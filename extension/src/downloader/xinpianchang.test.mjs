@@ -22,9 +22,9 @@ async function setup(payload = mp4, options = {}) {
         static revokeObjectURL(url) { revoked.push(url); }
     }
     const bytes = typeof payload === 'string' ? new TextEncoder().encode(payload) : payload;
-    const context = vm.createContext({ URL: TestURL, Date, Math, console, Blob, AbortController,
+    const context = vm.createContext({ URL: TestURL, Date, Math, console, Blob, AbortController, DOMException, setTimeout, clearTimeout,
         crypto: { randomUUID: () => uuid },
-        location: { hash: `#${key}` },
+        location: { hash: `#${options.jobKind === 'amazon' ? 'amazon-job-' + uuid : key}` },
         window: { addEventListener() {}, close() {} },
         document: { querySelector(selector) {
             if (!elements.has(selector)) elements.set(selector, { textContent: '', addEventListener() {} });
@@ -60,6 +60,17 @@ async function setup(payload = mp4, options = {}) {
     const cache = new Map();
     async function load(path) {
         if (cache.has(path)) return cache.get(path);
+        if (path.endsWith('?worker')) {
+            const module = new vm.SyntheticModule(['default'], function () {
+                this.setExport('default', class {
+                    postMessage() {
+                        queueMicrotask(() => this.onmessage?.({ data: { amazonDirect: { buffer: mp4.buffer } } }));
+                    }
+                    terminate() {}
+                });
+            }, { context });
+            cache.set(path, module); return module;
+        }
         if (path.endsWith('.css')) {
             const module = new vm.SyntheticModule([], () => {}, { context });
             cache.set(path, module); return module;
@@ -69,7 +80,12 @@ async function setup(payload = mp4, options = {}) {
         }).outputText;
         const module = new vm.SourceTextModule(source, { context, identifier: path });
         cache.set(path, module);
-        await module.link((specifier, parent) => load(resolve(dirname(parent.identifier), specifier.endsWith('.css') ? specifier : specifier + '.ts')));
+        await module.link((specifier, parent) => {
+            if (specifier.startsWith('@freesavevideo/amazon-direct/')) {
+                return load(resolve(base, '../../../packages/amazon-direct/src', specifier.split('/').pop() + '.ts'));
+            }
+            return load(resolve(dirname(parent.identifier), /(?:\.css|\?worker)$/.test(specifier) ? specifier : specifier + '.ts'));
+        });
         return module;
     }
     async function entry(name) {
@@ -99,6 +115,19 @@ test('fetches the complete MP4 once, preserving bytes and scoped headers', async
     assert.equal(rule.condition.urlFilter, `|${url}|`);
     assert.equal(rule.action.requestHeaders[0].value, sourcePageUrl);
     assert.equal(s.rules.at(-1).removeRuleIds[0], rule.id);
+});
+
+test('Amazon extension download saves worker MP4 output instead of an HLS playlist', async () => {
+    const s = await setup(mp4, { jobKind: 'amazon' });
+    const m = await s.entry('chrome-downloads.ts');
+    await m.downloadWithChrome({ url: 'https://m.media-amazon.com/replay/720.m3u8', filename: 'FreeSaveVideo/replay.mp4' });
+    assert.equal(s.downloads.length, 0);
+    assert.equal(s.tabs[0].url, `chrome-extension://fsv/download/index.html#amazon-job-${uuid}`);
+    await s.entry('../download/main.ts');
+    await settle(() => s.downloads.length === 1);
+    assert.deepEqual(new Uint8Array(await s.savedBlob.arrayBuffer()), mp4);
+    assert.equal(s.downloads[0].url, 'blob:chrome-extension://fsv/local-video');
+    assert.equal(s.downloads[0].filename, 'FreeSaveVideo/replay.mp4');
 });
 
 test('hands off from worker to persistent page, saves the exact fetched Blob and releases it on completion', async () => {

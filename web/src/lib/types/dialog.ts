@@ -82,6 +82,7 @@ type PreviewDownloadDialog = Dialog & {
     extensionUrls?: string[],
     mediaType?: "video" | "audio" | "image",
     autoSave?: boolean,
+    amazonHls?: boolean,
     noticeText?: string,
     extensionPromptTitleKey?: string,
     extensionPromptBodyKey?: string,

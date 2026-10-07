@@ -1,0 +1,14 @@
+{
+    "name": "@freesavevideo/amazon-direct",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "exports": {
+        "./hls": "./src/hls.ts",
+        "./runner": "./src/runner.ts",
+        "./worker": "./src/worker.ts"
+    },
+    "dependencies": {
+        "mux.js": "7.1.0"
+    }
+}

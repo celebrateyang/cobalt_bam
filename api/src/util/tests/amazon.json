@@ -7,7 +7,7 @@
         },
         "expected": {
             "code": 200,
-            "status": "tunnel"
+            "status": "redirect"
         },
         "canFail": true
     },
@@ -19,7 +19,7 @@
         },
         "expected": {
             "code": 200,
-            "status": "tunnel"
+            "status": "redirect"
         },
         "canFail": true
     },

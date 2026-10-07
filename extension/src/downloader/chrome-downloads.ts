@@ -3,10 +3,16 @@ import { sanitizeDownloadPath } from './filename';
 import { planDownloadStrategy } from './probe';
 import { isXinpianchangMedia } from '../adapters/xinpianchang';
 import { openXinpianchangDownload } from './xinpianchang-job';
+import { isAmazonMediaUrl } from '@freesavevideo/amazon-direct/hls';
+import { openAmazonDownload } from './amazon-job';
 
 export type DownloadRequest = { url: string; filename?: string; media?: DetectedMedia };
 
 export const downloadWithChrome = async ({ url, filename, media }: DownloadRequest) => {
+    if (isAmazonMediaUrl(url)) {
+        await openAmazonDownload(url, filename);
+        return;
+    }
     if (isXinpianchangMedia(url)) {
         await openXinpianchangDownload(url, filename, media?.sourcePageUrl);
         return;

@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "FreeSaveVideo Downloader",
-    "version": "0.1.12",
+    "version": "0.1.13",
     "description": "Detect media on the current page and open supported public links in FreeSaveVideo.",
     "action": {
         "default_popup": "popup/index.html",
@@ -32,6 +32,7 @@
                 "*://*.bilibili.tv/*",
                 "*://*.b23.tv/*",
                 "*://learn.deeplearning.ai/*",
+                "https://www.amazon.com/*",
                 "*://*.magnific.com/*",
                 "*://*.magnific.ai/*",
                 "*://freesavevideo.online/*",
@@ -73,7 +74,8 @@
         "*://learn.deeplearning.ai/*",
         "*://*.magnific.com/*",
         "*://*.magnific.ai/*",
-        "*://*.cloudfront.net/*"
+        "*://*.cloudfront.net/*",
+        "https://*.media-amazon.com/*"
     ],
     "icons": {
         "16": "icons/icon-16.png",

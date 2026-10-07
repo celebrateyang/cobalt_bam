@@ -1,4 +1,5 @@
 export type PlatformId =
+    | 'amazon'
     | 'xinpianchang'
     | 'generic'
     | 'youtube-policy'

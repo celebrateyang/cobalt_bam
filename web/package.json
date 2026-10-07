@@ -23,6 +23,8 @@
         "test:saving": "node --test ./scripts/test-download-saving.mjs",
         "test:ffmpeg-startup": "node --test ./scripts/test-ffmpeg-startup.mjs",
         "test:fetch-startup": "node --test ./scripts/test-fetch-startup.mjs",
+        "test:fetch-streaming": "node --test ./scripts/test-fetch-streaming.mjs",
+        "test:amazon-direct": "node --test ./scripts/test-amazon-direct.mjs",
         "test:worker-assets": "node --test ./scripts/test-worker-assets.mjs",
         "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
     },
@@ -76,6 +78,7 @@
         "vite": "^5.0.3"
     },
     "dependencies": {
+        "@freesavevideo/amazon-direct": "workspace:*",
         "@clerk/clerk-js": "^5.114.1",
         "@clerk/localizations": "^3.30.1",
         "@excalidraw/excalidraw": "^0.18.0",

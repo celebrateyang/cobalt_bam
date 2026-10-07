@@ -59,7 +59,7 @@ if the desired service isn't supported yet, feel free to create an appropriate i
 ### additional notes or features (per service)
 | service    | notes or features                                                                                                    |
 | :--------  | :-----                                                                                                               |
-| amazon live | supports public `amazon.com/live/video/:id` and `amazon.com/vdp/:id` replay links with available HLS qualities.     |
+| amazon live | supports public `amazon.com/live/video/:id` and `amazon.com/vdp/:id` replays. Normal video downloads return a Direct Bridge redirect to the selected Amazon HLS playlist; the browser/extension saves MP4 without an API tunnel or queue. Finite unencrypted H.264/AAC TS replays up to 256 MiB are supported. Audio-only and muted conversions retain their processing flow. |
 | instagram  | supports reels, photos, and videos. lets you pick what to save from multi-media posts.                               |
 | magnific   | supports media exposed by public pages explicitly marked free and direct Magnific CDN links. Premium, private, login-only, and credit-based exports are excluded. Free assets may require attribution. |
 | iqiyi      | supports public, free iQIYI `v_*.html` and international `iq.com/play/...` videos as server-remuxed MP4 files without player ads; international pages currently expose 360p. |

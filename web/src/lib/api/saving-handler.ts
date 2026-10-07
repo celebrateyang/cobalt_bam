@@ -120,6 +120,7 @@ const isPreviewDownloadResponse = (response: CobaltAPIResponse) => (
     response.status === "redirect" &&
     "service" in response &&
     (
+        response.service === "amazon" ||
         response.service === "deeplearningai" ||
         response.service === "magnific" ||
         response.service === "bilibili" ||
@@ -182,6 +183,7 @@ const openPreviewDownloadDialog = (
         extensionUrls,
         mediaType,
         autoSave: true,
+        amazonHls: response.service === "amazon",
         ...extensionPrompt,
         ...cdnNotice,
     });

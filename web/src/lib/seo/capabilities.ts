@@ -251,7 +251,7 @@ export const capabilityServices: CapabilityService[] = [
         noWatermark: false,
         batchFriendly: true,
         collectionFriendly: false,
-        notes: ['Supports public amazon.com/live/video/:id and amazon.com/vdp/:id replay links with available HLS quality options.'],
+        notes: ['Supports public amazon.com/live/video/:id and amazon.com/vdp/:id replays. Video downloads use Direct Bridge: the browser fetches Amazon HLS segments and saves an MP4 in the preview dialog.'],
         searchIntents: ['amazon live downloader', 'download amazon live replay', 'amazon live video download', 'amazon vdp video download'],
         unsupportedCases: defaultUnsupportedCases,
     },

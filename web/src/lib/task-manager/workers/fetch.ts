@@ -608,7 +608,11 @@ const fetchFile = async (
             let bytesToSkip = 0;
             const requestedRange = requestedRangeEnd != null;
             const contentLengthHeaderRaw = response.headers.get("Content-Length");
-            const contentLengthHeader = Number(contentLengthHeaderRaw);
+            // Streaming remux tunnels omit Content-Length. Number(null) is 0,
+            // which would cancel a valid stream and repeatedly restart FFmpeg.
+            const contentLengthHeader = contentLengthHeaderRaw === null
+                ? NaN
+                : Number(contentLengthHeaderRaw);
 
             if (
                 requestedRange &&

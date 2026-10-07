@@ -2,6 +2,8 @@
     import { onDestroy, onMount } from "svelte";
     import { t } from "$lib/i18n/translations";
     import { copyURL, openFile } from "$lib/download";
+    import AmazonWorker from "$lib/download/amazon-worker?worker";
+    import { downloadAmazonMp4 } from "@freesavevideo/amazon-direct/runner";
     import {
         detectFreeSaveVideoExtensionInstalled,
         isChromiumLike,
@@ -26,6 +28,7 @@
     export let extensionUrls: string[] = [];
     export let mediaType: "video" | "audio" | "image" = "video";
     export let autoSave = true;
+    export let amazonHls = false;
     export let noticeText = "";
     export let extensionPromptTitleKey = "";
     export let extensionPromptBodyKey = "";
@@ -232,7 +235,7 @@
     const openDirectDownload = (url: string) => {
         const anchor = document.createElement("a");
         anchor.href = url;
-        anchor.download = filename;
+        anchor.download = amazonHls ? filename.replace(/\.mp4$/i, ".m3u8") : filename;
         anchor.target = "_blank";
         anchor.rel = "noreferrer noopener nofollow";
         document.body.append(anchor);
@@ -247,6 +250,17 @@
         receivedBytes = 0;
         totalBytes = null;
         startedAt = Date.now();
+
+        if (amazonHls) {
+            const blob = await downloadAmazonMp4(() => new AmazonWorker(), url, signal, (state) => {
+                receivedBytes = state.bytes;
+                progress = state.percent;
+                statusText = state.stage === "remuxing" ? "Preparing MP4 file..." : "Downloading video...";
+            });
+            signal.throwIfAborted();
+            completeDownload(new File([blob], filename, { type: "video/mp4" }));
+            return;
+        }
 
         const chunks: Uint8Array[] = [];
         let contentType = "";
@@ -334,9 +348,13 @@
             throw new Error("empty_file");
         }
 
-        file = new File([blob], filename, {
+        completeDownload(new File([blob], filename, {
             type: blob.type || "application/octet-stream",
-        });
+        }));
+    };
+
+    const completeDownload = (downloadedFile: File) => {
+        file = downloadedFile;
         if (filePreviewUrl) URL.revokeObjectURL(filePreviewUrl);
         filePreviewUrl = URL.createObjectURL(file);
         progress = 100;
@@ -353,6 +371,7 @@
     const start = async () => {
         controller?.abort();
         controller = new AbortController();
+        const signal = controller.signal;
         file = null;
         autoSaved = false;
         saveStarted = false;
@@ -367,10 +386,10 @@
         const candidates = uniqueUrls();
         for (const candidate of candidates) {
             try {
-                await downloadFromUrl(candidate, controller.signal);
+                await downloadFromUrl(candidate, signal);
                 return;
             } catch (error) {
-                if (controller.signal.aborted) return;
+                if (signal.aborted) return;
                 console.warn("[preview-download-dialog] candidate failed", error);
             }
         }
@@ -381,7 +400,7 @@
             statusText = "Trying browser extension fallback...";
             for (const extensionCandidate of extensionCandidates) {
                 const started = await requestExtensionDownload(extensionCandidate);
-                if (controller.signal.aborted) return;
+                if (signal.aborted) return;
                 if (started) {
                     extensionStarted = true;
                     saveStarted = true;
@@ -394,7 +413,9 @@
         }
 
         status = "fallback";
-        statusText = "Direct fetch was blocked. Use the browser download link or copy the URL.";
+        statusText = amazonHls
+            ? "Video download could not finish. Retry, or copy the media playlist URL."
+            : "Direct fetch was blocked. Use the browser download link or copy the URL.";
         progress = 0;
         receivedBytes = 0;
         totalBytes = null;
@@ -509,7 +530,7 @@
             {#if status === "fallback" || status === "error"}
                 <button type="button" class="button elevated" on:click={save}>
                     <IconDownload />
-                    {$t("button.download")}
+                    {amazonHls ? "Open media playlist" : $t("button.download")}
                 </button>
             {:else}
                 <button

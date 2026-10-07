@@ -142,6 +142,7 @@ const requestText = async (url, headers) => {
         const response = await fetch(url, {
             redirect: "follow",
             headers,
+            signal: AbortSignal.timeout(15_000),
         });
         if (!response.ok) return null;
 
@@ -164,13 +165,26 @@ export default async function amazon({ id, quality, url }) {
         referer: pageUrl,
     };
 
-    const page = await requestText(pageUrl, headers);
-    if (!page) return { error: "fetch.fail" };
-
-    const metadata = extractAmazonLiveMetadata(page.text);
-    if (!isAmazonMediaUrl(metadata.manifestUrl)) {
-        return { error: "fetch.empty" };
+    // Amazon intermittently serves a 503/challenge for one replay route while
+    // its alias remains available. Only try the alias if extraction fails.
+    const aliasUrl = new URL(pageUrl);
+    aliasUrl.pathname = aliasUrl.pathname.startsWith("/vdp/")
+        ? `/live/video/${encodeURIComponent(id)}`
+        : `/vdp/${encodeURIComponent(id)}`;
+    let page;
+    let metadata;
+    let hadPageResponse = false;
+    for (const candidate of [pageUrl, aliasUrl.toString()]) {
+        const response = await requestText(candidate, headers);
+        if (!response) continue;
+        hadPageResponse = true;
+        const extracted = extractAmazonLiveMetadata(response.text);
+        if (!isAmazonMediaUrl(extracted.manifestUrl)) continue;
+        page = response;
+        metadata = extracted;
+        break;
     }
+    if (!page) return { error: hadPageResponse ? "fetch.empty" : "fetch.fail" };
 
     const manifest = await requestText(metadata.manifestUrl, {
         ...headers,

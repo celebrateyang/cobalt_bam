@@ -1,4 +1,5 @@
 import { bilibiliAdapter } from './bilibili';
+import { amazonAdapter } from './amazon';
 import { deeplearningaiAdapter } from './deeplearningai';
 import { douyinAdapter } from './douyin';
 import { genericAdapter } from './generic';
@@ -29,6 +30,7 @@ const youtubePolicyAdapter: PlatformAdapter = {
 };
 
 const adapters: PlatformAdapter[] = [
+    amazonAdapter,
     xinpianchangAdapter,
     youtubePolicyAdapter,
     magnificAdapter,

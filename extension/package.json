@@ -3,6 +3,9 @@
     "version": "0.1.0",
     "private": true,
     "type": "module",
+    "dependencies": {
+        "@freesavevideo/amazon-direct": "workspace:*"
+    },
     "scripts": {
         "build": "vite build && vite build --config vite.content.config.ts && node ./scripts/copy-static.mjs && node ./scripts/validate-manifest.mjs",
         "dev": "vite build --watch & vite build --config vite.content.config.ts --watch",

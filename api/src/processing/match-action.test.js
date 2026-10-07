@@ -26,6 +26,20 @@ const youtubeResult = {
     duration: 60,
 };
 
+test("returns Amazon HLS through Direct Bridge even with forced local processing", () => {
+    const url = "https://m.media-amazon.com/replay/720.m3u8";
+    for (const localProcessing of ["disabled", "preferred", "forced"]) {
+        const response = matchAction({ ...baseArgs, host: "amazon", localProcessing,
+            alwaysProxy: true, r: { service: "amazon", urls: url, isHLS: true, filename: "replay.mp4" } });
+        assert.equal(response.body.status, "redirect");
+        assert.equal(response.body.service, "amazon");
+        assert.equal(response.body.url, url);
+        assert.equal(response.body.directUrl, url);
+        assert.deepEqual(response.body.directUrlCandidates, [url]);
+        assert.equal(response.body.tunnelUrl, undefined);
+    }
+});
+
 test('returns Xinpianchang progressive media through a server tunnel', () => {
     const response = matchAction({
         ...baseArgs, host: 'xinpianchang',

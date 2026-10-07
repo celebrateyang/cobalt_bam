@@ -12,11 +12,9 @@
 
     import DialogContainer from "$components/dialog/DialogContainer.svelte";
 
-    import DialogButtons from "$components/dialog/DialogButtons.svelte";
-    import SaveLocationHint from "$components/save/SaveLocationHint.svelte";
-
     import IconDownload from "@tabler/icons-svelte/IconDownload.svelte";
     import IconFileDownload from "@tabler/icons-svelte/IconFileDownload.svelte";
+    import IconX from "@tabler/icons-svelte/IconX.svelte";
 
 
     export let id: string;
@@ -70,12 +68,10 @@
                 <h2 class="popup-title" tabindex="-1">
                     {$t("button.download")}
                 </h2>
+                <button type="button" class="button close-button" aria-label={$t("dialog.saving.close")} on:click={close}>
+                    <IconX />
+                </button>
             </div>
-
-            <button id="save-download" class="button active download-button" disabled={saving} on:click={save}>
-                <IconDownload />
-                {$t(device.is.iOS && file ? "save.action.files" : "button.download")}
-            </button>
 
             {#if outcome && outcome !== "dialog"}
                 <p class="body-text" role="status" aria-live="polite">{$t(`save.result.${outcome}`)}</p>
@@ -92,19 +88,11 @@
                 </div>
             {/if}
 
-            <SaveLocationHint afterClick={outcome === "download"} collapsible compact />
+            <button type="button" id="save-download" class="button active download-button" disabled={saving} on:click={save}>
+                <IconDownload />
+                {$t(device.is.iOS && file ? "save.action.files" : file ? "button.download" : "dialog.saving.allow_popup_download")}
+            </button>
         </div>
-
-        <DialogButtons
-            buttons={[
-                {
-                    text: $t("button.done"),
-                    main: false,
-                    action: () => {},
-                },
-            ]}
-            closeFunc={close}
-        />
     </div>
 </DialogContainer>
 
@@ -151,13 +139,32 @@
         box-shadow: none !important;
     }
 
+    .close-button {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        flex-shrink: 0;
+    }
+
     .download-button {
         display: flex;
         align-items: center;
         justify-content: center;
         width: 100%;
         min-height: 44px;
+        height: auto;
+        padding: 10px 12px;
+        white-space: normal;
+        line-height: 1.3;
         gap: calc(var(--padding) / 2);
+    }
+
+    .download-button :global(svg) {
+        flex-shrink: 0;
     }
 
     .body-text {

@@ -15,6 +15,8 @@
     "picker.batch.save_selected": "Ausgewählte speichern ({{ count }})",
     "picker.batch.saving": "{{ count }} von {{ max }} werden gespeichert...",
     "picker.batch.complete": "{{ count }} gespeichert, {{ max }} fehlgeschlagen",
+    "saving.allow_popup_download": "Download im Pop-up erlauben",
+    "saving.close": "Schließen",
     "saving.title": "Wählen Sie, wie gespeichert werden soll",
     "saving.blocked": "FreeSaveVideo hat versucht, die Datei in einem neuen Tab zu öffnen, aber Ihr Browser hat dies blockiert. Sie können Pop-ups für FreeSaveVideo zulassen, um dies in Zukunft zu verhindern.",
     "saving.timeout": "FreeSaveVideo hat versucht, die Datei automatisch zu speichern, aber Ihr Browser hat dies gestoppt. Sie müssen manuell eine bevorzugte Methode auswählen.",

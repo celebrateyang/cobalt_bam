@@ -15,6 +15,8 @@
     "picker.batch.save_selected": "guardar seleccionadas ({{ count }})",
     "picker.batch.saving": "guardando {{ count }} de {{ max }}...",
     "picker.batch.complete": "{{ count }} guardadas, {{ max }} fallidas",
+    "saving.allow_popup_download": "Permitir descarga en ventana emergente",
+    "saving.close": "Cerrar",
     "saving.title": "elige cómo guardar",
     "saving.blocked": "FreeSaveVideo intentó abrir el archivo en una nueva pestaña, pero tu navegador lo bloqueó. puedes permitir ventanas emergentes para FreeSaveVideo para evitar que esto suceda la próxima vez.",
     "saving.timeout": "FreeSaveVideo intentó guardar el archivo automáticamente, pero tu navegador lo detuvo. tienes que seleccionar un método preferido manualmente.",

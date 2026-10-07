@@ -47,6 +47,8 @@
     "batch.detect.download_batch": "unduhan batch",
     "batch.manual_save_hint": "Pilih penyimpanan otomatis saat Anda memulai batch sehingga setiap video yang selesai segera ditulis ke perangkat Anda.",
     "batch.keep_screen_on_hint": "Selama pengunduhan antrian batch, jaga agar perangkat ini tetap aktif: jangan biarkan komputer Anda tidur atau layar ponsel Anda terkunci, atau tugas-tugas selanjutnya mungkin terhenti atau gagal.",
+    "saving.allow_popup_download": "Izinkan unduhan melalui pop-up",
+    "saving.close": "Tutup",
     "saving.title": "pilih cara menyimpan",
     "saving.blocked": "FreeSaveVideo mencoba membuka file di tab baru, tetapi browser Anda memblokirnya. Anda dapat mengizinkan pop-up untuk FreeSaveVideo untuk mencegah hal ini terjadi di lain waktu.",
     "saving.timeout": "FreeSaveVideo mencoba menyimpan file secara otomatis, tetapi browser Anda menghentikannya. Anda harus memilih metode yang diinginkan secara manual.",

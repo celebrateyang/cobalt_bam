@@ -46,7 +46,8 @@
     $: copy = getYouTubeCopy(lang);
     $: downloadLabel = `${copy.downloadStages[downloadStage]} \u00b7 ${copy.elapsed.replace('{seconds}', String(downloadSeconds))}`;
     $: parsedInput = parseYouTubeInput(input);
-    $: submitLabel = parsedInput?.kind === 'search' || !parsedInput ? copy.search : copy.open;
+    $: submitLabel = parsedInput?.kind === 'video' ? copy.download
+        : parsedInput?.kind === 'playlist' ? copy.open : copy.search;
     $: feedbackSource = selected?.url || (parsedInput && parsedInput.kind !== 'search' ? parsedInput.url : '');
     $: if (SearchHelpers && helperLocale !== lang) void loadSearchHelpers(lang);
 

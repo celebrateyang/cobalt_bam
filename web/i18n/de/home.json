@@ -166,5 +166,7 @@
         "install": "Chrome-Erweiterung installieren",
         "installed": "Chrome-Erweiterung installiert",
         "checking": "Erweiterung wird geprüft..."
-    }
+    },
+    "agent_integration": "Anleitung zur Anbindung persönlicher KI-Agenten",
+    "browser_use": "Im Browser nutzbar"
 }

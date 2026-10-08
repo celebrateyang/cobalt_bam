@@ -120,5 +120,6 @@
             "q": "¿Puedo descargar vídeos de WeChat Channels y de artículos de cuentas oficiales?",
             "a": "Sí. Pega un enlace público de WeChat Channels o de un artículo mp.weixin.qq.com. Si el artículo contiene varios vídeos, elige los que quieras antes de agregarlos a la cola. No se admite contenido privado, eliminado o que requiera iniciar sesión."
         }
-    }
+    },
+    "tools_aria": "Búsqueda y enlaces de preguntas frecuentes"
 }

@@ -52,5 +52,6 @@
     "location.android": "Android: check the download notification, Chrome Downloads, or Files > Downloads.",
     "location.wechat": "In WeChat or in-app browsers, downloads may be blocked. Open this page in Chrome or Safari if you cannot find the file.",
     "location.after_click": "After you click Download, the browser may ask where to save it. If you choose a folder, look there first.",
-    "location.batch_auto": "For batch auto-save, videos are saved to the folder you selected when starting the batch."
+    "location.batch_auto": "For batch auto-save, videos are saved to the folder you selected when starting the batch.",
+    "guides_aria": "Download guides"
 }

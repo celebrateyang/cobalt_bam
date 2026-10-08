@@ -166,5 +166,7 @@
         "install": "Chrome 확장 프로그램 설치",
         "installed": "Chrome 확장 프로그램 설치됨",
         "checking": "확장 프로그램 확인 중..."
-    }
+    },
+    "agent_integration": "개인 AI 에이전트 연동 가이드",
+    "browser_use": "브라우저에서 사용"
 }

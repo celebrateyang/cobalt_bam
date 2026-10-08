@@ -188,7 +188,7 @@
         </div>
     </header>
 
-    <section class="card tools" aria-label="FAQ tools">
+    <section class="card tools" aria-label={$t("faq.tools_aria")}>
         <div class="search-row">
             <input
                 class="search"

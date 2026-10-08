@@ -891,7 +891,7 @@
                     {currentLocale === "zh" ? "\u89c6\u9891\u4e0b\u8f7d\u6307\u5357" : currentLocale === "ja" ? "動画ダウンロードガイド" : currentLocale === "th" ? "คู่มือดาวน์โหลดวิดีโอ" : currentLocale === "ko" ? "동영상 다운로드 가이드" : extraHomeText("guideDirectory", "Video download guides")}
                 </a>
                 <a class="home-hub-link" href="/agents">
-                    {currentLocale === "zh" ? "\u652f\u6301\u4e2a\u4eba AI agent\uff1a\u63a5\u5165\u8bf4\u660e" : "Personal AI agents supported: integration guide"}
+                    {$t("home.agent_integration")}
                 </a>
                 <a class="home-hub-link home-hub-link--primary" href={`/${currentLocale}/faq`}>
                     {currentLocale === "zh" ? "\u4e0b\u8f7d\u5e38\u89c1\u95ee\u9898" : currentLocale === "ja" ? "動画ダウンロードのよくある質問" : currentLocale === "th" ? "คำถามที่พบบ่อยเกี่ยวกับการดาวน์โหลด" : currentLocale === "ko" ? "동영상 다운로드 FAQ" : extraHomeText("faqDirectory", "Video download FAQ")}

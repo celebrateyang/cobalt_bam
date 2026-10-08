@@ -31,7 +31,7 @@
         </div>
         <p class="compatibility">{$t("home.welcome.desktop")}</p>
         <div class="benefits">
-            <span><IconCheck size={16} /> {$t("home.welcome.no_ads")}</span>
+            <span><IconCheck size={16} /> {$t("home.browser_use")}</span>
             <span><IconCheck size={16} /> {$t("home.welcome.free_plugin")}</span>
         </div>
     </div>

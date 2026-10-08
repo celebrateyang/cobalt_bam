@@ -47,5 +47,6 @@
     "location.desktop": "Máy tính: nhấn biểu tượng tải xuống hoặc Ctrl+J rồi mở tệp hay thư mục chứa tệp.", "location.ios": "iPhone/iPad: mở ứng dụng Tệp và kiểm tra Tải xuống hoặc thư mục đã chọn trong Safari.",
     "location.android": "Android: kiểm tra thông báo, mục tải xuống của Chrome hoặc Tệp > Tải xuống.", "location.wechat": "WeChat và trình duyệt trong ứng dụng có thể chặn tải xuống. Hãy mở trang trong Chrome hoặc Safari nếu không tìm thấy tệp.",
     "location.after_click": "Trình duyệt có thể hỏi nơi lưu tệp. Nếu đã chọn thư mục, hãy kiểm tra ở đó trước.", "location.batch_auto": "Tự động lưu hàng loạt dùng thư mục bạn chọn khi bắt đầu.",
-    "batch.detected": "đã phát hiện {{ count }} liên kết — chế độ hàng loạt", "batch.too_many": "quá nhiều liên kết: {{ count }} (tối đa {{ max }})"
+    "batch.detected": "đã phát hiện {{ count }} liên kết — chế độ hàng loạt", "batch.too_many": "quá nhiều liên kết: {{ count }} (tối đa {{ max }})",
+    "guides_aria": "Hướng dẫn tải xuống"
 }

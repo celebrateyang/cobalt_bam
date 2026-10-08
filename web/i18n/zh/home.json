@@ -166,5 +166,7 @@
         "install": "安装 Chrome 插件",
         "installed": "Chrome 插件已安装",
         "checking": "正在检查插件..."
-    }
+    },
+    "agent_integration": "支持个人 AI agent：接入说明",
+    "browser_use": "浏览器直接使用"
 }

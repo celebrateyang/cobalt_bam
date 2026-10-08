@@ -166,5 +166,7 @@
         "install": "Installer l’extension Chrome",
         "installed": "Extension Chrome installée",
         "checking": "Vérification de l’extension..."
-    }
+    },
+    "agent_integration": "Guide d’intégration des agents IA personnels",
+    "browser_use": "Utilisable dans le navigateur"
 }

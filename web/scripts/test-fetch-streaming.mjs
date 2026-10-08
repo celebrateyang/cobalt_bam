@@ -9,10 +9,10 @@ const workerCode = ts.transpileModule(
     { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } },
 ).outputText;
 
-const download = async (responses) => {
+const download = async (responses, onWrite = () => {}) => {
     const messages = [], calls = [], chunks = [];
     const storage = {
-        async write(data) { chunks.push(Buffer.from(data)); return data.length; },
+        async write(data) { onWrite(messages); chunks.push(Buffer.from(data)); return data.length; },
         async res() { return new Blob(chunks); },
         async destroy() {},
     };
@@ -45,6 +45,27 @@ test('downloads a chunked remux tunnel without Content-Length in one request', a
     const result = f.messages.find(message => message.result)?.result;
     assert.ok(result);
     assert.deepEqual(Buffer.from(await result.arrayBuffer()), payload);
+});
+
+test('reports received bytes before a chunked stream completes', async () => {
+    let sawProgressDuringTransfer = false;
+    const payload = new ReadableStream({
+        start(controller) {
+            controller.enqueue(new TextEncoder().encode('first chunk'));
+            controller.enqueue(new TextEncoder().encode('second chunk'));
+            controller.close();
+        },
+    });
+    const f = await download(() => new Response(payload, {
+        headers: { 'Content-Type': 'video/mp4', 'Estimated-Content-Length': '-1' },
+    }), messages => {
+        if (messages.some(message => message.size === 11 && message.progress === undefined)) {
+            assert.equal(messages.some(message => message.result), false);
+            sawProgressDuringTransfer = true;
+        }
+    });
+    assert.equal(sawProgressDuringTransfer, true);
+    assert.ok(f.messages.some(message => message.result));
 });
 
 test('retries an explicitly empty 200 and then consumes the valid stream', async () => {

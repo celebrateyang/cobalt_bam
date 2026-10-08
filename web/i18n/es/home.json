@@ -166,5 +166,7 @@
         "install": "Instalar extensión de Chrome",
         "installed": "Extensión de Chrome instalada",
         "checking": "Comprobando la extensión..."
-    }
+    },
+    "agent_integration": "Guía de integración con agentes personales de IA",
+    "browser_use": "Úsalo en tu navegador"
 }

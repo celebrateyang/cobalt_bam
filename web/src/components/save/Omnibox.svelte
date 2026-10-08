@@ -1247,7 +1247,7 @@
                 <div class="guide-popover-anchor guide-popover-anchor--desktop">
                     <div
                         class="download-guides download-guides--desktop"
-                        aria-label="Download guides"
+                        aria-label={$t("save.guides_aria")}
                     >
                         {#if collectionGuideText}
                             <button

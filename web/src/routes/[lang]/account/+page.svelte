@@ -417,9 +417,7 @@
 
         const accessMethod = promotionAccessMethod.trim();
         if (!accessMethod) {
-            promotionSubmitError = isChinese
-                ? "请填写访问方式（帖子链接/视频链接/账号主页等）。"
-                : "Please provide access details (post link/video link/profile URL).";
+            promotionSubmitError = $t("auth.promotion_access_required");
             promotionSubmitSuccess = "";
             return;
         }
@@ -451,17 +449,13 @@
             }
 
             const points = requestedPromotionPoints(promotionType);
-            promotionSubmitSuccess = isChinese
-                ? `提交成功，审核通过后将发放 ${points} 积分。`
-                : `Submitted successfully. ${points} points will be credited after approval.`;
+            promotionSubmitSuccess = $t("auth.promotion_submitted", { count: points });
             promotionAccessMethod = "";
             promotionType = "post";
             void refreshRecords();
         } catch (error) {
             console.debug("submit promotion request failed", error);
-            promotionSubmitError = isChinese
-                ? "提交失败，请稍后重试。"
-                : "Submission failed, please try again later.";
+            promotionSubmitError = $t("auth.promotion_failed");
         } finally {
             promotionSubmitting = false;
         }
@@ -522,9 +516,7 @@
                 }
             }
         } catch (error) {
-            recordsError = isChinese
-                ? "加载记录失败，请稍后重试。"
-                : "Failed to load records. Please try again later.";
+            recordsError = $t("auth.records_failed");
             console.debug("load account records failed", error);
         } finally {
             recordsLoading = false;
@@ -557,21 +549,21 @@
     };
 
     const promotionTypeLabel = (value: string) => {
-        if (value === "post") return isChinese ? "发帖推广" : "Post";
-        if (value === "video") return isChinese ? "视频推广" : "Video";
+        if (value === "post") return $t("auth.promotion_post_type");
+        if (value === "video") return $t("auth.promotion_video_type");
         return value;
     };
 
     const promotionStatusLabel = (value: string) => {
-        if (value === "PENDING") return isChinese ? "待审核" : "Pending";
-        if (value === "APPROVED") return isChinese ? "已通过" : "Approved";
-        if (value === "REJECTED") return isChinese ? "已驳回" : "Rejected";
+        if (value === "PENDING") return $t("auth.promotion_pending");
+        if (value === "APPROVED") return $t("auth.promotion_approved");
+        if (value === "REJECTED") return $t("auth.promotion_rejected");
         return value;
     };
 
     const formatAmount = (fen: number, currency: string) => {
         const value = Number(fen) / 100;
-        if (currency === "CNY") return `\u00A5${value.toFixed(2)}`;
+        if (currency === "CNY") return `CNY ${value.toFixed(2)}`;
         try {
             return new Intl.NumberFormat(undefined, {
                 style: "currency",
@@ -593,12 +585,12 @@
             return t.get("auth.unit_price_0_8_fen");
         }
         if (product.currency === "CNY" && product.unitPriceFen === 0.625) {
-            return "0.625 分/积分";
+            return `CNY 0.00625 / ${$t("auth.points_label")}`;
         }
 
         const points = Number(product.points) || 1;
         const unit = Number(product.amountFen) / 100 / points;
-        return `${unit.toFixed(4)} ${product.currency} / pt`;
+        return `${unit.toFixed(4)} ${product.currency} / ${$t("auth.points_label")}`;
     };
 
     const membershipPlanLabel = (planKey: string | undefined | null) => {
@@ -1679,7 +1671,7 @@
         </h1>
         <div class="subtext subtitle">{$t("auth.subtitle")}</div>
         <a href={`/${$page.params.lang}/account/agents`}>
-            {isChinese ? "个人 agent 授权" : "Personal agent access"}
+            {$t("auth.agent_access")}
         </a>
     </header>
 
@@ -1699,12 +1691,12 @@
         <div class="account-shell">
             <aside class="records-sidebar">
                 <div class="records-sidebar-header">
-                    <div class="subtext records-subtitle">account</div>
-                    <h2 class="records-title">{isChinese ? "记录中心" : "Record Center"}</h2>
+                    <div class="subtext records-subtitle">{$t("auth.title")}</div>
+                    <h2 class="records-title">{$t("auth.records_title")}</h2>
                 </div>
 
                 <nav class="records-nav">
-                    <div class="records-nav-title">{isChinese ? "支持" : "Support"}</div>
+                    <div class="records-nav-title">{$t("auth.records_support")}</div>
                     <button
                         type="button"
                         class="records-menu-item"
@@ -1715,7 +1707,7 @@
                             <span class="records-menu-icon">
                                 <IconUserCircle />
                             </span>
-                            <span>{isChinese ? "账户首页" : "Account Home"}</span>
+                            <span>{$t("auth.account_home")}</span>
                         </span>
                     </button>
                     <button
@@ -1728,7 +1720,7 @@
                             <span class="records-menu-icon">
                                 <IconSpeakerphone />
                             </span>
-                            <span>{isChinese ? "推广记录" : "Promotion Records"}</span>
+                            <span>{$t("auth.promotion_records")}</span>
                         </span>
                     </button>
                     <button
@@ -1741,12 +1733,12 @@
                             <span class="records-menu-icon">
                                 <IconBug />
                             </span>
-                            <span>{isChinese ? "问题反馈" : "Feedback"}</span>
+                            <span>{$t("auth.feedback_records")}</span>
                         </span>
                         {#if $feedbackUnread > 0}
                             <span
                                 class="records-notification-badge"
-                                aria-label={`${$feedbackUnread} unread`}
+                                aria-label={$t("auth.records_unread", { count: $feedbackUnread })}
                             >
                                 {$feedbackUnread > 99 ? "99+" : $feedbackUnread}
                             </span>
@@ -1759,25 +1751,25 @@
                 {#if activeRecordsTab !== null}
                     <section class="card records-content">
                         {#if recordsLoading}
-                            <div class="subtext">{isChinese ? "加载中..." : "Loading..."}</div>
+                            <div class="subtext">{$t("auth.records_loading")}</div>
                         {:else if recordsError}
                             <div class="subtext error">{recordsError}</div>
                         {:else if activeRecordsTab === "promotion"}
                             {#if promotionRecords.length === 0}
                                 <div class="subtext">
-                                    {isChinese ? "暂无推广记录" : "No promotion records yet"}
+                                    {$t("auth.promotion_empty")}
                                 </div>
                             {:else}
                                 <div class="records-table-wrap">
                                     <table class="records-table">
                                         <thead>
                                             <tr>
-                                                <th class="col-time">{isChinese ? "提交时间" : "Submitted At"}</th>
-                                                <th>{isChinese ? "类型" : "Type"}</th>
-                                                <th>{isChinese ? "访问方式" : "Access Details"}</th>
-                                                <th>{isChinese ? "审核状态" : "Review Status"}</th>
-                                                <th>{isChinese ? "审核备注" : "Admin Note"}</th>
-                                                <th>{isChinese ? "审核时间" : "Reviewed At"}</th>
+                                                <th class="col-time">{$t("auth.records_submitted_at")}</th>
+                                                <th>{$t("auth.records_type")}</th>
+                                                <th>{$t("auth.records_access")}</th>
+                                                <th>{$t("auth.records_review_status")}</th>
+                                                <th>{$t("auth.records_admin_note")}</th>
+                                                <th>{$t("auth.records_reviewed_at")}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -1809,19 +1801,19 @@
                         {:else}
                             {#if feedbackRecords.length === 0}
                                 <div class="subtext">
-                                    {isChinese ? "暂无反馈记录" : "No feedback records yet"}
+                                    {$t("auth.feedback_empty")}
                                 </div>
                             {:else}
                                 <div class="records-table-wrap">
                                     <table class="records-table">
                                         <thead>
                                             <tr>
-                                                <th class="col-time">{isChinese ? "提交时间" : "Submitted At"}</th>
-                                                <th class="col-url">{isChinese ? "视频链接" : "Video URL"}</th>
-                                                <th>{isChinese ? "问题现象" : "Issue"}</th>
-                                                <th>{isChinese ? "建议" : "Suggestion"}</th>
-                                                <th>{isChinese ? "处理备注" : "Process Note"}</th>
-                                                <th>{isChinese ? "处理时间" : "Processed At"}</th>
+                                                <th class="col-time">{$t("auth.records_submitted_at")}</th>
+                                                <th class="col-url">{$t("auth.records_video_url")}</th>
+                                                <th>{$t("auth.records_issue")}</th>
+                                                <th>{$t("auth.records_suggestion")}</th>
+                                                <th>{$t("auth.records_response")}</th>
+                                                <th>{$t("auth.records_processed_at")}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -2058,65 +2050,51 @@
                             <summary class="accordion-summary">
                                 <div>
                                     <div class="card-title">
-                                        {isChinese
-                                            ? "宣传网站赚积分"
-                                            : "Promote Website, Earn Points"}
+                                        {$t("auth.promotion_title")}
                                     </div>
                                     <div class="subtext card-subtitle">
-                                        {isChinese
-                                            ? "发帖或发视频介绍网站，审核通过后可获得积分奖励。"
-                                            : "Publish posts/videos introducing this site and earn points after review."}
+                                        {$t("auth.promotion_subtitle")}
                                     </div>
                                 </div>
                             </summary>
 
                             <div class="accordion-body">
                                 <div class="subtext promotion-rules-title">
-                                    {isChinese ? "活动规则" : "Rules"}
+                                    {$t("auth.promotion_rules")}
                                 </div>
                                 <div class="promotion-rules-list">
                                     <div>
-                                        {isChinese
-                                            ? "1. 在任一平台发帖介绍本站（不少于80字，需包含网站链接），奖励 50 积分。"
-                                            : "1. Publish a post on any platform (at least 80 words, must include the site link) to earn 50 points."}
+                                        {$t("auth.promotion_post_rule")}
                                     </div>
                                     <div>
-                                        {isChinese
-                                            ? "2. 发布介绍本站功能的视频（不少于1分钟）到任一平台，奖励 100 积分。"
-                                            : "2. Publish a video introducing any site feature (at least 1 minute) on any platform to earn 100 points."}
+                                        {$t("auth.promotion_video_rule")}
                                     </div>
                                     <div>
-                                        {isChinese
-                                            ? "3. 完成后提交访问方式（链接/账号主页等），管理员审核通过后发放积分。"
-                                            : "3. Submit access details (link/profile URL, etc.). Points are credited after admin approval."}
+                                        {$t("auth.promotion_submit_rule")}
                                     </div>
                                 </div>
 
                                 <div class="promotion-form">
                                     <label class="promotion-label" for="promotion-type">
-                                        {isChinese ? "任务类型" : "Task type"}
+                                        {$t("auth.promotion_task_type")}
                                     </label>
                                     <select id="promotion-type" bind:value={promotionType}>
                                         <option value="post">
-                                            {isChinese ? "发帖推广（50积分）" : "Post promotion (50 points)"}
+                                            {$t("auth.promotion_post_option")}
                                         </option>
                                         <option value="video">
-                                            {isChinese ? "视频推广（100积分）" : "Video promotion (100 points)"}
+                                            {$t("auth.promotion_video_option")}
                                         </option>
                                     </select>
 
                                     <label class="promotion-label" for="promotion-access-method">
-                                        {isChinese
-                                            ? "访问方式（帖子链接/ 视频链接 / 账号主页 / 关键词）"
-                                            : "Access details (post/video link, profile URL, keyword)"}
+                                        {$t("auth.promotion_access_label")}
                                     </label>
                                     <textarea
                                         id="promotion-access-method"
                                         rows="3"
                                         bind:value={promotionAccessMethod}
-                                        placeholder={isChinese
-                                            ? "示例：https://xxx；平台账号：xxx；搜索关键词：xxx"
-                                            : "Example: https://... ; account: ... ; search keyword: ..."}
+                                        placeholder={$t("auth.promotion_access_placeholder")}
                                     ></textarea>
 
                                     <button
@@ -2125,9 +2103,9 @@
                                         disabled={promotionSubmitting}
                                     >
                                         {#if promotionSubmitting}
-                                            {isChinese ? "提交中..." : "Submitting..."}
+                                            {$t("auth.promotion_submitting")}
                                         {:else}
-                                            {isChinese ? "提交审核" : "Submit for review"}
+                                            {$t("auth.promotion_submit")}
                                         {/if}
                                     </button>
 

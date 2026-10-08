@@ -52,5 +52,6 @@
     "location.android": "Android：查看下载通知、Chrome 下载列表，或“文件管理 > Downloads”。",
     "location.wechat": "微信或 App 内置浏览器可能阻止下载。如果找不到文件，请用 Chrome 或 Safari 打开本页再下载。",
     "location.after_click": "点击“下载”后，浏览器可能会让你选择保存位置。如果你选了文件夹，请先去那个文件夹查找。",
-    "location.batch_auto": "批量自动保存时，视频会保存到你开始批量下载时选择的文件夹。"
+    "location.batch_auto": "批量自动保存时，视频会保存到你开始批量下载时选择的文件夹。",
+    "guides_aria": "下载指南"
 }

@@ -6,7 +6,7 @@
 </script>
 
 <div class="trust-row">
-    <span><IconCheck size={16} /> {$t("home.welcome.no_ads")}</span>
+    <span><IconCheck size={16} /> {$t("home.browser_use")}</span>
     <a href="#free-options"><IconGift size={16} /> {$t("home.welcome.free_options")}</a>
     <a class="desktop-extension" href="#free-extension-title"><IconPuzzle size={16} /> {$t("home.welcome.free_plugin")}</a>
 </div>

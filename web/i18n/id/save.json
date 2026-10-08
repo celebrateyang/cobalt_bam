@@ -52,5 +52,6 @@
     "location.android": "Android: periksa notifikasi unduhan, Unduhan Chrome, atau File > Unduhan.",
     "location.wechat": "Di WeChat atau browser dalam aplikasi, unduhan mungkin diblokir. Buka halaman ini di Chrome atau Safari jika Anda tidak dapat menemukan file tersebut.",
     "location.after_click": "Setelah Anda mengklik Unduh, browser mungkin bertanya di mana menyimpannya. Jika Anda memilih folder, lihat dulu di sana.",
-    "location.batch_auto": "Untuk penyimpanan otomatis batch, video disimpan ke folder yang Anda pilih saat memulai batch."
+    "location.batch_auto": "Untuk penyimpanan otomatis batch, video disimpan ke folder yang Anda pilih saat memulai batch.",
+    "guides_aria": "Panduan unduhan"
 }

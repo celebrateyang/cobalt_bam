@@ -166,5 +166,7 @@
         "install": "Install Chrome extension",
         "installed": "Chrome extension installed",
         "checking": "Checking extension..."
-    }
+    },
+    "agent_integration": "Personal AI agents supported: integration guide",
+    "browser_use": "Use in your browser"
 }

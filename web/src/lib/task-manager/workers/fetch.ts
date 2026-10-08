@@ -478,8 +478,12 @@ const fetchFile = async (
         }
 
         const reportProgress = () => {
-            if (!expectedSize) return;
-            if (!expectedSizeReliable && expectedSize <= receivedBytes) return;
+            // Chunked server merges often have no usable length. Still report
+            // bytes so the UI can distinguish an active transfer from startup.
+            if (!expectedSize || (!expectedSizeReliable && expectedSize <= receivedBytes)) {
+                self.postMessage({ cobaltFetchWorker: { size: receivedBytes } });
+                return;
+            }
 
             largestExpectedSize = Math.max(largestExpectedSize, expectedSize, receivedBytes);
             if (largestExpectedSize <= 0) return;

@@ -52,5 +52,6 @@
     "location.after_click": "다운로드를 누르면 브라우저가 저장 위치를 물을 수 있습니다. 폴더를 선택했다면 그 위치를 먼저 확인하세요.",
     "location.batch_auto": "일괄 자동 저장 파일은 일괄 작업을 시작할 때 선택한 폴더에 저장됩니다.",
     "batch.detected": "링크 {{ count }}개 감지됨 — 일괄 모드",
-    "batch.too_many": "링크가 너무 많습니다: {{ count }}개(최대 {{ max }}개)"
+    "batch.too_many": "링크가 너무 많습니다: {{ count }}개(최대 {{ max }}개)",
+    "guides_aria": "다운로드 가이드"
 }

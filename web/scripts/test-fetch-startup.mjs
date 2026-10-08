@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import ts from 'typescript';
 
 const fixture = ({ constructorError = false, cloneError = false, missing = false } = {}) => {
-    const workers = [], errors = [], results = [], timers = new Map(), subscribers = new Set();
+    const workers = [], errors = [], results = [], progresses = [], timers = new Map(), subscribers = new Set();
     const items = missing ? {} : { task: { state: 'running' } };
     let timerId = 0;
     class Worker {
@@ -16,7 +16,7 @@ const fixture = ({ constructorError = false, cloneError = false, missing = false
     }
     const dependencies = {
         '$lib/task-manager/workers/fetch?worker': { default: Worker },
-        '$lib/state/task-manager/current-tasks': { updateWorkerProgress() {}, updateWorkerNetworkStalled() {} },
+        '$lib/state/task-manager/current-tasks': { updateWorkerProgress: (...args) => progresses.push(args), updateWorkerNetworkStalled() {} },
         '$lib/state/task-manager/queue': {
             queue: { subscribe(fn) { subscribers.add(fn); fn(items); return () => subscribers.delete(fn); } },
             itemError: (...args) => errors.push(args), pipelineTaskDone: (...args) => results.push(args),
@@ -35,7 +35,7 @@ const fixture = ({ constructorError = false, cloneError = false, missing = false
         setTimeout(fn) { const id = ++timerId; timers.set(id, fn); return id; },
         clearTimeout: id => timers.delete(id),
     });
-    return { workers, errors, results, timers, subscribers, items,
+    return { workers, errors, results, progresses, timers, subscribers, items,
         run: () => exports.runFetchWorker('fetch', 'task', 'https://media.test/file'),
         notify: () => [...subscribers].forEach(fn => fn(items)),
     };
@@ -84,6 +84,17 @@ test('startup deadlines stop after three attempts with a diagnostic', async () =
     for (let i = 0; i < 3; i++) [...f.timers.values()][0]();
     assert.equal(f.errors.length, 1); assert.equal(f.errors[0][3].errorName, 'TimeoutError');
     assert.equal(f.workers.length, 3); assert.equal(f.timers.size, 0);
+});
+
+test('forwards byte progress when the stream has no total size', async () => {
+    const f = fixture(); await f.run();
+    f.workers[0].message({ size: 1024 });
+    assert.equal(f.progresses.length, 1);
+    assert.equal(f.progresses[0][1].size, 1024);
+    assert.equal(f.progresses[0][1].percentage, undefined);
+    f.workers[0].message({ result: 'file' });
+    assert.equal(f.results.length, 1);
+    assert.equal(f.timers.size, 0);
 });
 
 test('Pages routes send LibAV to static assets even when excludes exceed 100 rules', () => {

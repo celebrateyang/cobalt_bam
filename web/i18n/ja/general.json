@@ -7,7 +7,7 @@
     "guide": {
         "title": "FreeSaveVideo で動画をオンライン保存する方法",
         "description1": "FreeSaveVideo ならソフトをインストールせずに動画をオンライン保存できます。対応サービスのリンクを貼り付けるだけで、可能な場合は透かしなしの HD 動画を保存できます。",
-        "description2": "単一リンクだけでなく、一括ダウンロード、合集や playlist ページの解析にも対応し、保存前に音声のみやミュートへ切り替えられます。"
+        "description2": "個別の動画だけでなく、複数のリンクやプレイリスト、シリーズの一括ダウンロードにも対応しています。保存前に「音声のみ」「音声なし」を選ぶこともできます。"
     },
     "notification": {
         "title": "お知らせ：",
@@ -38,7 +38,7 @@
         }
     },
     "pwa": {
-        "install_prompt": "このウェブサイトはデスクトップへのインストールをサポートしています",
+        "install_prompt": "FreeSaveVideoをアプリとして追加できます。",
         "install": "インストール",
         "close": "閉じる"
     },
@@ -50,18 +50,18 @@
     "seo": {
         "home": {
             "title": "FreeSaveVideo - オンライン動画ダウンローダー",
-            "description": "FreeSaveVideo で透かしなし動画をオンライン保存。Douyin、TikTok、Bilibili、Sohu Video、小紅書、Instagram、Threads、Facebook、NicoNico、Amazon Live、YouTube などのリンクを貼るだけ。一括ダウンロード、合集 / playlist、音声のみ、ミュート保存に対応。 公開 WeChat Channels 動画と、WeChat 公式アカウント記事内の複数動画の選択ダウンロードにも対応します。",
-            "keywords": "オンライン動画ダウンローダー, 透かしなし動画ダウンロード, Douyin ダウンローダー, TikTok 動画保存, Bilibili 動画ダウンロード, 一括ダウンロード, playlist ダウンローダー, Haokan downloader, Haokan 動画ダウンロード, Toutiao video downloader, Toutiao 動画ダウンロード, NicoNico downloader, nicovideo download, Sohu video downloader, download Sohu video, Amazon Live downloader, Amazon Live replay download, amazon.com/live/video download, amazon vdp video download WeChat Channels 動画ダウンロード, WeChat 公式アカウン動画保存, mp.weixin.qq.com 動画ダウンロード"
+            "description": "FreeSaveVideoは、YouTube、TikTok、Instagram、NicoNicoなどの公開動画を保存できるオンライン動画ダウンローダーです。リンクを貼り付けて、利用可能な画質や形式を選ぶだけ。プレイリストや複数リンクの一括ダウンロード、音声のみ・音声なしの保存にも対応しています。",
+            "keywords": "オンライン動画ダウンローダー, 透かしなし動画ダウンロード, Douyin ダウンローダー, TikTok 動画保存, Bilibili 動画ダウンロード, 一括ダウンロード, playlist ダウンローダー, Haokan downloader, Haokan 動画ダウンロード, Toutiao video downloader, Toutiao 動画ダウンロード, NicoNico downloader, nicovideo download, Sohu video downloader, download Sohu video, Amazon Live downloader, Amazon Live replay download, amazon.com/live/video download, amazon vdp video download WeChat Channels 動画ダウンロード, WeChat公式アカウントの動画保存, mp.weixin.qq.com 動画ダウンロード"
         },
         "transfer": {
             "title": "無料オンラインファイル転送 - アプリ不要 | P2P共有 | クロスデバイス | FreeSaveVideo",
-            "description": "アプリをインストールせずにデバイス間でファイルを転送する最良の方法。安全なP2Pファイル共有、クロスプラットフォームクリップボード同期。高速、無料、プライベート。",
+            "description": "アプリをインストールせずに、端末間でファイルを転送できます。P2Pでのファイル共有とクリップボードの同期に対応しています。",
             "keywords": "ファイル転送、アプリ不要ファイル共有、p2pファイル転送、クロスデバイスコピーペースト、オンラインファイルドロップ、snapdrop代替"
         },
         "discover": {
-            "title": "トレンド動画を発見 - ビューティー、面白い、バイラルクリップ | 毎日更新",
-            "description": "ウェブ上で最もホットな動画のコレクション。厳選されたビューティー動画、面白いクリップ、バイラルトレンド。毎日更新。",
-            "keywords": "トレンド動画、ビューティー動画、面白い動画、バイラルクリップ、ホット動画、動画おすすめ"
+            "title": "人気動画を探す | FreeSaveVideo",
+            "description": "話題の動画や面白いクリップをまとめてチェック。FreeSaveVideoで気になる動画を見つけられます。",
+            "keywords": "人気動画, 話題の動画, 面白い動画, おすすめ動画"
         }
     }
 }

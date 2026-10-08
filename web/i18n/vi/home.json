@@ -166,5 +166,7 @@
         "install": "Cài tiện ích Chrome",
         "installed": "Đã cài tiện ích Chrome",
         "checking": "Đang kiểm tra tiện ích..."
-    }
+    },
+    "agent_integration": "Hướng dẫn tích hợp trợ lý AI cá nhân",
+    "browser_use": "Sử dụng trong trình duyệt"
 }

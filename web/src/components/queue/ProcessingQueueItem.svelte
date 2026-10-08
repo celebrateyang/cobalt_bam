@@ -165,6 +165,9 @@
 
             if (runningWorkers.length && totalSize > 0) {
                 const formattedSize = formatFileSize(totalSize);
+                if (progresses.some(p => p?.size && p.percentage === undefined)) {
+                    return `${runningText}: ${formattedSize}`;
+                }
                 return `${runningText}: ${Math.floor(progress * 100)}%, ${formattedSize}`;
             }
 
@@ -243,8 +246,6 @@
 
     $: showNetworkStalledNotice =
         info.state === "running" &&
-        info.originalRequest?.batch === true &&
-        info.originalRequest?.bilibiliDirectBridge === true &&
         info.pipeline.some((worker) => (
             worker.worker === "fetch" &&
             $currentTasks[worker.workerId]?.progress?.networkStalled === true

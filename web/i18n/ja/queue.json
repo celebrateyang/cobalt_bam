@@ -3,12 +3,12 @@
     "state": {
         "running": {
             "fetch": "取得中",
-            "remux": "リミックス中",
+            "remux": "形式変換中",
             "encode": "エンコード中"
         },
         "starting": {
             "fetch": "取得を開始",
-            "remux": "リミックスを開始",
+            "remux": "形式変換を開始",
             "encode": "エンコードを開始"
         },
         "retrying": "再試行中",

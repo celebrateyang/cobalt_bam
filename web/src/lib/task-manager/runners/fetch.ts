@@ -124,7 +124,7 @@ export const runFetchWorker = async (
                 updateWorkerNetworkStalled(workerId, eventData.networkStalled === true);
             }
 
-            if (eventData.progress !== undefined) {
+            if (eventData.progress !== undefined || eventData.size !== undefined) {
                 updateWorkerProgress(workerId, {
                     percentage: eventData.progress,
                     size: eventData.size,

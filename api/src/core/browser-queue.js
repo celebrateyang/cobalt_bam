@@ -4,6 +4,10 @@ export const isBrowserQueuedDownload = ({ request, response }) => {
 
     if (bodyStatus === "local-processing") return true;
     if (request?.localProcessing === "forced" && bodyStatus === "tunnel") return true;
+    // Match the web saving handler: server processing tunnels are fetched by
+    // the browser queue even when local processing is disabled (Android).
+    if (bodyStatus === "tunnel" &&
+        ["merge", "remux", "mute", "audio", "gif"].includes(response?.type)) return true;
 
     // WeChat article selections are returned as direct CDN redirects, but the
     // web app still downloads them through its processing queue. Keep their

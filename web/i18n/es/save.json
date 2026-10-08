@@ -47,5 +47,6 @@
     "location.desktop": "Ordenador: pulsa el icono de descargas del navegador o Ctrl+J y abre el archivo o su carpeta.", "location.ios": "iPhone/iPad: abre Archivos y revisa Descargas o la carpeta elegida en Safari.",
     "location.android": "Android: revisa la notificación, Descargas de Chrome o Archivos > Descargas.", "location.wechat": "WeChat y otros navegadores integrados pueden bloquear descargas. Abre la página en Chrome o Safari si no encuentras el archivo.",
     "location.after_click": "El navegador puede preguntar dónde guardar el archivo. Si elegiste una carpeta, revísala primero.", "location.batch_auto": "El guardado automático por lotes usa la carpeta elegida al iniciar el lote.",
-    "batch.detected": "{{ count }} enlaces detectados — modo por lotes", "batch.too_many": "demasiados enlaces: {{ count }} (máximo {{ max }})"
+    "batch.detected": "{{ count }} enlaces detectados — modo por lotes", "batch.too_many": "demasiados enlaces: {{ count }} (máximo {{ max }})",
+    "guides_aria": "Guías de descarga"
 }

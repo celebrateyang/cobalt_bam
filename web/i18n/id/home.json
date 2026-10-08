@@ -166,5 +166,7 @@
         "install": "Instal ekstensi Chrome",
         "installed": "Ekstensi Chrome terpasang",
         "checking": "Memeriksa ekstensi..."
-    }
+    },
+    "agent_integration": "Panduan integrasi agen AI pribadi",
+    "browser_use": "Gunakan di browser"
 }

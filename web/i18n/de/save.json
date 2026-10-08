@@ -47,5 +47,6 @@
     "location.desktop": "Computer: Klicken Sie auf das Downloadsymbol oder drücken Sie Ctrl+J und öffnen Sie die Datei oder ihren Ordner.", "location.ios": "iPhone/iPad: Öffnen Sie Dateien und prüfen Sie Downloads oder den in Safari gewählten Ordner.",
     "location.android": "Android: Prüfen Sie die Benachrichtigung, Chrome-Downloads oder Dateien > Downloads.", "location.wechat": "WeChat und In-App-Browser können Downloads blockieren. Öffnen Sie die Seite in Chrome oder Safari, wenn die Datei fehlt.",
     "location.after_click": "Der Browser kann nach dem Speicherort fragen. Prüfen Sie zuerst den gewählten Ordner.", "location.batch_auto": "Bei automatischer Batch-Speicherung werden Dateien im beim Start gewählten Ordner gespeichert.",
-    "batch.detected": "{{ count }} Links erkannt — Batch-Modus", "batch.too_many": "zu viele Links: {{ count }} (maximal {{ max }})"
+    "batch.detected": "{{ count }} Links erkannt — Batch-Modus", "batch.too_many": "zu viele Links: {{ count }} (maximal {{ max }})",
+    "guides_aria": "Download-Anleitungen"
 }

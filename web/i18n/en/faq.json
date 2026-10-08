@@ -120,5 +120,6 @@
             "q": "Can I download WeChat Channels and WeChat Official Account article videos?",
             "a": "Yes. Paste a public WeChat Channels share link or an mp.weixin.qq.com Official Account article link. When an article contains multiple videos, choose the items you want before they enter the download queue. Private, deleted, and login-only content is not supported."
         }
-    }
+    },
+    "tools_aria": "FAQ tools"
 }

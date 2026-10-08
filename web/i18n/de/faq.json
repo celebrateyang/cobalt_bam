@@ -120,5 +120,6 @@
             "q": "Kann ich Videos aus WeChat Channels und Official-Account-Artikeln herunterladen?",
             "a": "Ja. Fügen Sie einen öffentlichen WeChat-Channels-Link oder einen mp.weixin.qq.com-Artikel ein. Bei mehreren Videos wählen Sie zuerst die gewünschten Einträge aus. Private, gelöschte oder anmeldepflichtige Inhalte werden nicht unterstützt."
         }
-    }
+    },
+    "tools_aria": "FAQ-Suche und weiterführende Links"
 }

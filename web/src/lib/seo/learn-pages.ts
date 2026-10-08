@@ -1371,6 +1371,105 @@ export const learnPages: LearnPage[] = [
             'convert youtube audio to mp3 locally',
         ],
     },
+    {
+        slug: 'download-youtube-videos-for-editing-workflow',
+        title: 'How to save authorized YouTube videos for an editing workflow',
+        description:
+            'A creator-focused workflow for saving your own or authorized public YouTube videos, choosing video or audio resources, processing playlists, and organizing browser downloads for editing.',
+        updatedAt: '2026-10-08',
+        readingTime: '7 min read',
+        category: 'Creator workflow',
+        summary:
+            'FreeSaveVideo can analyze a public YouTube watch or playlist URL, show the resources available for each item, and queue selected downloads. Creators can then organize saved files, extract audio locally, or convert compatible local media before editing.',
+        keyTakeaways: [
+            'Use this workflow only for videos you created, licensed, or have explicit permission to edit.',
+            'Select the resource actually exposed for each video; quality, container, and audio availability can differ between playlist entries.',
+            'Use queue retries and an authorized save folder to keep multi-video projects organized.',
+        ],
+        sections: [
+            {
+                heading: 'Confirm editing rights before saving the source',
+                body: [
+                    'A public watch page is technically accessible, but public access does not automatically grant editing or redistribution rights. Good use cases include your own channel archive, a client-provided source, Creative Commons material used within its licence, or a video whose owner has given permission.',
+                    'Private, paid, members-only, age-gated, and DRM-protected media are not part of the supported workflow. Do not use a downloader to bypass access controls or remove ownership attribution.',
+                ],
+            },
+            {
+                heading: 'Choose a specific video or public playlist',
+                body: [
+                    'Paste a public watch URL for one video. For an editing project that uses several authorized sources, open a normal public playlist and keep its stable list parameter in the copied address.',
+                    'Channel homepages, search results, Watch Later, and generated Mix pages do not describe a finite public playlist. Open the exact video or playlist before starting.',
+                ],
+            },
+            {
+                heading: 'Review video and audio options per item',
+                body: [
+                    'The analyzer shows the resources that are available for the current source. Do not assume every video provides the same resolution, combined audio, container, or audio-only format.',
+                    'For a playlist, select the entries you need and verify each item before adding it to the queue. A missing or restricted entry can fail independently while other eligible tasks continue.',
+                ],
+            },
+            {
+                heading: 'Keep project downloads organized',
+                body: [
+                    'Use a dedicated browser download folder or choose an auto-save directory when folder permission is supported. Clear filenames and one project folder reduce relinking work when the files are imported into an editor.',
+                    'Keep the tab open until queued tasks finish. If a network interruption occurs, use the visible retry or continuation controls instead of starting every item again.',
+                ],
+            },
+            {
+                heading: 'Prepare local files before editing',
+                body: [
+                    'If the editor does not accept the saved container, use the local converter to create MP4 or WebM when compatible. The same browser tool can extract MP3, M4A, or WAV audio from a supported local file.',
+                    'Local conversion depends on browser memory, temporary storage, and codec support. It is useful for compatibility preparation, but it cannot restore missing quality or create an audio track that the source does not contain.',
+                ],
+            },
+        ],
+        table: {
+            headers: ['Editing need', 'Recommended step', 'Check before continuing'],
+            rows: [
+                ['One authorized source', 'Analyze the public watch URL', 'Confirm ownership or permission'],
+                ['Several project clips', 'Expand a normal public playlist and select entries', 'Verify the stable list ID and each item'],
+                ['Audio-only edit', 'Choose an available audio resource or extract locally', 'Confirm the source contains audio'],
+                ['Editor rejects the container', 'Convert the saved local file to MP4 or WebM', 'Keep the original as a backup'],
+                ['Unstable network', 'Use queue retry or continuation', 'Keep the browser tab open'],
+            ],
+        },
+        faqs: [
+            {
+                q: 'Can I edit any public YouTube video after downloading it?',
+                a: 'No. Public access does not grant editing or redistribution rights. Use only your own videos or material you are licensed or authorized to edit.',
+            },
+            {
+                q: 'Can I download several authorized YouTube videos together?',
+                a: 'Yes, when they are entries in a supported normal public playlist. Expand the playlist, select eligible items, and add them as separate queue tasks.',
+            },
+            {
+                q: 'Why do playlist videos show different formats?',
+                a: 'Each source can expose different resolutions, containers, and audio resources. Choose an available option for each item instead of assuming one format applies to the whole playlist.',
+            },
+            {
+                q: 'Can I convert a saved video before importing it into an editor?',
+                a: 'Yes. The local browser converter supports common inputs and can output MP4 or WebM, subject to browser memory, storage, and codec limits.',
+            },
+        ],
+        relatedDownloads: ['youtube-download', 'youtube-playlist-downloader'],
+        relatedGuides: ['youtube-download-guide', 'how-to-download-multiple-videos', 'download-videos-to-folder'],
+        relatedTools: [
+            {
+                title: 'Convert or extract audio from a saved file',
+                description:
+                    'Prepare supported local video files as MP4 or WebM, or extract MP3, M4A, or WAV audio in the browser.',
+                href: '/en/remux',
+            },
+        ],
+        keywords: [
+            'download youtube videos for editing',
+            'save youtube video for video editor',
+            'download own youtube videos for editing',
+            'youtube playlist download for creators',
+            'youtube video editing workflow',
+            'convert youtube video for editing',
+        ],
+    },
 ];
 
 export const learnSlugs = learnPages.map((page) => page.slug);

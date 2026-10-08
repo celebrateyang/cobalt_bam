@@ -92,7 +92,7 @@ test("parses a live fixed-product purchase with an order code", () => {
     },
   });
   assert.equal(result.ok, true);
-  assert.equal(result.product.points, 600);
+  assert.equal(result.product.points, 1200);
   assert.equal(result.outTradeNo, "cpt_abcdefghijklmnopqrst");
   assert.equal(result.amountFen, 199);
 });

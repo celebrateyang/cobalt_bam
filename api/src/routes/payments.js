@@ -124,38 +124,38 @@ const WECHAT_CREDIT_PRODUCTS = [
 const NOWPAYMENTS_CREDIT_PRODUCTS = [
     {
         key: "nowpayments_usd_199",
-        points: 600,
+        points: 1200,
         amountFen: 199,
         currency: "USD",
-        unitPriceFen: 0.332,
+        unitPriceFen: 199 / 1200,
     },
     {
         key: "nowpayments_usd_499",
-        points: 2000,
+        points: 4000,
         amountFen: 499,
         currency: "USD",
-        unitPriceFen: 0.25,
+        unitPriceFen: 499 / 4000,
     },
     {
         key: "nowpayments_usd_999",
-        points: 5000,
+        points: 10000,
         amountFen: 999,
         currency: "USD",
-        unitPriceFen: 0.2,
+        unitPriceFen: 999 / 10000,
     },
     {
         key: "nowpayments_usd_1999",
-        points: 12000,
+        points: 25000,
         amountFen: 1999,
         currency: "USD",
-        unitPriceFen: 0.167,
+        unitPriceFen: 1999 / 25000,
     },
     {
         key: "nowpayments_usd_4999",
-        points: 35000,
+        points: 75000,
         amountFen: 4999,
         currency: "USD",
-        unitPriceFen: 0.143,
+        unitPriceFen: 4999 / 75000,
     },
 ];
 

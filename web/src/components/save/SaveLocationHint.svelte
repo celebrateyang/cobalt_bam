@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { browser } from "$app/environment";
     import { t } from "$lib/i18n/translations";
     import { device } from "$lib/device";
     import SupportLink from "$components/save/SupportLink.svelte";
@@ -12,11 +13,13 @@
     export let compact = false;
     export let inline = false;
 
-    $: platformKey = device.is.iOS
-        ? "save.location.ios"
-        : device.is.android
-            ? "save.location.android"
-            : "save.location.desktop";
+    $: platformKey = !browser
+        ? "save.location.default"
+        : device.is.iOS
+            ? "save.location.ios"
+            : device.is.android
+                ? "save.location.android"
+                : "save.location.desktop";
 </script>
 
 {#if collapsible}
@@ -33,7 +36,6 @@
                 <p>{$t("save.location.after_click")}</p>
             {/if}
             <p>{$t(platformKey)}</p>
-            {#if !device.is.iOS}<p>{$t("save.location.default")}</p>{/if}
             {#if device.browser.wechat}
                 <p>{$t("save.location.wechat")}</p>
             {/if}
@@ -55,7 +57,6 @@
                 <p>{$t("save.location.after_click")}</p>
             {/if}
             <p>{$t(platformKey)}</p>
-            {#if !device.is.iOS}<p>{$t("save.location.default")}</p>{/if}
             {#if device.browser.wechat}
                 <p>{$t("save.location.wechat")}</p>
             {/if}

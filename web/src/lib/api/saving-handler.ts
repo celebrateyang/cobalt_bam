@@ -36,12 +36,15 @@ import {
 import type { CobaltAPIResponse, CobaltSaveRequestBody } from "$lib/types/api";
 import type { CobaltQueueItemCollectionMemory } from "$lib/types/queue";
 
+export type SavingStage = 'authenticating' | 'confirming' | 'resolving' | 'starting';
+
 type SavingHandlerArgs = {
     url?: string,
     request?: CobaltSaveRequestBody,
     oldTaskId?: string,
     response?: CobaltAPIResponse,
     skipPoints?: boolean,
+    onStage?: (stage: SavingStage) => void,
     queueMeta?: {
         collectionMemory?: CobaltQueueItemCollectionMemory;
         batchSessionId?: string;
@@ -487,6 +490,7 @@ export const savingHandler = async ({
     skipPoints,
     queueMeta,
     suppressErrors,
+    onStage,
 }: SavingHandlerArgs) => {
     downloadButtonState.set("think");
 
@@ -550,6 +554,7 @@ export const savingHandler = async ({
     selectedRequest.queueId ||= effectiveTaskId;
 
     if (clerkEnabled) {
+        onStage?.('authenticating');
         const signedIn = await requireDownloadAuth();
         if (!signedIn) {
             downloadButtonState.set("idle");
@@ -558,6 +563,7 @@ export const savingHandler = async ({
     }
 
     if (!preFetchedResponse && !skipPoints && clerkEnabled && selectedRequest?.url) {
+        onStage?.('confirming');
         const approved = await confirmPointsPreview(selectedRequest.url);
         if (!approved) {
             downloadButtonState.set("idle");
@@ -565,6 +571,7 @@ export const savingHandler = async ({
         }
     }
 
+    if (!preFetchedResponse) onStage?.('resolving');
     const response = preFetchedResponse ?? await API.request(selectedRequest);
 
     if (!response) {
@@ -641,6 +648,8 @@ export const savingHandler = async ({
         );
         return response;
     }
+
+    onStage?.('starting');
 
     if (response.status === "redirect") {
         const redirectUrl = normalizeTunnelUrl(response.url) || response.url;

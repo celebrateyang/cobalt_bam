@@ -117,6 +117,60 @@ const downloadErrors: Record<string, string> = {
     ko: '다운로드를 준비할 수 없습니다. 다시 시도하세요.', ru: 'Не удалось подготовить загрузку. Повторите попытку.',
     th: 'เตรียมดาวน์โหลดไม่ได้ โปรดลองอีกครั้ง', vi: 'Không thể chuẩn bị tải xuống. Vui lòng thử lại.',
 };
-export const getYouTubeCopy = (lang: string): Copy & { downloadError: string } => ({
+type DownloadWaitCopy = {
+    downloadStages: Record<'preparing' | 'authenticating' | 'confirming' | 'resolving' | 'starting', string>;
+    elapsed: string;
+    longWait: string;
+};
+
+const downloadWaitCopies: Record<string, DownloadWaitCopy> = {
+    en: {
+        downloadStages: { preparing: 'Preparing download...', authenticating: 'Verifying sign-in...', confirming: 'Confirming download...', resolving: 'Resolving video...', starting: 'Starting download...' },
+        elapsed: 'Waited {seconds}s', longWait: 'Video resolution is taking longer. The download will start automatically when ready.',
+    },
+    de: {
+        downloadStages: { preparing: 'Download wird vorbereitet...', authenticating: 'Anmeldung wird geprüft...', confirming: 'Download wird bestätigt...', resolving: 'Video wird verarbeitet...', starting: 'Download wird gestartet...' },
+        elapsed: 'Seit {seconds} s', longWait: 'Die Videoverarbeitung dauert länger. Der Download startet automatisch, sobald er bereit ist.',
+    },
+    es: {
+        downloadStages: { preparing: 'Preparando descarga...', authenticating: 'Verificando sesión...', confirming: 'Confirmando descarga...', resolving: 'Procesando vídeo...', starting: 'Iniciando descarga...' },
+        elapsed: 'Espera: {seconds} s', longWait: 'El procesamiento del vídeo está tardando más. La descarga comenzará automáticamente cuando esté lista.',
+    },
+    fr: {
+        downloadStages: { preparing: 'Préparation du téléchargement...', authenticating: 'Vérification de la connexion...', confirming: 'Confirmation du téléchargement...', resolving: 'Analyse de la vidéo...', starting: 'Démarrage du téléchargement...' },
+        elapsed: 'Attente : {seconds} s', longWait: 'L’analyse de la vidéo prend plus de temps. Le téléchargement démarrera automatiquement dès qu’il sera prêt.',
+    },
+    ja: {
+        downloadStages: { preparing: 'ダウンロードを準備中…', authenticating: 'ログインを確認中…', confirming: 'ダウンロードを確認中…', resolving: '動画を解析中…', starting: 'ダウンロードを開始中…' },
+        elapsed: '{seconds}秒経過', longWait: '動画の解析に時間がかかっています。準備ができ次第、ダウンロードが自動的に始まります。',
+    },
+    ko: {
+        downloadStages: { preparing: '다운로드 준비 중…', authenticating: '로그인 확인 중…', confirming: '다운로드 확인 중…', resolving: '동영상 분석 중…', starting: '다운로드 시작 중…' },
+        elapsed: '{seconds}초 경과', longWait: '동영상 분석에 시간이 더 걸리고 있습니다. 준비가 완료되면 다운로드가 자동으로 시작됩니다.',
+    },
+    ru: {
+        downloadStages: { preparing: 'Подготовка загрузки…', authenticating: 'Проверка входа…', confirming: 'Подтверждение загрузки…', resolving: 'Обработка видео…', starting: 'Запуск загрузки…' },
+        elapsed: 'Ожидание: {seconds} с', longWait: 'Обработка видео занимает больше времени. Загрузка начнётся автоматически, когда всё будет готово.',
+    },
+    th: {
+        downloadStages: { preparing: 'กำลังเตรียมดาวน์โหลด…', authenticating: 'กำลังตรวจสอบการเข้าสู่ระบบ…', confirming: 'กำลังยืนยันการดาวน์โหลด…', resolving: 'กำลังวิเคราะห์วิดีโอ…', starting: 'กำลังเริ่มดาวน์โหลด…' },
+        elapsed: 'รอแล้ว {seconds} วินาที', longWait: 'การวิเคราะห์วิดีโอใช้เวลานานขึ้น การดาวน์โหลดจะเริ่มโดยอัตโนมัติเมื่อพร้อม',
+    },
+    vi: {
+        downloadStages: { preparing: 'Đang chuẩn bị tải...', authenticating: 'Đang xác minh đăng nhập...', confirming: 'Đang xác nhận tải...', resolving: 'Đang phân tích video...', starting: 'Đang bắt đầu tải...' },
+        elapsed: 'Đã đợi {seconds} giây', longWait: 'Việc phân tích video đang mất nhiều thời gian hơn. Quá trình tải sẽ tự động bắt đầu khi sẵn sàng.',
+    },
+    zh: {
+        downloadStages: { preparing: '正在准备下载…', authenticating: '正在验证登录…', confirming: '正在确认下载…', resolving: '正在解析视频…', starting: '正在启动下载…' },
+        elapsed: '已等待 {seconds} 秒', longWait: '视频解析耗时较长，准备完成后将自动开始下载。',
+    },
+    id: {
+        downloadStages: { preparing: 'Menyiapkan unduhan...', authenticating: 'Memverifikasi login...', confirming: 'Mengonfirmasi unduhan...', resolving: 'Memproses video...', starting: 'Memulai unduhan...' },
+        elapsed: 'Menunggu {seconds} dtk', longWait: 'Pemrosesan video membutuhkan waktu lebih lama. Unduhan akan dimulai otomatis saat siap.',
+    },
+};
+
+export const getYouTubeCopy = (lang: string): Copy & { downloadError: string } & DownloadWaitCopy => ({
     ...(copies[lang] || en), downloadError: downloadErrors[lang] || downloadErrors.en,
+    ...(downloadWaitCopies[lang] || downloadWaitCopies.en),
 });

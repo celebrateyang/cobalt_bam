@@ -7,6 +7,7 @@
     import type { CobaltSettings } from '$lib/types/settings';
     import type { CobaltExpandOkResponse } from '$lib/types/expand';
     import type { SeoLandingLocaleContent } from '$lib/seo/landing-pages';
+    import type { SavingStage } from '$lib/api/saving-handler';
 
     export let lang: string;
     export let content: SeoLandingLocaleContent;
@@ -23,6 +24,12 @@
     let hasSearched = false;
     let searching = false;
     let downloadBusy = false;
+    let downloadStage: 'preparing' | SavingStage = 'preparing';
+    let downloadSeconds = 0;
+    let stageSeconds = 0;
+    let downloadStartedAt = 0;
+    let stageStartedAt = 0;
+    let downloadTimer: ReturnType<typeof setInterval> | undefined;
     let message = '';
     let notice = '';
     let playlist: CobaltExpandOkResponse | null = null;
@@ -37,6 +44,7 @@
     let audioBitrate: CobaltSettings['save']['audioBitrate'] = '128';
 
     $: copy = getYouTubeCopy(lang);
+    $: downloadLabel = `${copy.downloadStages[downloadStage]} \u00b7 ${copy.elapsed.replace('{seconds}', String(downloadSeconds))}`;
     $: parsedInput = parseYouTubeInput(input);
     $: submitLabel = parsedInput?.kind === 'search' || !parsedInput ? copy.search : copy.open;
     $: feedbackSource = selected?.url || (parsedInput && parsedInput.kind !== 'search' ? parsedInput.url : '');
@@ -89,6 +97,7 @@
         if (parsed.kind === 'video') {
             searching = false;
             await selectVideo({ id: parsed.id, url: parsed.url, title: `YouTube / ${parsed.id}`, channel: '', duration: null, thumbnail: `https://i.ytimg.com/vi/${parsed.id}/hqdefault.jpg` });
+            if (!disposed && number === requestNumber) await downloadSelected();
             return;
         }
         searching = true;
@@ -129,7 +138,14 @@
     }
 
     async function paste() {
-        try { input = await navigator.clipboard.readText(); inputElement?.focus(); }
+        if (downloadBusy) return;
+        try {
+            const value = await navigator.clipboard.readText();
+            if (disposed || downloadBusy) return;
+            input = value;
+            inputElement?.focus();
+            if (parseYouTubeInput(value)?.kind === 'video') await submit(value);
+        }
         catch { message = copy.clipboard; inputElement?.focus(); }
     }
 
@@ -148,33 +164,62 @@
         inputElement?.focus();
     }
 
+    function setDownloadStage(stage: 'preparing' | SavingStage) {
+        if (disposed) return;
+        downloadStage = stage;
+        stageStartedAt = performance.now();
+        stageSeconds = 0;
+    }
+
+    function startDownloadWait() {
+        stopDownloadWait();
+        downloadBusy = true;
+        downloadSeconds = 0;
+        downloadStartedAt = performance.now();
+        setDownloadStage('preparing');
+        message = '';
+        notice = '';
+        downloadTimer = setInterval(() => {
+            const now = performance.now();
+            downloadSeconds = Math.floor((now - downloadStartedAt) / 1000);
+            stageSeconds = Math.floor((now - stageStartedAt) / 1000);
+        }, 1000);
+    }
+
+    function stopDownloadWait() {
+        if (downloadTimer !== undefined) clearInterval(downloadTimer);
+        downloadTimer = undefined;
+        downloadBusy = false;
+    }
+
     async function downloadSelected() {
         if (!selected || downloadBusy) return;
-        downloadBusy = true;
-        notice = '';
+        startDownloadWait();
         remember();
         try {
             const { loadTranslations } = await import('$lib/i18n/translations');
             await Promise.all(['save', 'button', 'dialog', 'error', 'auth', 'queue'].map(key => loadTranslations(lang, key)));
             const { savingHandler, buildSaveRequest } = await import('$lib/api/saving-handler');
+            if (disposed) return;
             const request = {
                 ...buildSaveRequest(selected.url), downloadMode: mode, videoQuality: quality,
                 youtubeVideoCodec: 'h264' as const, youtubeVideoContainer: 'mp4' as const,
                 audioFormat, audioBitrate, convertGif: false,
             };
-            const response = await savingHandler({ request });
-            if (response && response.status !== 'error') notice = copy.started;
-        } catch { message = copy.downloadError; }
-        finally { if (!disposed) downloadBusy = false; }
+            const response = await savingHandler({ request, onStage: setDownloadStage });
+            if (!disposed && response && response.status !== 'error') notice = copy.started;
+        } catch { if (!disposed) message = copy.downloadError; }
+        finally { stopDownloadWait(); }
     }
 
     async function downloadPlaylist() {
         if (!playlist || !items.length || downloadBusy) return;
-        downloadBusy = true;
+        startDownloadWait();
         remember();
         try {
         const { loadTranslations, t } = await import('$lib/i18n/translations');
         await Promise.all(['button', 'dialog', 'error', 'auth'].map(key => loadTranslations(lang, key)));
+        if (disposed) return;
         const { createDialog } = await import('$lib/state/dialogs');
         const { get } = await import('svelte/store');
         const { default: serverInfo } = await import('$lib/state/server-info');
@@ -199,8 +244,8 @@
             collectionSourceUrl: input.trim(),
             downloadMode: mode,
         });
-        } catch { message = copy.downloadError; }
-        finally { if (!disposed) downloadBusy = false; }
+        } catch { if (!disposed) message = copy.downloadError; }
+        finally { stopDownloadWait(); }
     }
 
     onMount(() => {
@@ -228,7 +273,7 @@
         void import('$lib/api/server-info').then(({ getServerInfo }) => getServerInfo());
     });
 
-    onDestroy(() => { disposed = true; requestNumber++; searchController?.abort(); });
+    onDestroy(() => { disposed = true; requestNumber++; searchController?.abort(); stopDownloadWait(); });
 </script>
 
 <main class="youtube-page" tabindex="-1" data-first-focus data-focus-ring-hidden>
@@ -281,7 +326,9 @@
                     {/if}
                 </div>
                 <p class="muted">{copy.sourceNote}</p>
-                <div class="download-actions"><button class="primary" disabled={downloadBusy} on:click={downloadSelected}>{downloadBusy ? copy.downloading : copy.download}<span aria-hidden="true">↓</span></button><a href={selected.url} target="_blank" rel="noopener noreferrer nofollow">{copy.watch} ↗</a></div>
+                <div class="download-actions"><button class="primary" disabled={downloadBusy} aria-busy={downloadBusy} on:click={downloadSelected}>{downloadBusy ? downloadLabel : copy.download}{#if downloadBusy}<span class="download-spinner" aria-hidden="true"></span>{:else}<span aria-hidden="true">↓</span>{/if}</button><a href={selected.url} target="_blank" rel="noopener noreferrer nofollow">{copy.watch} ↗</a></div>
+                {#if downloadBusy}<p class="sr-only" role="status">{copy.downloadStages[downloadStage]}</p>{/if}
+                {#if downloadBusy && downloadStage === 'resolving' && stageSeconds >= 15}<p class="muted" role="status">{copy.longWait}</p>{/if}
                 {#if notice}<p class="notice" role="status">{notice}</p>{/if}
             </div>
         </section>
@@ -289,7 +336,7 @@
 
     {#if searching || hasSearched}
         <section class="results" aria-labelledby="youtube-results-heading" aria-busy={searching}>
-            <div class="section-heading"><div><p class="eyebrow">{playlist ? copy.playlist : copy.results}</p><h2 id="youtube-results-heading">{resultQuery}</h2></div>{#if !searching}<span>{items.length}</span>{/if}{#if playlist && items.length}<button class="secondary" on:click={downloadPlaylist} disabled={downloadBusy}>{copy.batch}</button>{/if}</div>
+            <div class="section-heading"><div><p class="eyebrow">{playlist ? copy.playlist : copy.results}</p><h2 id="youtube-results-heading">{resultQuery}</h2></div>{#if !searching}<span>{items.length}</span>{/if}{#if playlist && items.length}<button class="secondary" on:click={downloadPlaylist} disabled={downloadBusy}>{downloadBusy ? downloadLabel : copy.batch}</button>{/if}</div>
             {#if searching}<p role="status" class="muted">{copy.searching}</p><div class="video-grid">{#each [1,2,3,4,5,6] as index}<div class="skeleton" aria-hidden="true"><div></div><i></i><i></i></div>{/each}</div>
             {:else if !items.length}<div class="empty"><h3>{copy.empty}</h3><p>{copy.emptyBody}</p></div>
             {:else}<p class="muted">{copy.choose}</p><div class="video-grid">{#each items as video (video.id)}<button class="video-card" class:chosen={selected?.id === video.id} on:click={() => selectVideo(video)} disabled={downloadBusy} aria-label={`${copy.select}: ${video.title}`} aria-pressed={selected?.id === video.id}><div class="thumbnail"><img src={video.thumbnail} alt="" loading="lazy" /><span class="duration">{formatYouTubeDuration(video.duration)}</span><span class="card-play" aria-hidden="true">▶</span></div><div class="card-copy"><h3>{video.title}</h3><p>{video.channel}</p><span class="card-action">{selected?.id === video.id ? copy.selected : copy.select}<b aria-hidden="true">↗</b></span></div></button>{/each}</div>{/if}
@@ -359,6 +406,7 @@
     .format-tag span { color:var(--subtext);font-weight:400;margin-left:8px; }
     .download-actions { display:flex;align-items:center;gap:20px;margin-top:18px; }
     .download-actions .primary { flex:1; }
+    .download-spinner { width:14px;height:14px;flex-shrink:0;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:search-spin .7s linear infinite; }
     .download-actions a { color:var(--subtext);font-size:12px; }
     .notice { color:var(--text);background:var(--yt-soft);padding:12px;border-radius:8px;font-size:13px;line-height:1.6; }
     .results { margin:26px 0; }
@@ -405,5 +453,5 @@
     button:focus-visible,a:focus-visible,summary:focus-visible,select:focus-visible { outline:2px solid var(--yt-accent);outline-offset:4px; }
     @media(max-width:900px) { .download-panel { grid-template-columns:1fr 1.5fr;gap:18px; }.video-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
     @media(max-width:600px) { .youtube-page { padding:12px 4px 36px; }.hero { padding:10px 4px 18px; }.search-box { max-width:100%;padding:4px 0 0; }.input-with-feedback { flex-direction:column;align-items:stretch;gap:0; }.input-row { padding:12px 16px;gap:10px; }.input-row.has-input { padding-right:8px; }.input-row input { font-size:16px; }.search-actions { flex-direction:column;align-items:stretch;gap:12px; }.paste { width:100%; }.examples { gap:6px; }.examples>span { width:100%;margin-bottom:4px; }.examples button { padding:7px 9px;gap:8px; }.download-panel { grid-template-columns:1fr;padding:14px;gap:16px; }.video-grid { gap:12px; }.card-copy { padding:11px; }.card-copy h3 { font-size:12px;min-height:39px; }.card-copy p,.card-action { font-size:11px; }.steps { grid-template-columns:1fr;gap:22px; }.download-actions { flex-wrap:wrap; }.download-actions .primary { min-width:65%; }.section-heading h2 { font-size:20px; }.section-heading { flex-wrap:wrap; }.duration { font-size:10px;bottom:6px;right:6px; } }
-    @media(prefers-reduced-motion:reduce) { .video-card,.input-row { transition:none; }.search-icon.loading svg { animation:none; }.input-row:focus-within { transform:none; }.video-card:hover:not(:disabled) { transform:none; } }
+    @media(prefers-reduced-motion:reduce) { .video-card,.input-row { transition:none; }.search-icon.loading svg,.download-spinner { animation:none; }.input-row:focus-within { transform:none; }.video-card:hover:not(:disabled) { transform:none; } }
 </style>

@@ -8,6 +8,7 @@ import { trackTopupPrompt } from "$lib/analytics/commerce";
 import { t } from "$lib/i18n/translations";
 import { getClerkToken } from "$lib/state/clerk";
 import { createDialog } from "$lib/state/dialogs";
+import { WHATSAPP_CONTACT_URL } from "./contact";
 
 export const FIRST_DOWNLOAD_GRACE_MAX_GAP = 800;
 
@@ -50,6 +51,7 @@ export const accountPath = (
   redirectPath?: string | null,
   checkout?:
     | "starter"
+    | "credit_199"
     | "recommended"
     | "membership_3day"
     | "membership_weekly"
@@ -72,6 +74,7 @@ export const accountPath = (
 
   if (
     checkout === "starter" ||
+    checkout === "credit_199" ||
     checkout === "recommended" ||
     checkout === "membership_3day" ||
     checkout === "membership_weekly" ||
@@ -98,6 +101,7 @@ const navigateToAccountSection = async (
   redirectPath?: string | null,
   checkout?:
     | "starter"
+    | "credit_199"
     | "recommended"
     | "membership_3day"
     | "membership_weekly"
@@ -167,6 +171,45 @@ export const showPointsInsufficientDialog = (
     currentPoints,
     requiredPoints,
   );
+  if (get(page)?.params?.lang !== "zh") {
+    createDialog({
+      id: `points-insufficient-${Date.now()}`,
+      type: "small",
+      meowbalt: "error",
+      title: get(t)("dialog.batch.points_insufficient.title"),
+      bodyText: get(t)("dialog.points_insufficient.overseas_body", {
+        current: currentPoints,
+        required: requiredPoints,
+      }),
+      buttons: [
+        {
+          text: get(t)("dialog.points_insufficient.whatsapp"),
+          main: false,
+          action: () => {
+            trackTopupPrompt("contact", "points_insufficient", currentPoints, requiredPoints);
+            window.open(WHATSAPP_CONTACT_URL, "_blank", "noopener,noreferrer");
+          },
+        },
+        {
+          text: get(t)("dialog.points_insufficient.membership_3day"),
+          main: true,
+          action: () => {
+            trackTopupPrompt("membership", "points_insufficient", currentPoints, requiredPoints);
+            void navigateToAccountSection("membership", onBeforeNavigate, redirectPath, "membership_3day");
+          },
+        },
+        {
+          text: get(t)("dialog.points_insufficient.credit_199"),
+          main: false,
+          action: () => {
+            trackTopupPrompt("topup", "points_insufficient", currentPoints, requiredPoints);
+            void navigateToAccountSection("topup", onBeforeNavigate, redirectPath, "credit_199");
+          },
+        },
+      ],
+    });
+    return;
+  }
   createDialog({
     id: `points-insufficient-${Date.now()}`,
     type: "small",

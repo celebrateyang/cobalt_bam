@@ -1,4 +1,8 @@
 {
+    "points_insufficient.overseas_body": "Для этой загрузки нужно {{ required }} баллов; у вас {{ current }}. Выберите вариант. Бесплатные баллы выдаются после личной проверки, не автоматически.",
+    "points_insufficient.whatsapp": "Запросить бесплатные баллы в WhatsApp",
+    "points_insufficient.membership_3day": "Подписка на 3 дня (рекомендуем)",
+    "points_insufficient.credit_199": "Купить 1200 баллов - US$1.99",
     "magnific.title": "Открыть бесплатный ресурс Magnific",
     "magnific.body": "Magnific заблокировал доступ сервера. Поддерживаются только страницы, явно отмеченные бесплатными; Premium, приватные работы, Projects и экспорт за кредиты исключены.",
     "magnific.install_title": "Установить FreeSaveVideo Downloader",

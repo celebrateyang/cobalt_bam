@@ -1668,7 +1668,8 @@
 
         if (
             checkoutIntent !== "recommended" &&
-            checkoutIntent !== "starter"
+            checkoutIntent !== "starter" &&
+            checkoutIntent !== "credit_199"
         )
             return;
         if (creditProductsLoading || !recommendedValueProductKey) return;
@@ -1683,7 +1684,9 @@
             Number.parseInt($page.url.searchParams.get("needed") || "1", 10) || 1,
         );
         const product =
-            checkoutIntent === "starter"
+            checkoutIntent === "credit_199"
+                ? enabledProducts.find((candidate) => candidate.key === "buymeacoffee_usd_199")
+                : checkoutIntent === "starter"
                 ? [...enabledProducts].sort(
                       (a, b) => Number(a.points) - Number(b.points),
                   ).find((candidate) => Number(candidate.points) >= pointsNeeded) ??
@@ -2246,7 +2249,6 @@
                         </div>
 
                         {#if selectedPaymentProvider === "buymeacoffee"}
-                            <p class="subtext">{$t("auth.bmc_payment_destination")}</p>
                             <p class="subtext">{$t("auth.bmc_checkout_notice")}</p>
                         {/if}
 
@@ -2281,6 +2283,22 @@
                                     >
                                         Crypto
                                 </button>
+                            </div>
+                        {/if}
+
+                        {#if selectedPaymentProvider === "buymeacoffee"}
+                            <div class="bmc-seller-card">
+                                <img
+                                    src="/account/bambooyang-buymeacoffee.png"
+                                    alt="Bamboo Yang"
+                                    width="80"
+                                    height="80"
+                                />
+                                <div class="bmc-seller-copy">
+                                    <strong>Bamboo Yang</strong>
+                                    <span class="subtext">FreeSaveVideo · Buy Me a Coffee</span>
+                                    <p class="subtext">{$t("auth.bmc_payment_destination")}</p>
+                                </div>
                             </div>
                         {/if}
 
@@ -2662,7 +2680,7 @@
                                             {$t(buyMeACoffeeCodeSaved ? "auth.bmc_step_pay" : "auth.bmc_copy_continue")}
                                         </a>
                                     {/if}
-                                    <button class="button elevated" on:click={copyBuyMeACoffeePaymentCode}>
+                                    <button type="button" class="bmc-copy-link" on:click={copyBuyMeACoffeePaymentCode}>
                                         {$t(buyMeACoffeeCodeSaved ? "button.copied" : "button.copy")}
                                     </button>
                                 </div>
@@ -3179,6 +3197,10 @@
     }
 
     .records-menu-item {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 10px;
         width: 100%;
         min-height: 40px;
         border-radius: var(--border-radius);
@@ -3196,6 +3218,9 @@
         display: flex;
         align-items: center;
         gap: 10px;
+        flex: 1;
+        min-width: 0;
+        text-align: left;
     }
 
     .records-menu-icon {
@@ -3797,6 +3822,56 @@
         display: inline-flex;
         align-items: center;
         gap: 10px;
+    }
+
+    .bmc-seller-card {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px;
+        border: 1px solid var(--surface-2);
+        border-radius: var(--border-radius);
+        background: var(--surface-1);
+    }
+
+    .bmc-seller-card > img {
+        width: 80px;
+        height: 80px;
+        flex: 0 0 auto;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .bmc-seller-copy {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+    }
+
+    .bmc-seller-copy > strong {
+        font-size: 1.1rem;
+    }
+
+    .bmc-seller-copy .subtext {
+        margin: 0;
+        padding: 0;
+    }
+
+    .bmc-copy-link {
+        align-self: center;
+        padding: 4px 8px;
+        border: 0;
+        background: transparent;
+        color: var(--subtext);
+        font-size: 0.8rem;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+        cursor: pointer;
+    }
+
+    .bmc-copy-link:hover {
+        color: var(--text);
     }
 
     .bmc-creator-identity > img {

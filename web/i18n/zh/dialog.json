@@ -1,4 +1,8 @@
 {
+    "points_insufficient.overseas_body": "本次下载需要 {{ required }} 积分，你当前有 {{ current }} 积分。请选择以下方式。免费积分需人工审核后发放，不会自动到账。",
+    "points_insufficient.whatsapp": "通过 WhatsApp 联系我申请免费积分",
+    "points_insufficient.membership_3day": "3 天会员（推荐）",
+    "points_insufficient.credit_199": "购买 1200 积分 - US$1.99",
     "magnific.title": "在浏览器中打开 Magnific 免费素材",
     "magnific.body": "Magnific 阻止了服务器访问。仅支持明确标记为免费的页面；不支持 Premium 素材、私有创作、Projects 和积分导出。",
     "magnific.install_title": "安装 FreeSaveVideo Downloader",

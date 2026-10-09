@@ -1,4 +1,8 @@
 {
+    "points_insufficient.overseas_body": "การดาวน์โหลดนี้ต้องใช้ {{ required }} คะแนน คุณมี {{ current }} คะแนน เลือกตัวเลือกด้านล่าง คะแนนฟรีจะได้รับหลังจากการตรวจสอบ ไม่ใช่อัตโนมัติ",
+    "points_insufficient.whatsapp": "ขอคะแนนฟรีผ่าน WhatsApp",
+    "points_insufficient.membership_3day": "สมาชิก 3 วัน (แนะนำ)",
+    "points_insufficient.credit_199": "ซื้อ 1200 คะแนน - US$1.99",
     "magnific.title": "เปิดสื่อฟรีของ Magnific ในเบราว์เซอร์",
     "magnific.body": "Magnific บล็อกการเข้าถึงจากเซิร์ฟเวอร์ รองรับเฉพาะหน้าที่ระบุว่าฟรี ไม่รองรับ Premium งานส่วนตัว Projects หรือการส่งออกที่ใช้เครดิต",
     "magnific.install_title": "ติดตั้ง FreeSaveVideo Downloader",

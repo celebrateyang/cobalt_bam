@@ -64,7 +64,7 @@ export const trackCheckoutStarted = (item: CommerceItem) => {
 };
 
 export const trackTopupPrompt = (
-  action: "view" | "topup" | "membership" | "referral" | "dismiss",
+  action: "view" | "topup" | "membership" | "referral" | "contact" | "dismiss",
   source: "points_insufficient" | "low_points_balloon",
   currentPoints: number,
   requiredPoints?: number,

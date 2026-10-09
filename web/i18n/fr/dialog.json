@@ -1,4 +1,8 @@
 {
+    "points_insufficient.overseas_body": "Ce téléchargement nécessite {{ required }} points ; vous en avez {{ current }}. Choisissez une option. Les points gratuits sont accordés après examen personnel, pas automatiquement.",
+    "points_insufficient.whatsapp": "Demander des points gratuits sur WhatsApp",
+    "points_insufficient.membership_3day": "Abonnement de 3 jours (recommandé)",
+    "points_insufficient.credit_199": "Acheter 1200 points - US$1.99",
     "magnific.title": "Ouvrir la ressource Magnific gratuite",
     "magnific.body": "Magnific a bloqué l'accès du serveur. Seules les pages explicitement gratuites sont prises en charge ; Premium, créations privées, Projects et exports à crédits sont exclus.",
     "magnific.install_title": "Installer FreeSaveVideo Downloader",

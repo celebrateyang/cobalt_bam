@@ -1,5 +1,5 @@
 {
-    "points_insufficient.overseas_body": "This download needs {{ required }} points; you have {{ current }}. Choose an option below. Free points are granted after a personal review, not automatically.",
+    "points_insufficient.overseas_body": "This download needs {{ required }} points; you have {{ current }}. Choose an option below.",
     "points_insufficient.whatsapp": "WhatsApp me to request free points",
     "points_insufficient.membership_3day": "3-day membership (recommended)",
     "points_insufficient.credit_199": "Buy 1200 points - US$1.99",

@@ -1,5 +1,5 @@
 {
-    "points_insufficient.overseas_body": "本次下载需要 {{ required }} 积分，你当前有 {{ current }} 积分。请选择以下方式。免费积分需人工审核后发放，不会自动到账。",
+    "points_insufficient.overseas_body": "本次下载需要 {{ required }} 积分，你当前有 {{ current }} 积分。请选择以下方式。",
     "points_insufficient.whatsapp": "通过 WhatsApp 联系我申请免费积分",
     "points_insufficient.membership_3day": "3 天会员（推荐）",
     "points_insufficient.credit_199": "购买 1200 积分 - US$1.99",

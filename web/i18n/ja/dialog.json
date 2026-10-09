@@ -1,5 +1,5 @@
 {
-    "points_insufficient.overseas_body": "このダウンロードには {{ required }} ポイントが必要です。残高は {{ current }} ポイントです。以下から選択してください。無料ポイントは個別確認後に付与されます。自動付与ではありません。",
+    "points_insufficient.overseas_body": "このダウンロードには {{ required }} ポイントが必要です。残高は {{ current }} ポイントです。以下から選択してください。",
     "points_insufficient.whatsapp": "WhatsAppで無料ポイントを申請",
     "points_insufficient.membership_3day": "3日間のメンバーシップ（おすすめ）",
     "points_insufficient.credit_199": "1200ポイントを購入 - US$1.99",

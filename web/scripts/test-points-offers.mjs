@@ -9,6 +9,9 @@ const uiAst = ts.createSourceFile('ui.ts', ui, ts.ScriptTarget.Latest, true);
 const uiSource = uiAst.statements.filter(s => !ts.isImportDeclaration(s)).map(s => s.getText(uiAst)).join('\n');
 const compiledUi = ts.transpileModule(uiSource, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } })
     .outputText.replace(/^export /gm, '');
+const contactSource = readFileSync(new URL('../src/lib/points/contact.ts', import.meta.url), 'utf8');
+const contactJs = ts.transpileModule(contactSource, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText;
+const { WHATSAPP_CONTACT_URL } = await import(`data:text/javascript;base64,${Buffer.from(contactJs).toString('base64')}`);
 
 function dialogHarness(lang) {
     const calls = { dialogs: [], navigations: [], contacts: [], events: [] };
@@ -19,7 +22,7 @@ function dialogHarness(lang) {
         createDialog: dialog => calls.dialogs.push(dialog),
         trackTopupPrompt: (...args) => calls.events.push(args),
         goto: async path => calls.navigations.push(path),
-        WHATSAPP_CONTACT_URL: 'https://wa.me/qr/JGD6D7RPQISIO1',
+        WHATSAPP_CONTACT_URL,
         window: { open: (...args) => calls.contacts.push(args) },
     });
     vm.runInContext(compiledUi, context);
@@ -38,7 +41,7 @@ for (const lang of ['en', 'de', 'ja', 'th']) {
         ]);
         assert.deepEqual(Array.from(dialog.buttons, b => b.main), [false, true, false]);
         dialog.buttons[0].action();
-        assert.deepEqual(h.calls.contacts[0], ['https://wa.me/qr/JGD6D7RPQISIO1', '_blank', 'noopener,noreferrer']);
+        assert.deepEqual(h.calls.contacts[0], ['https://wa.me/66863855255', '_blank', 'noopener,noreferrer']);
         dialog.buttons[1].action();
         dialog.buttons[2].action();
         await Promise.resolve();
@@ -51,6 +54,14 @@ for (const lang of ['en', 'de', 'ja', 'th']) {
         assert.equal(credits.searchParams.get('redirect'), `/${lang}/`);
     });
 }
+
+test('WhatsApp contact still opens when analytics throws', () => {
+    const h = dialogHarness('en');
+    h.show(8, 10);
+    h.context.trackTopupPrompt = () => { throw new Error('analytics blocked'); };
+    assert.doesNotThrow(() => h.calls.dialogs[0].buttons[0].action());
+    assert.equal(h.calls.contacts[0][0], WHATSAPP_CONTACT_URL);
+});
 
 test('Chinese insufficient-points offers keep their existing flow', () => {
     const h = dialogHarness('zh');

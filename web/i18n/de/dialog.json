@@ -1,5 +1,5 @@
 {
-    "points_insufficient.overseas_body": "Dieser Download benötigt {{ required }} Punkte; du hast {{ current }}. Wähle eine Option. Kostenlose Punkte werden nach persönlicher Prüfung vergeben, nicht automatisch.",
+    "points_insufficient.overseas_body": "Dieser Download benötigt {{ required }} Punkte; du hast {{ current }}. Wähle eine Option.",
     "points_insufficient.whatsapp": "Kostenlose Punkte per WhatsApp anfragen",
     "points_insufficient.membership_3day": "3-Tage-Mitgliedschaft (empfohlen)",
     "points_insufficient.credit_199": "1200 Punkte kaufen - US$1.99",

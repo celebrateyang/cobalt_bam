@@ -1,5 +1,5 @@
 {
-    "points_insufficient.overseas_body": "การดาวน์โหลดนี้ต้องใช้ {{ required }} คะแนน คุณมี {{ current }} คะแนน เลือกตัวเลือกด้านล่าง คะแนนฟรีจะได้รับหลังจากการตรวจสอบ ไม่ใช่อัตโนมัติ",
+    "points_insufficient.overseas_body": "การดาวน์โหลดนี้ต้องใช้ {{ required }} คะแนน คุณมี {{ current }} คะแนน เลือกตัวเลือกด้านล่าง",
     "points_insufficient.whatsapp": "ขอคะแนนฟรีผ่าน WhatsApp",
     "points_insufficient.membership_3day": "สมาชิก 3 วัน (แนะนำ)",
     "points_insufficient.credit_199": "ซื้อ 1200 คะแนน - US$1.99",

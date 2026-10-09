@@ -1,5 +1,5 @@
 {
-    "points_insufficient.overseas_body": "Lượt tải này cần {{ required }} điểm; bạn có {{ current }}. Chọn một tùy chọn. Điểm miễn phí được cấp sau khi xem xét trực tiếp, không tự động.",
+    "points_insufficient.overseas_body": "Lượt tải này cần {{ required }} điểm; bạn có {{ current }}. Chọn một tùy chọn.",
     "points_insufficient.whatsapp": "Xin điểm miễn phí qua WhatsApp",
     "points_insufficient.membership_3day": "Thành viên 3 ngày (đề xuất)",
     "points_insufficient.credit_199": "Mua 1200 điểm - US$1.99",

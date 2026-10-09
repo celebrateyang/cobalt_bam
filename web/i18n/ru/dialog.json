@@ -1,5 +1,5 @@
 {
-    "points_insufficient.overseas_body": "Для этой загрузки нужно {{ required }} баллов; у вас {{ current }}. Выберите вариант. Бесплатные баллы выдаются после личной проверки, не автоматически.",
+    "points_insufficient.overseas_body": "Для этой загрузки нужно {{ required }} баллов; у вас {{ current }}. Выберите вариант.",
     "points_insufficient.whatsapp": "Запросить бесплатные баллы в WhatsApp",
     "points_insufficient.membership_3day": "Подписка на 3 дня (рекомендуем)",
     "points_insufficient.credit_199": "Купить 1200 баллов - US$1.99",

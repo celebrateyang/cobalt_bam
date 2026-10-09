@@ -186,8 +186,12 @@ export const showPointsInsufficientDialog = (
           text: get(t)("dialog.points_insufficient.whatsapp"),
           main: false,
           action: () => {
-            trackTopupPrompt("contact", "points_insufficient", currentPoints, requiredPoints);
             window.open(WHATSAPP_CONTACT_URL, "_blank", "noopener,noreferrer");
+            try {
+              trackTopupPrompt("contact", "points_insufficient", currentPoints, requiredPoints);
+            } catch {
+              // Analytics must not prevent contacting support or closing the dialog.
+            }
           },
         },
         {

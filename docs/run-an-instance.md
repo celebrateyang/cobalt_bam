@@ -181,7 +181,7 @@ sudo service nscd start
 | `FREEBIND_CIDR`       | ➖        | `2001:db8::/32`         | IPv6 prefix used for randomly assigning addresses to cobalt requests. only supported on linux systems. see below for more info. |
 | `RATELIMIT_WINDOW`    | `60`      | `120`                   | rate limit time window in **seconds**. |
 | `RATELIMIT_MAX`       | `20`      | `30`                    | max requests per time window. requests above this amount will be blocked for the rate limit window duration. |
-| `DURATION_LIMIT`      | `10800`   | `18000`                 | max allowed video duration in **seconds**. |
+| `DURATION_LIMIT`      | `10800`   | `18000`                 | max allowed video duration in **seconds**, including YouTube video and audio downloads. YouTube extraction rejects longer media before creating tunnels; the main API also checks duration metadata returned by upstream instances. |
 | `TUNNEL_LIFESPAN`     | `90`      | `120`                   | the duration for which tunnel info is stored in ram, **in seconds**. |
 | `TUNNEL_DEBUG_LOGS`   | not used  | `true`                  | enables verbose `[TUNNEL]` and `[ITUNNEL]` stream debugging logs. leave unset in production unless investigating tunnel behavior. |
 | `YTDLP_BIN`           | not used  | `/usr/local/bin/yt-dlp` | optional path to a custom `yt-dlp` binary when not available in `PATH`. |

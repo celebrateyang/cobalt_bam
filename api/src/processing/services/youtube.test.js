@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import createFilename from "../create-filename.js";
 import { buildYoutubeResult } from "./youtube.js";
+import { env } from "../../config.js";
 
 const mediaUrl = (itag) =>
     `https://rr.example.googlevideo.com/videoplayback?itag=${itag}&c=VISIONOS`;
@@ -27,6 +28,35 @@ const buildResult = (formats, overrides = {}, targetQuality = 1080) => buildYout
     },
     requestClientIp: "",
     targetQuality,
+});
+
+test("rejects over-limit YouTube media before selecting formats, including audio and mute", () => {
+    for (const mode of [{}, { isAudioOnly: true }, { isAudioMuted: true }]) {
+        const result = buildYoutubeResult({
+            info: { duration: env.durationLimit + 1 },
+            o: { id: "long-video", ...mode },
+            requestClientIp: "",
+            targetQuality: 720,
+        });
+        assert.deepEqual(result, { error: "content.too_long" });
+    }
+});
+
+test("allows YouTube media exactly at the duration limit", () => {
+    const result = buildYoutubeResult({
+        info: {
+            duration: env.durationLimit,
+            formats: [{
+                format_id: "18", ext: "mp4", width: 640, height: 360,
+                vcodec: "avc1.42001E", acodec: "mp4a.40.2", url: mediaUrl("18"),
+            }],
+        },
+        o: { id: "boundary-video", codec: "h264", container: "mp4" },
+        requestClientIp: "",
+        targetQuality: 360,
+    });
+    assert.equal(result.error, undefined);
+    assert.equal(result.duration, env.durationLimit);
 });
 
 test("falls back from unavailable AV1 to VP9", () => {

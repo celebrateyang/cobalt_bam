@@ -4,6 +4,7 @@ import { env } from "../config.js";
 import { createResponse } from "../processing/request.js";
 import { createStream } from "../stream/manage.js";
 import { requestUpstream } from "./upstream/request.js";
+import { getYoutubeUpstreamDurationError } from "./youtube-duration.js";
 
 import { testers } from "./service-patterns.js";
 import matchAction from "./match-action.js";
@@ -185,6 +186,12 @@ const requestUpstreamCobalt = async (payload, options = {}) => {
 
     try {
         const body = upstream.body;
+        if (isYouTubeHost(getRequestHost(payload))) {
+            const durationError = getYoutubeUpstreamDurationError(body);
+            if (durationError) {
+                return createResponse("error", durationError);
+            }
+        }
         const upstreamOrigin = upstream.upstreamOrigin;
         const normalizeTunnelUrl = (value) => {
             if (typeof value !== "string") return value;

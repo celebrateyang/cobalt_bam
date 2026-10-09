@@ -5,6 +5,7 @@ import { mkdtemp, writeFile, rm } from "node:fs/promises";
 
 import { getCookie } from "../cookie/manager.js";
 import { sanitizeString } from "../create-filename.js";
+import { exceedsYoutubeDurationLimit } from "../youtube-duration.js";
 
 const DEFAULT_TIMEOUT_MS = 45000;
 const MIN_GOOD_URL_SCORE = -140;
@@ -833,6 +834,9 @@ export const buildYoutubeResult = ({
 }) => {
     const allFormats = Array.isArray(info.formats) ? info.formats : [];
     const duration = parseNumber(info.duration);
+    if (exceedsYoutubeDurationLimit(duration)) {
+        return { error: "content.too_long" };
+    }
     const title = String(info.title || `youtube_${o.id}`).trim() || `youtube_${o.id}`;
     const artist = String(info.channel || info.uploader || "").trim();
     const subtitles = pickSubtitleUrl(info, o.subtitleLang);
@@ -1083,6 +1087,10 @@ export default async function youtube(o) {
             requestClientIp: attempt.requestClientIp,
             targetQuality,
         });
+
+        if (built?.error === "content.too_long") {
+            return built;
+        }
 
         if (!built?.error) {
             console.log(

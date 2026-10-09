@@ -972,14 +972,6 @@ export const savingHandler = async ({
             }
         }
 
-        const buttons = [
-            {
-                text: get(t)("button.done"),
-                main: true,
-                action: () => { },
-            },
-        ];
-
         createDialog({
             id: "download-picker",
             type: "picker",
@@ -994,7 +986,6 @@ export const savingHandler = async ({
                 ...item,
                 url: normalizeTunnelUrl(item.url) || item.url,
             })),
-            buttons,
         });
         return response;
     }

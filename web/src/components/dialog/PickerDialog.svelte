@@ -17,6 +17,7 @@
     import DialogButtons from "$components/dialog/DialogButtons.svelte";
 
     import IconBoxMultiple from "@tabler/icons-svelte/IconBoxMultiple.svelte";
+    import IconX from "@tabler/icons-svelte/IconX.svelte";
 
     export let id: string;
     export let items: Optional<DialogPickerItem[]> = undefined;
@@ -140,6 +141,16 @@
                 <h2 class="popup-title" tabindex="-1">
                     {$t("dialog.picker.title")}
                 </h2>
+                {#if dismissable}
+                    <button
+                        type="button"
+                        class="secondary picker-close"
+                        aria-label={$t("dialog.saving.close")}
+                        on:click={close}
+                    >
+                        <IconX />
+                    </button>
+                {/if}
             </div>
             <div class="subtext popup-description">
                 {$t(dialogDescription)}
@@ -181,7 +192,7 @@
                 {/if}
             </div>
         {/if}
-        {#if buttons}
+        {#if buttons?.length}
             <DialogButtons {buttons} closeFunc={close} />
         {/if}
     </div>
@@ -211,6 +222,18 @@
         align-items: center;
         gap: calc(var(--padding) / 2);
         color: var(--secondary);
+        width: 100%;
+    }
+
+    .picker-close {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        margin-left: auto;
     }
 
     .popup-title-container :global(svg) {

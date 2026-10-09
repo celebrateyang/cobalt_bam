@@ -2246,6 +2246,7 @@
                         </div>
 
                         {#if selectedPaymentProvider === "buymeacoffee"}
+                            <p class="subtext">{$t("auth.bmc_payment_destination")}</p>
                             <p class="subtext">{$t("auth.bmc_checkout_notice")}</p>
                         {/if}
 
@@ -2587,8 +2588,8 @@
                                         alt="Bamboo Yang"
                                     />
                                     <span>
-                                        <strong>Buy Me a Coffee</strong>
-                                        <small>Bamboo Yang · FreeSaveVideo</small>
+                                        <strong>FreeSaveVideo</strong>
+                                        <small>Bamboo Yang · Buy Me a Coffee</small>
                                     </span>
                                 </span>
                             {:else}
@@ -2601,15 +2602,24 @@
                     </div>
 
                     <div class="subtext payment-subtitle">
-                        {$t("auth.order_total")}: {formatAmount(activeOrder.amount_fen, activeOrder.currency)}
-                        {#if activeOrder.kind === "credit"}
-                            - {activeOrder.points} {$t("auth.points_label")}
+                        {#if activeOrder.provider === "buymeacoffee"}
+                            {$t(activeOrder.kind === "credit" ? "auth.bmc_credit_order_summary" : "auth.bmc_member_order_summary", {
+                                count: activeOrder.kind === "credit" ? activeOrder.points : 0,
+                                days: activeOrder.kind === "membership" ? activeOrder.duration_days : 0,
+                                price: formatAmount(activeOrder.amount_fen, activeOrder.currency),
+                            })}
                         {:else}
-                            - {membershipPlanLabel(activeOrder.plan_key)}
+                            {$t("auth.order_total")}: {formatAmount(activeOrder.amount_fen, activeOrder.currency)}
+                            {#if activeOrder.kind === "credit"}
+                                - {activeOrder.points} {$t("auth.points_label")}
+                            {:else}
+                                - {membershipPlanLabel(activeOrder.plan_key)}
+                            {/if}
                         {/if}
                     </div>
 
                     {#if activeOrder.provider === "buymeacoffee" && activeOrder.status !== "PAID"}
+                        <p class="subtext">{$t("auth.bmc_payment_destination")}</p>
                         <p class="subtext">{$t(activeOrder.kind === "membership" ? "auth.download_pass_terms" : "auth.bmc_terms", { days: activeOrder.kind === "membership" ? activeOrder.duration_days : 0 })}</p>
                         <p class="subtext">{$t(activeOrder.kind === "membership" ? "auth.bmc_member_checkout_notice" : "auth.bmc_checkout_notice")}</p>
                     {/if}

@@ -116,6 +116,25 @@ over the same date range and allow time for code submission.
 
 ## Release checks
 
+### Purchase identity update (2026-10-09, Asia/Shanghai)
+
+- Site checkout identifies FreeSaveVideo as the purchased service and Bamboo
+  Yang / Buy Me a Coffee as the seller / external payment platform. The same
+  existing portrait is used on the site and the public Shop product page.
+- Credit quantity, membership duration and product price are interpolated from
+  the active server order, rather than hard-coded marketing copy. Product price
+  is not a promise about additional fees or currency conversion at checkout.
+- All 11 site locales explain that the next payment step opens on
+  `buymeacoffee.com`. Credit and membership purchases have distinct summaries.
+- The owner explicitly requires external Shop titles and descriptions to remain
+  brand-neutral. Do not add FreeSaveVideo to Shop copy. Keep descriptions
+  accurate about the processing service and retain the payment-code steps.
+- Read-only public inspection confirmed product 581332 displays 1200 processing
+  credits for USD 1.99, with the same seller portrait. The creator product list
+  displays the updated 4,000 / 10,000 / 25,000 / 75,000 credit titles too; their
+  full public descriptions were not inspected in this update. No external copy,
+  image, price, account setting or publication state was changed.
+
 ### Checkout and recovery update (2026-10-09, Asia/Shanghai)
 
 - The primary link now copies the code and opens the Shop in one click. Native

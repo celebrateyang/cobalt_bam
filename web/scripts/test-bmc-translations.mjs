@@ -21,6 +21,9 @@ for (const entry of await readdir(root, { withFileTypes: true })) {
         ['bmc_buy', { count: 2000, price: 'US$4.99' }, ['2000', 'US$4.99']],
         ['download_pass_buy', { days: 30, price: 'US$4.99' }, ['30', 'US$4.99']],
         ['download_pass_terms', { days: 30 }, ['30']],
+        ['bmc_credit_order_summary', { count: 1200, price: 'US$1.99' }, ['FreeSaveVideo', '1200', 'US$1.99']],
+        ['bmc_member_order_summary', { days: 30, price: 'US$7.99' }, ['FreeSaveVideo', '30', 'US$7.99']],
+        ['bmc_payment_destination', {}, ['Bamboo Yang', 'FreeSaveVideo', 'Buy Me a Coffee', 'buymeacoffee.com']],
     ]) {
         const output = t(`auth.${key}`, payload);
         assert.ok(output && output !== `auth.${key}`, `${entry.name}: missing ${key}`);

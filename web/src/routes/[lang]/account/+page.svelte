@@ -26,6 +26,12 @@
     } from "$lib/analytics/commerce";
     import { getOrderAttribution } from "$lib/analytics/attribution";
     import {
+        readBuyMeACoffeeOrder,
+        saveBuyMeACoffeeOrder,
+        removeBuyMeACoffeeOrder,
+        safeBuyMeACoffeeCheckoutUrl,
+    } from "$lib/payments/buymeacoffee-recovery";
+    import {
         feedbackUnread,
         markFeedbackNotificationsSeen,
     } from "$lib/state/feedback-notifications";
@@ -57,6 +63,7 @@
         out_trade_no: string;
         provider: "wechat" | "nowpayments" | "buymeacoffee";
         provider_data?: Record<string, unknown> | null;
+        product_key: string;
     };
 
     type Membership = {
@@ -689,11 +696,14 @@
     let buyMeACoffeePaymentCode = "";
     let buyMeACoffeeCodeSaved = false;
     let buyMeACoffeeCopyFailed = false;
-    let buyMeACoffeeReturnHandled = false;
+    let buyMeACoffeeRecoveryUserId = "";
+    let buyMeACoffeeCheckoutOpened = false;
+    let buyMeACoffeeLastReturnCheck = 0;
     let buyMeACoffeeSavedOrderId = 0;
     let buyMeACoffeeSavedKind: "credit" | "membership" = "credit";
     let showMoreCreditPackages = false;
     let buyMeACoffeeStatusError = false;
+    let buyMeACoffeeStatusErrorTracked = false;
     let orderStatusLoading = false;
     let paymentViewVersion = 0;
     let pollTimer: ReturnType<typeof setInterval> | null = null;
@@ -944,6 +954,51 @@
         orderStatusLoading = false;
     };
 
+    const rememberBuyMeACoffeeOrder = (id: number, kind: "credit" | "membership") => {
+        if (!$clerkUser) return;
+        try { saveBuyMeACoffeeOrder(window.localStorage, $clerkUser.id, id, kind); } catch { /* Storage may be disabled. */ }
+    };
+
+    const recordedBuyMeACoffeeSteps = new Set<string>();
+    const trackBuyMeACoffeeStep = (
+        step: Parameters<typeof trackPaymentStep>[0],
+        orderId: number,
+        kind: "credit" | "membership" = "credit",
+    ) => {
+        trackPaymentStep(step, orderId, kind);
+        const userId = $clerkUser?.id;
+        const key = `${userId}:${kind}:${orderId}:${step}`;
+        if (!userId || recordedBuyMeACoffeeSteps.has(key)) return;
+        recordedBuyMeACoffeeSteps.add(key);
+        // Independent from GA/Clarity and never awaited by checkout navigation.
+        void (async () => {
+            try {
+                const token = await getClerkToken();
+                if (!token || $clerkUser?.id !== userId) { recordedBuyMeACoffeeSteps.delete(key); return; }
+                const res = await fetch(`${currentApiURL()}/payments/${kind === "membership" ? "memberships" : "credits"}/orders/${orderId}/payment-step`, {
+                    method: "POST",
+                    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({ step }),
+                    signal: AbortSignal.timeout(5000),
+                });
+                if (!res.ok) recordedBuyMeACoffeeSteps.delete(key);
+            } catch { recordedBuyMeACoffeeSteps.delete(key); }
+        })();
+    };
+
+    const forgetBuyMeACoffeeOrder = () => {
+        buyMeACoffeeSavedOrderId = 0;
+        buyMeACoffeeCheckoutOpened = false;
+        if ($clerkUser) {
+            try { removeBuyMeACoffeeOrder(window.localStorage, $clerkUser.id); } catch { /* Storage may be disabled. */ }
+        }
+        const cleanUrl = new URL(window.location.href);
+        cleanUrl.searchParams.delete("bmc_order");
+        cleanUrl.searchParams.delete("bmc_kind");
+        window.history.replaceState({}, "", cleanUrl.toString());
+        stopPolling();
+    };
+
     onDestroy(() => {
         stopPolling();
         if (referralCopyTimer) {
@@ -1018,14 +1073,9 @@
                 if (order.provider === "buymeacoffee") {
                     buyMeACoffeeStatusError = false;
                     buyMeACoffeePaymentCode = order.out_trade_no;
-                    buyMeACoffeeCheckoutUrl = String(order.provider_data?.checkout_url || "");
-                    if (order.status !== "CREATED") {
-                        buyMeACoffeeSavedOrderId = 0;
-                        const cleanUrl = new URL(window.location.href);
-                        cleanUrl.searchParams.delete("bmc_order");
-                        cleanUrl.searchParams.delete("bmc_kind");
-                        window.history.replaceState({}, "", cleanUrl.toString());
-                        stopPolling();
+                    buyMeACoffeeCheckoutUrl = safeBuyMeACoffeeCheckoutUrl(order.provider_data?.checkout_url);
+                    if (order.status !== "CREATED" && buyMeACoffeeSavedOrderId === order.id && buyMeACoffeeSavedKind === "credit") {
+                        forgetBuyMeACoffeeOrder();
                     }
                 }
                 if (
@@ -1055,6 +1105,10 @@
             if (requestViewVersion !== paymentViewVersion) return null;
             if (activeOrder?.provider === "buymeacoffee" || buyMeACoffeeSavedOrderId === orderId) {
                 buyMeACoffeeStatusError = true;
+                if (!buyMeACoffeeStatusErrorTracked) {
+                    trackBuyMeACoffeeStep("status_check_failed", orderId, "credit");
+                    buyMeACoffeeStatusErrorTracked = true;
+                }
             }
             console.debug("load order status failed", error);
         } finally {
@@ -1104,14 +1158,9 @@
                 if (order.provider === "buymeacoffee") {
                     buyMeACoffeeStatusError = false;
                     buyMeACoffeePaymentCode = order.out_trade_no;
-                    buyMeACoffeeCheckoutUrl = String(order.provider_data?.checkout_url || "");
-                    if (order.status !== "CREATED") {
-                        buyMeACoffeeSavedOrderId = 0;
-                        const cleanUrl = new URL(window.location.href);
-                        cleanUrl.searchParams.delete("bmc_order");
-                        cleanUrl.searchParams.delete("bmc_kind");
-                        window.history.replaceState({}, "", cleanUrl.toString());
-                        stopPolling();
+                    buyMeACoffeeCheckoutUrl = safeBuyMeACoffeeCheckoutUrl(order.provider_data?.checkout_url);
+                    if (order.status !== "CREATED" && buyMeACoffeeSavedOrderId === order.id && buyMeACoffeeSavedKind === "membership") {
+                        forgetBuyMeACoffeeOrder();
                     }
                 }
 
@@ -1136,7 +1185,13 @@
             }
         } catch (error) {
             if (requestViewVersion !== paymentViewVersion) return null;
-            if (activeOrder?.provider === "buymeacoffee" || buyMeACoffeeSavedOrderId === orderId) buyMeACoffeeStatusError = true;
+            if (activeOrder?.provider === "buymeacoffee" || buyMeACoffeeSavedOrderId === orderId) {
+                buyMeACoffeeStatusError = true;
+                if (!buyMeACoffeeStatusErrorTracked) {
+                    trackBuyMeACoffeeStep("status_check_failed", orderId, "membership");
+                    buyMeACoffeeStatusErrorTracked = true;
+                }
+            }
             console.debug("load membership order status failed", error);
         } finally {
             if (requestViewVersion === paymentViewVersion) orderStatusLoading = false;
@@ -1146,6 +1201,7 @@
     };
 
     const checkActiveOrderStatus = (order: ActivePaymentOrder) => {
+        if (order.provider === "buymeacoffee") trackBuyMeACoffeeStep("status_checked", order.id, order.kind);
         if (order.kind === "membership") {
             void fetchMembershipOrderStatus(order.id, true);
             return;
@@ -1239,23 +1295,41 @@
 
     const copyBuyMeACoffeePaymentCode = async () => {
         if (!buyMeACoffeePaymentCode) return;
+        const order = activeOrder;
+        const requestViewVersion = paymentViewVersion;
+        const code = buyMeACoffeePaymentCode;
         try {
-            await navigator.clipboard.writeText(buyMeACoffeePaymentCode);
+            await navigator.clipboard.writeText(code);
+            if (requestViewVersion !== paymentViewVersion) return;
             buyMeACoffeeCodeSaved = true;
             buyMeACoffeeCopyFailed = false;
-            if (activeOrder) trackPaymentStep("code_copied", activeOrder.id, activeOrder.kind);
+            if (order) trackBuyMeACoffeeStep("code_copied", order.id, order.kind);
         } catch {
+            if (requestViewVersion !== paymentViewVersion) return;
             buyMeACoffeeCopyFailed = true;
+            if (order) trackBuyMeACoffeeStep("code_copy_failed", order.id, order.kind);
         }
+    };
+
+    const openBuyMeACoffeeCheckout = () => {
+        if (!activeOrder || !buyMeACoffeeCheckoutUrl) return;
+        buyMeACoffeeCheckoutOpened = true;
+        trackBuyMeACoffeeStep("checkout_opened", activeOrder.id, activeOrder.kind);
+        // Keep native link navigation in the user gesture. Awaiting clipboard
+        // access before opening a window can trigger mobile popup blockers.
+        void copyBuyMeACoffeePaymentCode();
     };
 
     const startBuyMeACoffeePay = async (productKey: string, kind: "credit" | "membership" = "credit") => {
         if (purchaseLoading || !$clerkUser) return;
         if (activeOrder?.status === "CREATED" && activeOrder.provider !== "buymeacoffee") return;
+        if (activeOrder?.status === "CREATED" && activeOrder.product_key === productKey && activeOrder.kind === kind) return;
 
         // A saved BMC order is optional recovery, not a lock on later purchases.
         // Keep the server order payable; only replace the current payment view.
         clearActiveOrder();
+        const checkoutViewVersion = paymentViewVersion;
+        const checkoutUserId = $clerkUser.id;
 
         purchaseLoading = true;
         purchaseErrorKey = "";
@@ -1276,12 +1350,13 @@
                 }),
             });
             const data = await res.json().catch(() => ({}));
+            if (checkoutViewVersion !== paymentViewVersion || $clerkUser?.id !== checkoutUserId) return;
             if (data?.error?.code === "MEMBERSHIP_INCOMPATIBLE") { purchaseErrorKey = "auth.bmc_membership_incompatible"; return; }
             if (!res.ok || data?.status !== "success") {
                 throw new Error(data?.error?.message || "failed to create order");
             }
             const order = data?.data?.order as CreditOrder | MembershipOrder | undefined;
-            const checkoutUrl = String(data?.data?.buymeacoffee?.checkoutUrl || "");
+            const checkoutUrl = safeBuyMeACoffeeCheckoutUrl(data?.data?.buymeacoffee?.checkoutUrl);
             const paymentCode = String(data?.data?.buymeacoffee?.paymentCode || "");
             if (!order?.id || !checkoutUrl || !paymentCode) {
                 throw new Error("invalid create order response");
@@ -1301,14 +1376,18 @@
             buyMeACoffeeCodeSaved = false;
             buyMeACoffeeCopyFailed = false;
             buyMeACoffeeStatusError = false;
+            buyMeACoffeeStatusErrorTracked = false;
+            buyMeACoffeeCheckoutOpened = false;
             buyMeACoffeeSavedOrderId = order.id;
             buyMeACoffeeSavedKind = kind;
+            rememberBuyMeACoffeeOrder(order.id, kind);
             const returnUrl = new URL(window.location.href);
             returnUrl.searchParams.set("bmc_order", String(order.id));
             returnUrl.searchParams.set("bmc_kind", kind);
             window.history.replaceState({}, "", returnUrl.toString());
             startPolling(order.id, kind);
         } catch (error) {
+            if (checkoutViewVersion !== paymentViewVersion || $clerkUser?.id !== checkoutUserId) return;
             purchaseErrorKey = "auth.payment_create_failed";
             console.debug("create Buy Me a Coffee order failed", error);
         } finally {
@@ -1400,7 +1479,22 @@
         const order = await (kind === "membership" ? fetchMembershipOrderStatus : fetchOrderStatus)(buyMeACoffeeSavedOrderId, false, false);
         if (order?.provider !== "buymeacoffee") return;
         activeOrder = kind === "membership" ? { ...(order as MembershipOrder), kind } : { ...(order as CreditOrder), kind };
-        if (order.status === "CREATED") startPolling(order.id, kind);
+        if (order.status === "CREATED") {
+            rememberBuyMeACoffeeOrder(order.id, kind);
+            trackBuyMeACoffeeStep("order_restored", order.id, kind);
+            startPolling(order.id, kind);
+        }
+    };
+
+    const refreshBuyMeACoffeeOnReturn = () => {
+        if (!buyMeACoffeeCheckoutOpened || document.hidden || orderStatusLoading ||
+            activeOrder?.provider !== "buymeacoffee" || activeOrder.status !== "CREATED") return;
+        const now = Date.now();
+        if (now - buyMeACoffeeLastReturnCheck < 1500) return;
+        buyMeACoffeeLastReturnCheck = now;
+        trackBuyMeACoffeeStep("returned", activeOrder.id, activeOrder.kind);
+        if (activeOrder.kind === "membership") void fetchMembershipOrderStatus(activeOrder.id);
+        else void fetchOrderStatus(activeOrder.id);
     };
 
     const resumeNowPaymentsCheckout = async () => {
@@ -1631,15 +1725,33 @@
         void resumeNowPaymentsCheckout();
     }
 
-    $: if (browser && $clerkUser && !buyMeACoffeeReturnHandled) {
-        buyMeACoffeeReturnHandled = true;
+    $: if (browser && ($clerkUser?.id || "") !== buyMeACoffeeRecoveryUserId) {
+        if (buyMeACoffeeRecoveryUserId) clearActiveOrder();
+        buyMeACoffeeRecoveryUserId = $clerkUser?.id || "";
+        buyMeACoffeeSavedOrderId = 0;
+        buyMeACoffeeCheckoutOpened = false;
+        buyMeACoffeeStatusError = false;
+        buyMeACoffeeStatusErrorTracked = false;
+        if ($clerkUser) recoverBuyMeACoffeeOrder();
+    }
+
+    const recoverBuyMeACoffeeOrder = () => {
         const orderId = Number($page.url.searchParams.get("bmc_order"));
         if (Number.isSafeInteger(orderId) && orderId > 0) {
             buyMeACoffeeSavedOrderId = orderId;
             buyMeACoffeeSavedKind = $page.url.searchParams.get("bmc_kind") === "membership" ? "membership" : "credit";
             void restoreBuyMeACoffeeOrder();
+            return;
         }
-    }
+        try {
+            const saved = readBuyMeACoffeeOrder(window.localStorage, $clerkUser!.id);
+            if (!saved) return;
+            buyMeACoffeeSavedOrderId = saved.id;
+            buyMeACoffeeSavedKind = saved.kind;
+            // Show recovery inline instead of interrupting a fresh visit.
+            void (saved.kind === "membership" ? fetchMembershipOrderStatus : fetchOrderStatus)(saved.id, false, false);
+        } catch { /* URL recovery still works with storage disabled. */ }
+    };
 
     const selectPaymentProvider = (provider: PaymentProvider) => {
         if (isChinese && provider !== "wechat") return;
@@ -1657,6 +1769,9 @@
     };
 
 </script>
+
+<svelte:window on:focus={refreshBuyMeACoffeeOnReturn} />
+<svelte:document on:visibilitychange={refreshBuyMeACoffeeOnReturn} />
 
 <svelte:head>
     <title>{$t("auth.title")} - FreeSaveVideo</title>
@@ -2512,32 +2627,34 @@
                             {:else if activeOrder.provider === "buymeacoffee"}
                                 <div class="bmc-payment-code">
                                     <strong>{$t("auth.bmc_step_save")}</strong>
-                                    <code>{buyMeACoffeePaymentCode}</code>
+                                    <input
+                                        class="bmc-code-input"
+                                        aria-label={$t("auth.bmc_step_save")}
+                                        value={buyMeACoffeePaymentCode}
+                                        readonly
+                                        on:focus={(event) => event.currentTarget.select()}
+                                        on:click={(event) => event.currentTarget.select()}
+                                    />
+                                    <span class="subtext" aria-live="polite">
+                                        {#if buyMeACoffeeCodeSaved}{$t("button.copied")}{/if}
+                                    </span>
                                     {#if buyMeACoffeeCopyFailed}
                                         <p role="alert">{$t("auth.bmc_copy_failed")}</p>
-                                        <label class="bmc-code-confirmation">
-                                            <input type="checkbox" bind:checked={buyMeACoffeeCodeSaved} />
-                                            <span>{$t("auth.bmc_saved_manually")}</span>
-                                        </label>
                                     {/if}
-                                    {#if buyMeACoffeeCheckoutUrl && buyMeACoffeeCodeSaved}
+                                    {#if buyMeACoffeeCheckoutUrl}
                                         <a
                                             class="button elevated active"
                                             href={buyMeACoffeeCheckoutUrl}
                                             target="_blank"
                                             rel="noreferrer noopener nofollow"
-                                             on:click={() => activeOrder && trackPaymentStep("checkout_opened", activeOrder.id, activeOrder.kind)}
+                                            on:click={openBuyMeACoffeeCheckout}
                                         >
-                                            {$t("auth.bmc_step_pay")}
+                                            {$t(buyMeACoffeeCodeSaved ? "auth.bmc_step_pay" : "auth.bmc_copy_continue")}
                                         </a>
-                                    {:else}
-                                        <button
-                                            class="button elevated active"
-                                            on:click={copyBuyMeACoffeePaymentCode}
-                                        >
-                                            {$t("auth.bmc_copy_continue")}
-                                        </button>
                                     {/if}
+                                    <button class="button elevated" on:click={copyBuyMeACoffeePaymentCode}>
+                                        {$t(buyMeACoffeeCodeSaved ? "button.copied" : "button.copy")}
+                                    </button>
                                 </div>
                             {:else if qrDataUrl}
                                 <img
@@ -2593,7 +2710,7 @@
                                         <a
                                             class="bmc-help-link"
                                             href={`mailto:celebrateyang@gmail.com?subject=${encodeURIComponent(`FreeSaveVideo payment help: ${buyMeACoffeePaymentCode}`)}&body=${encodeURIComponent(`Payment code: ${buyMeACoffeePaymentCode}\nPlease attach your Buy Me a Coffee receipt. Do not include card details.`)}`}
-                                             on:click={() => activeOrder && trackPaymentStep("help_opened", activeOrder.id, activeOrder.kind)}
+                                            on:click={() => activeOrder && trackBuyMeACoffeeStep("help_opened", activeOrder.id, activeOrder.kind)}
                                         >{$t(activeOrder.kind === "membership" ? "auth.bmc_member_help" : "auth.bmc_help")}</a>
                                         <p>{$t("auth.bmc_help_hint")}</p>
                                         {#if buyMeACoffeeStatusError}
@@ -3744,12 +3861,15 @@
         gap: 12px;
     }
 
-    .bmc-payment-code code {
+    .bmc-code-input {
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+        border: 1px solid var(--surface-2);
         padding: 12px;
         border-radius: 10px;
         background: var(--surface-2);
         color: var(--text);
-        overflow-wrap: anywhere;
         user-select: all;
         white-space: nowrap;
         overflow-x: auto;
@@ -3759,13 +3879,6 @@
     .bmc-payment-code :global(a.button) {
         justify-content: center;
         text-decoration: none;
-    }
-
-    .bmc-code-confirmation {
-        display: flex;
-        align-items: flex-start;
-        gap: 8px;
-        font-size: 0.85rem;
     }
 
     .bmc-help-link {

@@ -16,7 +16,8 @@ type AnalyticsWindow = Window & {
 const analyticsWindow = () => window as AnalyticsWindow;
 
 export const trackPaymentStep = (
-  step: "code_copied" | "checkout_opened" | "help_opened",
+  step: "code_copied" | "code_copy_failed" | "checkout_opened" | "help_opened"
+    | "order_restored" | "returned" | "status_checked" | "status_check_failed",
   orderId: number,
   kind: "credit" | "membership" = "credit",
 ) => {

@@ -4,6 +4,7 @@ import { nanoid } from "nanoid";
 
 import { MEMBER_DOWNLOAD_LIMITS, upsertUserFromClerk, getActiveMembershipForUser } from "../db/users.js";
 import { recordBuyMeACoffeeReceipt } from "../db/buymeacoffee-receipts.js";
+import { BUYMEACOFFEE_STEPS, recordBuyMeACoffeeStep } from "../payments/buymeacoffee-steps.js";
 import {
     createCreditOrder,
     getCreditOrderById,
@@ -918,6 +919,28 @@ if (!isClerkAuthConfigured) {
     });
 } else {
     router.use(clerkMiddleware());
+
+    userPaymentRoute("post", ["/credits/orders/:id/payment-step", "/memberships/orders/:id/payment-step"], async (req, res) => {
+        try {
+            const auth = paymentAuth(req);
+            if (!auth.userId) return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
+            const id = Number(req.params.id);
+            const step = req.body?.step;
+            if (!Number.isSafeInteger(id) || id <= 0 || !BUYMEACOFFEE_STEPS.has(step)) {
+                return jsonError(res, 400, "INVALID_PAYMENT_STEP", "Invalid payment step");
+            }
+            const kind = req.path.startsWith("/memberships/") ? "membership" : "credit";
+            const order = await (kind === "membership" ? getMembershipOrderById : getCreditOrderById)(id);
+            if (!order || order.clerk_user_id !== auth.userId || order.provider !== "buymeacoffee") {
+                return jsonError(res, 404, "NOT_FOUND", "Order not found");
+            }
+            await recordBuyMeACoffeeStep({ id, kind, clerkUserId: auth.userId, step });
+            return res.status(200).json({ status: "success" });
+        } catch (error) {
+            console.error("Buy Me a Coffee payment step error:", error);
+            return jsonError(res, 500, "SERVER_ERROR", "server error");
+        }
+    });
 
     userPaymentRoute("post", ["/credits/buymeacoffee", "/memberships/buymeacoffee"], async (req, res) => {
         try {

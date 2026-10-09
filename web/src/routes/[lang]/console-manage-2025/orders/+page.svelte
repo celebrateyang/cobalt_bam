@@ -26,10 +26,23 @@
         paid_at: number | string | null;
         created_at: number | string;
         updated_at: number | string;
+        provider_data?: Record<string, unknown> | null;
         user?: OrderUser;
     };
 
     let orders: CreditOrder[] = [];
+
+    const paymentProgress = (order: CreditOrder) => {
+        const data = order.provider_data || {};
+        if (order.status === "PAID") return "已付款并入账";
+        if (data.bmc_step_help_opened) return "已打开付款帮助";
+        if (data.bmc_step_returned) return "已返回本站，尚未入账";
+        if (data.bmc_step_checkout_opened) return "已点击站外付款链接";
+        if (data.bmc_step_code_copied) return "已复制订单码";
+        if (data.bmc_step_code_copy_failed) return "复制失败，可手动复制";
+        if (data.bmc_step_order_restored) return "已恢复付款说明";
+        return "暂无操作上报";
+    };
     let loading = true;
     let error = "";
 
@@ -470,6 +483,14 @@
                                     ).toLowerCase()}`}
                                     >{o.status}</span
                                 >
+                                {#if o.provider === "buymeacoffee"}
+                                    <div class="sub" title="浏览器操作记录；点击链接不代表收银台已加载或付款成功。旧订单和上报失败可能没有记录。">
+                                        {paymentProgress(o)}
+                                    </div>
+                                    {#if o.provider_data?.bmc_step_status_check_failed}
+                                        <div class="sub">曾发生状态查询失败</div>
+                                    {/if}
+                                {/if}
                             </td>
                             <td class="mono">{o.points}</td>
                             <td class="mono">{formatAmount(o.amount_fen, o.currency)}</td>

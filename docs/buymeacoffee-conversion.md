@@ -116,6 +116,42 @@ over the same date range and allow time for code submission.
 
 ## Release checks
 
+### Checkout and recovery update (2026-10-09, Asia/Shanghai)
+
+- The primary link now copies the code and opens the Shop in one click. Native
+  link navigation is never delayed by clipboard permission, so mobile popup
+  blocking does not depend on an asynchronous clipboard result. The original
+  page keeps a selectable code field, copy retry, and payment help.
+- Copy failure does not lock the payment link. Buyers still need to submit the
+  code on the provider's thank-you page before fulfillment; automatic matching
+  by email is not introduced.
+- The latest pending order ID and kind are stored per signed-in user for seven
+  days. No payment code or receipt is stored. A fresh account visit shows inline
+  recovery; an explicit `bmc_order` URL opens instructions. Terminal orders
+  clear the saved reference. Switching users clears the payment view.
+- Returning focus/visibility after opening checkout triggers an immediate status
+  read. Duplicate notifications are suppressed; hidden tabs do not poll.
+- Additional diagnostic steps are `code_copy_failed`, `order_restored`,
+  `returned`, `status_checked`, and `status_check_failed`. Existing GA/Clarity
+  events remain available. Since the new link opens without waiting for copying,
+  `checkout_opened` can arrive before `code_copied`; do not require that ordering
+  in a funnel.
+- Authenticated `POST /payments/credits/orders/:id/payment-step` and the matching
+  membership route accept only the fixed step allowlist for the caller's BMC
+  order. First server-received timestamps are stored as `bmc_step_*` in existing
+  `provider_data`, without changing financial fields or order update timestamps.
+  Retries preserve the first observation and other provider metadata. Tracking
+  failures never block checkout. No schema migration is required.
+- The orders console shows the reported progress under BMC order status. A link
+  click is not evidence that checkout loaded or a payment succeeded. Old orders
+  and failed reports show no observations; historical steps cannot be recovered.
+- Compare order creation, reported checkout clicks, actual provider payments,
+  and credited orders over the same cohort. Segment GA/Clarity by device and
+  language where available. Only signed provider receipts determine payment.
+- Site code and external Shop copy need separate releases/updates. The owner
+  handles the external change from 600/2,000 to 1,200/4,000 credits. Neither a
+  new payment provider nor a live paid test is part of this update.
+
 - Run `pnpm -C api test:buymeacoffee` and `pnpm -C web check`.
 - Run i18n completeness and encoding checks.
 - Verify copy success, manual copy after clipboard failure, external checkout,

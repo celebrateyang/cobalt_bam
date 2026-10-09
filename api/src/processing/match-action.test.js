@@ -26,6 +26,23 @@ const youtubeResult = {
     duration: 60,
 };
 
+test("Douyin picker exposes original MP3 audio with its unchanged filename", () => {
+    const picker = [{ type: "photo", url: "https://example.com/photo.jpg" }];
+    const audio = "https://example.com/tunnel?id=audio";
+    for (const audioFormat of ["best", "mp3", "ogg"]) {
+        const response = matchAction({
+            ...baseArgs,
+            host: "douyin",
+            audioFormat,
+            r: { picker, audio, audioFilename: "ceramics_audio.mp3" },
+        });
+        assert.equal(response.body.status, "picker");
+        assert.deepEqual(response.body.picker, picker);
+        assert.equal(response.body.audio, audio);
+        assert.equal(response.body.audioFilename, "ceramics_audio.mp3");
+    }
+});
+
 test("returns Amazon HLS through Direct Bridge even with forced local processing", () => {
     const url = "https://m.media-amazon.com/replay/720.m3u8";
     for (const localProcessing of ["disabled", "preferred", "forced"]) {

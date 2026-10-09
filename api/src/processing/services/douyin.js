@@ -1,6 +1,7 @@
 import { env } from "../../config.js";
 import { getCookie, updateCookie } from "../cookie/manager.js";
 import { requestUpstream } from "../upstream/request.js";
+import { createStream } from "../../stream/manage.js";
 
 // Mobile UA is required for the share page logic to work without X-Bogus
 // Verified working as of Dec 2025
@@ -215,12 +216,29 @@ const requestUpstreamCobalt = async (targetUrl, options = {}) => {
                 }
                 return null;
             }
+            if (payload.status === "picker" && Array.isArray(payload.picker) && (payload.picker.length || payload.audio)) {
+                return {
+                    picker: payload.picker,
+                    ...(payload.audio ? { audio: payload.audio, audioFilename: payload.audioFilename } : {}),
+                };
+            }
             if (!["redirect", "tunnel"].includes(payload.status) || !payload.url) {
                 if (attempt < timeoutPlan.length - 1) {
                     await sleep(250 + attempt * 200);
                     continue;
                 }
                 return null;
+            }
+
+            // Older upstreams can label slideshow background music as MP4.
+            // Expose it through the picker's separate audio download instead.
+            const audioUrl = payload.directUrl || payload.url;
+            if (isDouyinAudioUrl(audioUrl)) {
+                const filenameBase = buildFilenameBase(
+                    String(payload.filename || "").replace(/\.[a-z0-9]+$/i, ""),
+                    "audio",
+                );
+                return { picker: [], ...buildDouyinAudioResult([audioUrl], filenameBase) };
             }
 
             let normalizedUrl = payload.url;
@@ -487,7 +505,7 @@ const fetchAppAwemeDetail = async (videoId) => {
         if (!res.ok) return null;
         const json = await res.json().catch(() => null);
         const item = json?.status_code === 0 ? json?.aweme_detail : null;
-        return item?.video?.play_addr ? item : null;
+        return (item?.video?.play_addr || getDouyinImages(item).length) ? item : null;
     } catch {
         return null;
     }
@@ -593,7 +611,7 @@ const probeContentLength = async (url, timeoutMs = PAGE_TIMEOUT_MS) => {
         });
 
         return {
-            statusCode: res.status,
+            statusCode: /^audio\//i.test(res.headers.get("content-type") || "") ? 415 : res.status,
             bytes: parseTotalLength(res.headers),
             finalUrl: res.url,
         };
@@ -1199,6 +1217,71 @@ const normalizeMediaUrlCandidate = (raw) => {
     return null;
 };
 
+const isDouyinAudioUrl = (raw) => {
+    try {
+        const url = new URL(raw);
+        return /\.(?:mp3|m4a|aac|wav|ogg)$/i.test(url.pathname) ||
+            url.pathname.includes("/ies-music/");
+    } catch {
+        return false;
+    }
+};
+
+const getDouyinImages = (item) => {
+    if (Array.isArray(item?.images) && item.images.length) return item.images;
+    return Array.isArray(item?.image_post_info?.images) ? item.image_post_info.images : [];
+};
+
+const buildDouyinAudioResult = (candidates, filenameBase) => {
+    const url = candidates.map(normalizeMediaUrlCandidate).find((value) => value && isDouyinAudioUrl(value));
+    if (!url) return {};
+    const extension = new URL(url).pathname.match(/\.(mp3|m4a|aac|wav|ogg)$/i)?.[1]?.toLowerCase() || "mp3";
+    const audioFilename = `${filenameBase}_audio.${extension}`;
+    return {
+        audio: createStream({
+            service: "douyin",
+            type: "proxy",
+            url,
+            headers: { "User-Agent": MOBILE_UA },
+            filename: audioFilename,
+        }),
+        audioFilename,
+    };
+};
+
+const buildDouyinImageResult = ({ item, videoId, providedFilenameBase }) => {
+    const images = getDouyinImages(item);
+    if (!images.length) return null;
+    const filenameBase = providedFilenameBase || buildFilenameBase(buildDisplayTitle(item.desc, item), videoId);
+    const picker = images.flatMap((image, index) => {
+        const candidates = image?.url_list || image?.display_image?.url_list || image?.origin_image?.url_list;
+        const url = Array.isArray(candidates)
+            ? candidates.map(normalizeMediaUrlCandidate).find(Boolean)
+            : null;
+        if (!url) return [];
+        const pathname = new URL(url).pathname;
+        const extension = pathname.match(/\.(jpg|jpeg|png|webp|avif|heic)$/i)?.[1]?.toLowerCase() || "jpg";
+        return [{
+            type: "photo",
+            url: createStream({
+                service: "douyin",
+                type: "proxy",
+                url,
+                headers: { "User-Agent": MOBILE_UA },
+                filename: `${filenameBase}_${index + 1}.${extension}`,
+            }),
+        }];
+    });
+    const audio = buildDouyinAudioResult([
+        ...(Array.isArray(item?.music?.play_url?.url_list) ? item.music.play_url.url_list : []),
+        item?.music?.play_url?.uri,
+        ...(Array.isArray(item?.video?.play_addr?.url_list) ? item.video.play_addr.url_list : []),
+        item?.video?.play_addr?.uri,
+    ], filenameBase);
+    // Never continue into video extraction when an image post has no usable images.
+    return picker.length || audio.audio ? { picker, ...audio } : { error: "fetch.empty" };
+};
+
 const buildOrderedMediaCandidates = (item, videoUri) => {
     const directVod = [];
     const nonWatermarkedApi = [];
@@ -1208,6 +1291,7 @@ const buildOrderedMediaCandidates = (item, videoUri) => {
 
     const pushIntoBucket = (raw) => {
         const url = normalizeMediaUrlCandidate(raw);
+        if (isDouyinAudioUrl(url)) return;
         if (!url || seen.has(url)) return;
         seen.add(url);
 
@@ -1256,7 +1340,7 @@ const buildOrderedMediaCandidates = (item, videoUri) => {
     pushUrls(item?.video?.play_addr_265?.url_list);
     pushUrls(item?.video?.download_addr?.url_list);
 
-    if (videoUri) {
+    if (videoUri && !isDouyinAudioUrl(videoUri)) {
         const directVideoUri = normalizeMediaUrlCandidate(videoUri);
         if (directVideoUri) {
             pushIntoBucket(directVideoUri);
@@ -1290,6 +1374,8 @@ const mergeOrderedMediaCandidates = (...candidateGroups) => {
 };
 
 const tryBuildAppDirectResult = async ({ item, videoId, providedFilenameBase }) => {
+    const imageResult = buildDouyinImageResult({ item, videoId, providedFilenameBase });
+    if (imageResult) return imageResult;
     if (!item?.video?.play_addr) return null;
 
     const candidates = buildOrderedMediaCandidates(item);
@@ -1365,6 +1451,7 @@ export default async function(obj) {
             });
             if (upstreamTargetUrl) {
                 const upstream = await requestUpstreamCobalt(upstreamTargetUrl);
+                if (upstream?.picker) return upstream;
                 if (upstream?.url) {
                     const providedFilenameBase = getProvidedFilenameBase(obj.shortLink);
                     logUpstreamUsed("shortlink_fetch_failed", {
@@ -1522,6 +1609,7 @@ export default async function(obj) {
                 });
 
                 const upstream = await requestUpstreamCobalt(upstreamTargetUrl);
+                if (upstream?.picker) return upstream;
                 if (upstream?.url) {
                     logUpstreamUsed("waf_fetch", {
                         videoId,
@@ -1609,6 +1697,7 @@ export default async function(obj) {
                 });
 
                 const upstream = await requestUpstreamCobalt(upstreamTargetUrl);
+                if (upstream?.picker) return upstream;
                 if (upstream?.url) {
                     logUpstreamUsed("waf_parse", {
                         videoId,
@@ -1674,6 +1763,7 @@ export default async function(obj) {
                 const upstream = await requestUpstreamCobalt(upstreamTargetUrl, {
                     quickMode: true,
                 });
+                if (upstream?.picker) return upstream;
                 if (upstream?.url) {
                     logUpstreamUsed("no_video_info", {
                         videoId,
@@ -1758,6 +1848,7 @@ export default async function(obj) {
                 const upstream = await requestUpstreamCobalt(upstreamTargetUrl, {
                     quickMode: true,
                 });
+                if (upstream?.picker) return upstream;
                 if (upstream?.url) {
                     logUpstreamUsed("no_item_list", {
                         videoId,
@@ -1798,7 +1889,9 @@ export default async function(obj) {
             throw new Error("no item list");
         }
 
-        const videoUri = item.video.play_addr.uri;
+        const imageResult = buildDouyinImageResult({ item, videoId, providedFilenameBase });
+        if (imageResult) return imageResult;
+        const videoUri = item?.video?.play_addr?.uri;
         const detailItem = await fetchWebAwemeDetail(videoId);
         const titleItem = detailItem || appDetailItem || item;
         const title = titleItem?.desc || item.desc;
@@ -1904,6 +1997,7 @@ export default async function(obj) {
                         const upstream = await requestUpstreamCobalt(upstreamTargetUrl, {
                             quickMode: true,
                         });
+                        if (upstream?.picker) return upstream;
                         if (upstream?.url) {
                             logUpstreamUsed("aweme_only_waf_probe_status", {
                                 videoId,
@@ -2027,6 +2121,7 @@ export default async function(obj) {
                 const upstream = await requestUpstreamCobalt(upstreamTargetUrl, {
                     quickMode: awemeOnlyPayload,
                 });
+                if (upstream?.picker) return upstream;
                 if (upstream?.url) {
                     const upstreamReason = "direct_probe_status";
                     logUpstreamUsed(upstreamReason, {

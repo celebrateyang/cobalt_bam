@@ -234,6 +234,10 @@ export default function({
         case "picker":
             responseType = "picker";
             switch (host) {
+                case "douyin":
+                    params = { picker: r.picker, url: r.audio, filename: r.audioFilename };
+                    break;
+
                 case "instagram":
                 case "twitter":
                 case "snapchat":

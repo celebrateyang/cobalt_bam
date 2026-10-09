@@ -71,6 +71,30 @@ test("App slideshow download_url_list is used even when url_list is empty", asyn
     assert.equal(result.picker[0].type, "photo");
 });
 
+test("slideshow uses the signed clean image instead of the watermarked download", async (t) => {
+    const clean = "https://p26-sign.douyinpic.com/photo~tplv-dy-shrink:2160:1440.webp?x-signature=clean%2Bsignature";
+    const watermarked = "https://p26-sign.douyinpic.com/photo~tplv-dy-water-v2:account:2160:1440.webp?x-signature=watermark";
+    t.mock.method(globalThis, "fetch", async () => Response.json({
+        status_code: 0,
+        aweme_detail: { images: [{ url_list: [clean], download_url_list: [watermarked] }] },
+    }));
+    const result = await douyin({ id: videoId });
+    const stream = await audioStream({ audio: result.picker[0].url });
+    assert.equal(stream.urls, clean);
+    assert.ok(stream.filename.endsWith(".webp"));
+});
+
+test("watermark template is skipped even when it appears in the primary list", async (t) => {
+    const watermarked = "https://p26-sign.douyinpic.com/photo~tplv-dy-water-v2:account.webp";
+    t.mock.method(globalThis, "fetch", async () => Response.json({
+        status_code: 0,
+        aweme_detail: { images: [{ url_list: [watermarked, image] }] },
+    }));
+    const result = await douyin({ id: videoId });
+    const stream = await audioStream({ audio: result.picker[0].url });
+    assert.equal(stream.urls, image);
+});
+
 for (const emptyShell of [false, true]) {
     test(`shared slides SSR extracts images (client-only first page: ${emptyShell})`, async (t) => {
         const slidesUrl = `https://www.iesdouyin.com/share/slides/${videoId}/?from_ssr=1`;

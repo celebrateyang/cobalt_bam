@@ -1255,14 +1255,17 @@ const buildDouyinImageResult = ({ item, videoId, providedFilenameBase }) => {
     const filenameBase = providedFilenameBase || buildFilenameBase(buildDisplayTitle(item.desc, item), videoId);
     const picker = images.flatMap((image, index) => {
         const candidates = [
-            image?.download_url_list,
+            image?.origin_image?.url_list,
             image?.url_list,
             image?.display_image?.url_list,
-            image?.origin_image?.url_list,
-        ].flatMap((list) => Array.isArray(list) ? list : []);
-        const url = Array.isArray(candidates)
-            ? candidates.map(normalizeMediaUrlCandidate).find(Boolean)
-            : null;
+            image?.download_url_list,
+        ].flatMap((list) => Array.isArray(list) ? list : [])
+            .map(normalizeMediaUrlCandidate).filter(Boolean);
+        // Douyin's download list uses dy-water-v2 templates; display/original
+        // lists expose signed images without the platform watermark. Preserve
+        // these URLs exactly, since changing the template invalidates signatures.
+        const url = candidates.find((candidate) => !/~tplv-[^/?]*water/i.test(new URL(candidate).pathname))
+            || candidates[0];
         if (!url) return [];
         const pathname = new URL(url).pathname;
         const extension = pathname.match(/\.(jpg|jpeg|png|webp|avif|heic)$/i)?.[1]?.toLowerCase() || "jpg";

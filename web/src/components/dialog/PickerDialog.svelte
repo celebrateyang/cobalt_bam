@@ -214,6 +214,8 @@
         align-items: flex-start;
         gap: 3px;
         max-width: calc(var(--picker-item-size) * 4);
+        width: 100%;
+        padding-right: 44px;
     }
 
     .popup-title-container {
@@ -226,6 +228,10 @@
     }
 
     .picker-close {
+        position: absolute;
+        top: var(--dialog-padding);
+        right: var(--dialog-padding);
+        z-index: 1;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -233,7 +239,12 @@
         width: 36px;
         height: 36px;
         padding: 0;
-        margin-left: auto;
+        margin: 0;
+    }
+
+    .picker-close :global(svg) {
+        width: 21px;
+        height: 21px;
     }
 
     .popup-title-container :global(svg) {

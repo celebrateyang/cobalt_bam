@@ -26,6 +26,19 @@ const youtubeResult = {
     duration: 60,
 };
 
+test("Pinterest HLS is remuxed to MP4 instead of redirecting to a playlist", () => {
+    const url = "https://v1.pinimg.com/videos/iht/hls/example.m3u8";
+    const response = matchAction({
+        ...baseArgs, host: "pinterest",
+        r: { urls: url, isHLS: true, filename: "pinterest_1129136937861945132.mp4" },
+    });
+    assert.equal(response.status, 200);
+    assert.equal(response.body.status, "tunnel");
+    assert.equal(response.body.type, "remux");
+    assert.equal(response.body.filename, "pinterest_1129136937861945132.mp4");
+    assert.equal(new URL(response.body.url).pathname, "/tunnel");
+});
+
 test("Douyin picker exposes original MP3 audio with its unchanged filename", () => {
     const picker = [{ type: "photo", url: "https://example.com/photo.jpg" }];
     const audio = "https://example.com/tunnel?id=audio";

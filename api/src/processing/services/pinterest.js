@@ -26,12 +26,15 @@ export default async function(o) {
 
     if (invalidPin) return { error: "fetch.empty" };
 
-    const videoLink = [...html.matchAll(videoRegex)]
-                    .map(([, link]) => link)
-                    .find(a => a.endsWith('.mp4'));
+    const videoLinks = [...html.matchAll(videoRegex)].map(([, link]) => link);
+    // Pinterest sometimes omits progressive URLs from StoryPinVideoBlock data.
+    // Use the existing HLS processing path when only a playlist is available.
+    const videoLink = videoLinks.find(a => a.endsWith('.mp4'))
+                    || videoLinks.find(a => a.endsWith('.m3u8'));
 
     if (videoLink) return {
         urls: videoLink,
+        ...(videoLink.endsWith('.m3u8') ? { isHLS: true } : {}),
         filename: `pinterest_${id}.mp4`,
         audioFilename: `pinterest_${id}_audio`
     }

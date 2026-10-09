@@ -79,6 +79,11 @@
             "video/mp4": "mp4",
             "video/webm": "webm",
             "video/quicktime": "mov",
+            "audio/mpeg": "mp3",
+            "audio/mp4": "m4a",
+            "audio/aac": "aac",
+            "audio/wav": "wav",
+            "audio/ogg": "ogg",
         };
         return extensions[contentType.split(";")[0].toLowerCase()] ?? "jpg";
     };

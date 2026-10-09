@@ -980,23 +980,17 @@ export const savingHandler = async ({
             },
         ];
 
-        if (response.audio) {
-            const pickerAudio = normalizeTunnelUrl(response.audio) || response.audio;
-            buttons.unshift({
-                text: get(t)("button.download.audio"),
-                main: false,
-                action: () => {
-                    downloadFile({
-                        url: pickerAudio,
-                    });
-                },
-            });
-        }
-
         createDialog({
             id: "download-picker",
             type: "picker",
-            items: response.picker.map((item) => ({
+            items: [...response.picker, ...(response.audio ? [{
+                type: "video" as const,
+                kind: "audio" as const,
+                url: response.audio,
+                filename: response.audioFilename,
+                label: get(t)("button.download.audio"),
+                note: response.audioFilename,
+            }] : [])].map((item) => ({
                 ...item,
                 url: normalizeTunnelUrl(item.url) || item.url,
             })),

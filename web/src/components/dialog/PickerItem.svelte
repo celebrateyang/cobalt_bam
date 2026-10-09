@@ -53,6 +53,11 @@
         {/if}
         </div>
 
+        {#if itemKind === "audio"}
+        <div class="picker-image picker-audio" aria-label={$t("button.download.audio")}>
+            <IconMusic />
+        </div>
+        {:else}
         <img
         class="picker-image"
         src={item.thumb ?? item.url}
@@ -62,6 +67,7 @@
         alt="{$t(`a11y.dialog.picker.item.${itemType}`)} {number}"
         />
         <Skeleton class="picker-image elevated" hidden={imageLoaded} />
+        {/if}
 
         {#if item.label || item.note}
             <div class="picker-meta">
@@ -121,6 +127,18 @@
 
     .picker-image.loading {
         display: none;
+    }
+
+    .picker-audio {
+        display: grid;
+        place-items: center;
+        background: var(--secondary-background);
+        color: var(--secondary);
+    }
+
+    .picker-audio :global(svg) {
+        width: 44px;
+        height: 44px;
     }
 
     .picker-image.video-thumbnail {

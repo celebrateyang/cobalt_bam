@@ -1254,7 +1254,12 @@ const buildDouyinImageResult = ({ item, videoId, providedFilenameBase }) => {
     if (!images.length) return null;
     const filenameBase = providedFilenameBase || buildFilenameBase(buildDisplayTitle(item.desc, item), videoId);
     const picker = images.flatMap((image, index) => {
-        const candidates = image?.url_list || image?.display_image?.url_list || image?.origin_image?.url_list;
+        const candidates = [
+            image?.download_url_list,
+            image?.url_list,
+            image?.display_image?.url_list,
+            image?.origin_image?.url_list,
+        ].flatMap((list) => Array.isArray(list) ? list : []);
         const url = Array.isArray(candidates)
             ? candidates.map(normalizeMediaUrlCandidate).find(Boolean)
             : null;
@@ -1506,6 +1511,9 @@ export default async function(obj) {
 
     // Fetch share page
     const shareUrls = [
+        ...(resolvedTargetUrl && /\/share\/slides\//.test(new URL(resolvedTargetUrl).pathname)
+            ? [resolvedTargetUrl]
+            : []),
         `https://www.iesdouyin.com/share/video/${videoId}`,
         `https://m.douyin.com/share/video/${videoId}`,
     ];
@@ -1566,6 +1574,13 @@ export default async function(obj) {
                     break;
                 }
 
+                // Overseas slideshow pages can be client-only shells. Keep
+                // trying the video share fallback rather than parsing an empty shell.
+                if (new URL(candidateUrl).pathname.includes("/share/slides/") &&
+                    !/window\._(?:ROUTER|RENDER)_DATA\s*=/.test(body)) {
+                    lastFetchError = new Error("no slideshow router data");
+                    break;
+                }
                 html = body;
                 break;
             } catch (e) {
@@ -1743,10 +1758,10 @@ export default async function(obj) {
         const loaderData = data.loaderData;
         if (!loaderData) throw new Error("no loaderData");
 
-        const videoPageKey = Object.keys(loaderData).find(k => k.includes('video_') && k.includes('/page'));
+        const videoPageKey = Object.keys(loaderData).find(k => /^(?:video|slides)_/.test(k) && k.includes('/page'));
         if (!videoPageKey) throw new Error("no video page key");
 
-        const videoInfoRes = loaderData[videoPageKey].videoInfoRes;
+        const videoInfoRes = loaderData[videoPageKey].slidesInfoRes || loaderData[videoPageKey].videoInfoRes;
         if (!videoInfoRes) {
             const upstreamTargetUrl = getUpstreamTargetUrl({
                 videoId,
@@ -1808,7 +1823,7 @@ export default async function(obj) {
                 .filter(Boolean)
             : [];
 
-        const item = videoInfoRes.item_list ? videoInfoRes.item_list[0] : null;
+        const item = videoInfoRes.aweme_details?.[0] || videoInfoRes.item_list?.[0] || null;
         if (!item) {
             if (filterReasons.length) {
                 console.warn("[douyin] video unavailable from share payload", {

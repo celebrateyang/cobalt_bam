@@ -61,6 +61,41 @@ test("image-only App detail is retained without video.play_addr", async (t) => {
     assert.equal(result.audio, undefined);
 });
 
+test("App slideshow download_url_list is used even when url_list is empty", async (t) => {
+    t.mock.method(globalThis, "fetch", async () => Response.json({
+        status_code: 0,
+        aweme_detail: { images: [{ url_list: [], download_url_list: [image] }] },
+    }));
+    const result = await douyin({ id: videoId });
+    assert.equal(result.picker.length, 1);
+    assert.equal(result.picker[0].type, "photo");
+});
+
+for (const emptyShell of [false, true]) {
+    test(`shared slides SSR extracts images (client-only first page: ${emptyShell})`, async (t) => {
+        const slidesUrl = `https://www.iesdouyin.com/share/slides/${videoId}/?from_ssr=1`;
+        const requests = [];
+        t.mock.method(globalThis, "fetch", async (input) => {
+            const url = String(input);
+            requests.push(url);
+            if (url.includes("v.douyin.com")) return new Response(null, { status: 302, headers: { location: slidesUrl } });
+            if (url.includes("api.amemv.com")) return Response.json({ status_code: 0 });
+            if (emptyShell && url === slidesUrl) return new Response("<html><div id=root></div></html>");
+            return new Response(`<script>window._ROUTER_DATA=${JSON.stringify({
+                loaderData: { "slides_(id)/page": { slidesInfoRes: { status_code: 0, aweme_details: [{
+                    images: [{ download_url_list: [image] }, { download_url_list: [image.replace("image.jpeg", "second.jpeg")] }],
+                    video: { play_addr: { uri: music } },
+                }] } } },
+            })}</script>`);
+        });
+        const result = await douyin({ shortLink: "nUh1gtRAwtU" });
+        assert.equal(result.picker.length, 2);
+        assert.ok(result.audio);
+        assert.equal(requests[2], slidesUrl);
+        assert.equal(requests.length, emptyShell ? 4 : 3);
+    });
+}
+
 test("ordinary App videos still use the direct video flow", async (t) => {
     const media = "https://v26.douyinvod.com/example.mp4";
     t.mock.method(globalThis, "fetch", async (input) => {

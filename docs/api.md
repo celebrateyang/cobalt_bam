@@ -231,3 +231,26 @@ response body type: `application/json`
 | `commit`    | `string` | commit hash       |
 | `branch`    | `string` | git branch        |
 | `remote`    | `string` | git remote        |
+
+# User points lookup
+
+`GET /user/points` requires the current user's Clerk bearer token. It reads
+the local user balance, membership, referral code and first-download eligibility
+and returns them under `data.user`. It does not fetch a Clerk user profile,
+create a user, or update user metadata. Responses use `Cache-Control: no-store`.
+
+An unsynced user receives `404 USER_NOT_SYNCED`; a disabled user receives `403`.
+Registration/login continues to synchronize user profiles via `GET /user/me`.
+Only after `USER_NOT_SYNCED`, the frontend joins the current user's pending
+registration sync or starts a recovery sync if none is running. After a
+successful sync it retries the points lookup or Discover consumption once,
+using a fresh token for the same user. Concurrent callers share the sync.
+Network errors, timeouts and other error responses do not trigger consumption
+retries. Failed synchronization leaves the request available for a manual retry.
+
+`POST /user/points/consume`, `POST /user/points/hold/finalize` and
+`POST /user/points/hold/release` also resolve the authenticated user from the
+local database without fetching or upserting Clerk profile data. Missing local
+users receive `404 USER_NOT_SYNCED`. The download entry point retains its
+existing fallback that creates a local user if needed before reserving points.
+Points transactions, hold ownership checks and idempotency remain unchanged.

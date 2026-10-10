@@ -4,11 +4,13 @@ import vm from 'node:vm';
 import { test } from 'node:test';
 import ts from 'typescript';
 
+const token = 'header.' + Buffer.from(JSON.stringify({ sub: 'user_test' })).toString('base64url') + '.signature';
+
 const fixture = ({ tokenStalled = false, syncFailed = false } = {}) => {
     const timers = new Map();
-    let nextTimer = 0, listener, syncCalls = 0;
+    let nextTimer = 0, listener, syncCalls = 0, resolveSync;
     const writable = value => ({ value, set(next) { this.value = next; } });
-    const session = { getToken: () => tokenStalled ? new Promise(() => {}) : Promise.resolve('token') };
+    const session = { getToken: () => tokenStalled ? new Promise(() => {}) : Promise.resolve(token) };
     const instance = {
         user: { id: 'user_test' }, session,
         load: async () => {},
@@ -29,14 +31,19 @@ const fixture = ({ tokenStalled = false, syncFailed = false } = {}) => {
         compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
     }).outputText;
     vm.runInNewContext(code, {
-        exports, Date, AbortSignal, console: { debug() {} },
+        exports, Date, AbortSignal, atob, console: { debug() {} },
         window: { location: { pathname: '/en/account' }, localStorage: { getItem() {}, setItem() {} } },
         require(name) { assert.ok(name in dependencies, name); return dependencies[name]; },
-        fetch() { syncCalls++; return syncFailed ? Promise.resolve({ ok: false, status: 503 }) : new Promise(() => {}); },
+        fetch() { syncCalls++; return syncFailed ? Promise.resolve({ ok: false, status: 503 }) : new Promise(resolve => { resolveSync = resolve; }); },
         setTimeout(fn, ms) { const id = ++nextTimer; timers.set(id, { fn, ms }); return id; },
         clearTimeout(id) { timers.delete(id); },
     });
-    return { exports, instance, timers, get listener() { return listener; }, get syncCalls() { return syncCalls; } };
+    return {
+        exports, instance, timers,
+        setSyncFailed(value) { syncFailed = value; },
+        completeSync() { resolveSync({ ok: true, json: async () => ({ data: { user: {} } }) }); },
+        get listener() { return listener; }, get syncCalls() { return syncCalls; },
+    };
 };
 
 test('stalled profile sync does not block initialization, tokens, or auth listener', async () => {
@@ -48,7 +55,7 @@ test('stalled profile sync does not block initialization, tokens, or auth listen
     assert.equal(initialized, f.instance);
     for (let i = 0; i < 10; i++) await Promise.resolve();
     assert.equal(f.syncCalls, 1);
-    assert.equal(await f.exports.getClerkToken(), 'token');
+    assert.equal(await f.exports.getClerkToken(), token);
     assert.equal(typeof f.listener, 'function');
     f.listener({ user: null, session: null });
     assert.equal(f.exports.clerkUser.value, null);
@@ -74,4 +81,63 @@ test('failed background synchronization can be retried by an auth update', async
     f.listener({ user: f.instance.user, session: f.instance.session });
     for (let i = 0; i < 10; i++) await Promise.resolve();
     assert.equal(f.syncCalls, 2);
+});
+
+test('missing-user recovery restarts failed sync and shares it among concurrent callers', async () => {
+    const f = fixture({ syncFailed: true });
+    await f.exports.initClerk();
+    for (let i = 0; i < 20; i++) await Promise.resolve();
+    assert.equal(f.syncCalls, 1);
+    f.setSyncFailed(false);
+    const first = f.exports.syncMissingUser(token);
+    const second = f.exports.syncMissingUser(token);
+    for (let i = 0; i < 20; i++) await Promise.resolve();
+    assert.equal(f.syncCalls, 2);
+    f.completeSync();
+    assert.equal(await first, token);
+    assert.equal(await second, token);
+});
+
+test('new-user recovery joins the pending registration sync', async () => {
+    const f = fixture();
+    await f.exports.initClerk();
+    const recovered = f.exports.syncMissingUser(token);
+    for (let i = 0; i < 20; i++) await Promise.resolve();
+    assert.equal(f.syncCalls, 1);
+    f.completeSync();
+    assert.equal(await recovered, token);
+});
+
+test('failed recovery returns no retry token and permits a later recovery attempt', async () => {
+    const f = fixture({ syncFailed: true });
+    await f.exports.initClerk();
+    for (let i = 0; i < 20; i++) await Promise.resolve();
+    assert.equal(await f.exports.syncMissingUser(token), null);
+    assert.equal(await f.exports.syncMissingUser(token), null);
+    assert.equal(f.syncCalls, 3);
+});
+
+test('switching accounts while synchronization is pending cancels request recovery', async () => {
+    const f = fixture();
+    await f.exports.initClerk();
+    const recovered = f.exports.syncMissingUser(token);
+    for (let i = 0; i < 20; i++) await Promise.resolve();
+    f.instance.user = { id: 'other_user' };
+    f.completeSync();
+    assert.equal(await recovered, null);
+});
+
+test('a synchronous token error does not leave recovery stuck on a cached failure', async () => {
+    const f = fixture({ syncFailed: true });
+    await f.exports.initClerk();
+    for (let i = 0; i < 20; i++) await Promise.resolve();
+    f.instance.session.getToken = () => { throw new Error('token unavailable'); };
+    assert.equal(await f.exports.syncMissingUser(token), null);
+    f.instance.session.getToken = async () => token;
+    f.setSyncFailed(false);
+    const recovered = f.exports.syncMissingUser(token);
+    for (let i = 0; i < 20; i++) await Promise.resolve();
+    assert.equal(f.syncCalls, 2);
+    f.completeSync();
+    assert.equal(await recovered, token);
 });

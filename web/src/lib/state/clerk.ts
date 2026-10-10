@@ -130,7 +130,7 @@ let initPromise: Promise<ClerkInstance | null> | null = null;
 let loadedLocaleKey: ClerkLocaleKey | null = null;
 let localeSyncPromise: Promise<void> | null = null;
 let lastSyncedUserId: string | null = null;
-let syncPromise: Promise<void> | null = null;
+const userSyncPromises = new Map<string, Promise<boolean>>();
 
 const CLERK_INIT_TIMEOUT_MS = 12000;
 const CLERK_TOKEN_TIMEOUT_MS = 10000;
@@ -267,25 +267,27 @@ const syncClerkLocale = async (instance: ClerkInstance) => {
     await localeSyncPromise;
 };
 
-const syncUserToAPI = async (instance: ClerkInstance | null | undefined) => {
-    if (!instance?.session) return;
+const syncUserToAPI = async (
+    instance: ClerkInstance | null | undefined,
+    force = false,
+): Promise<boolean> => {
+    if (!instance?.session) return false;
 
     const userId = instance.user?.id;
-    if (!userId || userId === lastSyncedUserId) return;
+    if (!userId) return false;
+    const pending = userSyncPromises.get(userId);
+    if (pending) return pending;
+    if (!force && userId === lastSyncedUserId) return true;
+    const session = instance.session;
 
     markClerkSignInSeenLocally();
 
-    if (syncPromise) {
-        await syncPromise;
-        if (lastSyncedUserId === userId) return;
-    }
-
-    syncPromise = (async () => {
+    const syncPromise = (async () => {
         try {
             const token = await withTimeout(
-                instance.session!.getToken(), CLERK_TOKEN_TIMEOUT_MS, "Clerk token",
+                session.getToken(), CLERK_TOKEN_TIMEOUT_MS, "Clerk token",
             );
-            if (!token) return;
+            if (!token) return false;
 
             const apiBase = currentApiURL();
             const response = await fetch(`${apiBase}/user/me`, {
@@ -306,21 +308,56 @@ const syncUserToAPI = async (instance: ClerkInstance | null | undefined) => {
                     code === "DUPLICATE_SIGNUP_BLOCKED" ||
                     code === "ACCOUNT_DISABLED"
                 ) {
-                    await instance.signOut().catch(() => {});
-                    clerkUser.set(null);
-                    clerkSession.set(null);
+                    if (instance.user?.id === userId && instance.session === session) {
+                        await withTimeout(instance.signOut(), USER_SYNC_TIMEOUT_MS, "Clerk sign out").catch(() => {});
+                        clerkUser.set(null);
+                        clerkSession.set(null);
+                    }
                 }
             }
 
             if (response?.ok) lastSyncedUserId = userId;
+            return response?.ok === true;
         } catch (error) {
             console.debug("Clerk syncUserToAPI failed", error);
-        } finally {
-            syncPromise = null;
+            return false;
         }
     })();
 
-    await syncPromise;
+    userSyncPromises.set(userId, syncPromise);
+    try {
+        return await syncPromise;
+    } finally {
+        if (userSyncPromises.get(userId) === syncPromise) userSyncPromises.delete(userId);
+    }
+};
+
+// Decode only to bind recovery to the original caller. The API verifies the JWT.
+const tokenUserId = (token: string): string | null => {
+    try {
+        const payload = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+        const sub = JSON.parse(atob(payload)).sub;
+        return typeof sub === "string" ? sub : null;
+    } catch {
+        return null;
+    }
+};
+
+// Called only after USER_NOT_SYNCED. Join the current sync or retry a failed one.
+export const syncMissingUser = async (originalToken: string): Promise<string | null> => {
+    const expectedUserId = tokenUserId(originalToken);
+    if (!expectedUserId) return null;
+    const instance = await initClerk();
+    const session = instance?.session;
+    if (!session || instance?.user?.id !== expectedUserId) return null;
+    if (!await syncUserToAPI(instance, true)) return null;
+    try {
+        const token = await withTimeout(session.getToken(), CLERK_TOKEN_TIMEOUT_MS, "Clerk token");
+        if (instance.user?.id !== expectedUserId || instance.session !== session) return null;
+        return token && tokenUserId(token) === expectedUserId ? token : null;
+    } catch {
+        return null;
+    }
 };
 
 export const initClerk = async () => {

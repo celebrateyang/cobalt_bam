@@ -3,7 +3,7 @@ import { page } from "$app/stores";
 
 import { get } from "svelte/store";
 
-import { currentApiURL } from "$lib/api/api-url";
+import { fetchUserPoints } from "$lib/api/user-points";
 import { trackTopupPrompt } from "$lib/analytics/commerce";
 import { t } from "$lib/i18n/translations";
 import { getClerkToken } from "$lib/state/clerk";
@@ -122,12 +122,7 @@ export const fetchCurrentUserPointsProfile =
     const token = await getClerkToken();
     if (!token) return null;
 
-    const apiBase = currentApiURL();
-    const res = await fetch(`${apiBase}/user/me`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }).catch(() => null);
+    const res = await fetchUserPoints(token).catch(() => null);
 
     if (!res?.ok) return null;
 

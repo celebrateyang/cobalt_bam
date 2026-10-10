@@ -1,5 +1,6 @@
 import express from "express";
 import { clerkClient, clerkMiddleware, getAuth } from "@clerk/express";
+import { createUserPointsHandler } from "./user-points.js";
 
 import {
     consumeUserPoints,
@@ -1066,7 +1067,7 @@ if (!isClerkApiConfigured) {
         });
     });
 
-    router.get("/me", (_, res) => {
+    router.get(["/me", "/points"], (_, res) => {
         res.status(501).json({
             status: "error",
             error: {
@@ -1254,7 +1255,7 @@ if (!isClerkApiConfigured) {
             });
         });
 
-        router.get("/me", (_, res) => {
+        router.get(["/me", "/points"], (_, res) => {
             res.status(501).json({
                 status: "error",
                 error: {
@@ -1384,6 +1385,10 @@ if (!isClerkApiConfigured) {
             const clerkUser = await clerkClient.users.getUser(clerkUserId);
             return upsertUserFromClerk(mapClerkUser(clerkUser));
         };
+
+        router.get("/points", createUserPointsHandler({
+            getAuth, getUserByClerkId, getActiveMembershipForUser,
+        }));
 
         router.get("/me", async (req, res) => {
             try {
@@ -2124,8 +2129,15 @@ if (!isClerkApiConfigured) {
                     );
                 }
 
-                const clerkUser = await clerkClient.users.getUser(auth.userId);
-                const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+                const user = await getUserByClerkId(auth.userId);
+                if (!user) {
+                    return jsonError(
+                        res,
+                        404,
+                        "USER_NOT_SYNCED",
+                        "User profile has not been synced yet",
+                    );
+                }
 
                 const updated = await consumeUserPoints(user.id, points);
                 if (!updated) {
@@ -2183,8 +2195,15 @@ if (!isClerkApiConfigured) {
                 const logContext = buildHoldLogContext(req);
                 console.log(`[hold-finalize] Request: userId=${auth.userId} holdId=${holdId} context=${JSON.stringify(logContext)}`);
 
-                const clerkUser = await clerkClient.users.getUser(auth.userId);
-                const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+                const user = await getUserByClerkId(auth.userId);
+                if (!user) {
+                    return jsonError(
+                        res,
+                        404,
+                        "USER_NOT_SYNCED",
+                        "User profile has not been synced yet",
+                    );
+                }
 
                 const result = await finalizePointsHold({
                     userId: user.id,
@@ -2283,8 +2302,15 @@ if (!isClerkApiConfigured) {
                 const logContext = buildHoldLogContext(req);
                 console.log(`[hold-release] Request: userId=${auth.userId} holdId=${holdId} context=${JSON.stringify(logContext)}`);
 
-                const clerkUser = await clerkClient.users.getUser(auth.userId);
-                const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+                const user = await getUserByClerkId(auth.userId);
+                if (!user) {
+                    return jsonError(
+                        res,
+                        404,
+                        "USER_NOT_SYNCED",
+                        "User profile has not been synced yet",
+                    );
+                }
 
                 const result = await releasePointsHold({
                     userId: user.id,

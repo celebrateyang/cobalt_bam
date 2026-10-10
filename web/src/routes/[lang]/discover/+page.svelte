@@ -5,6 +5,7 @@
 
     import { t } from "$lib/i18n/translations";
     import { currentApiURL } from "$lib/api/api-url";
+    import { fetchWithUserSync } from "$lib/api/user-points";
     import { curiousCat, type BlindBoxLink } from "$lib/api/curious-cat";
     import {
         accountPath,
@@ -948,14 +949,15 @@
         }
 
         const apiBase = currentApiURL();
-        const res = await fetch(`${apiBase}/user/points/consume`, {
+        const res = await fetchWithUserSync(retryToken => fetch(`${apiBase}/user/points/consume`, {
             method: "POST",
+            signal: AbortSignal.timeout(15000),
             headers: {
-                Authorization: `Bearer ${token}`,
+                Authorization: `Bearer ${retryToken}`,
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({ points: VIEW_POINT_COST }),
-        }).catch(() => null);
+        }), token).catch(() => null);
 
         const data = await res?.json().catch(() => ({}));
         if (!res?.ok || data?.status !== "success") {

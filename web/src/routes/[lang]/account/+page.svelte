@@ -17,6 +17,7 @@
         signUp,
     } from "$lib/state/clerk";
     import { currentApiURL } from "$lib/api/api-url";
+    import { fetchUserPoints } from "$lib/api/user-points";
     import {
         trackCheckoutStarted,
         trackPaymentStep,
@@ -340,13 +341,7 @@
             if (!isCurrentRequest()) return;
             if (!token) throw new Error("missing token");
 
-            const apiBase = currentApiURL();
-            const res = await fetch(`${apiBase}/user/me`, {
-                signal: AbortSignal.timeout(15000),
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            const res = await fetchUserPoints(token);
             const data = await res.json().catch(() => ({}));
             if (!isCurrentRequest()) return;
             if (!res.ok || data?.status !== "success") {

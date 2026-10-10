@@ -1,4 +1,8 @@
 {
+    "batch.sort": "เรียงลำดับ",
+    "batch.sort_original": "ลำดับเดิมของคอลเลกชัน",
+    "batch.sort_title_asc": "ชื่อ: ตัวเลขจากน้อยไปมาก",
+    "batch.sort_title_desc": "ชื่อ: ตัวเลขจากมากไปน้อย",
     "batch.open_collection": "เปิดรายการคอลเลกชัน",
     "batch.select_page": "เลือกหน้านี้",
     "batch.select_page_none": "ยกเลิกการเลือกหน้านี้",

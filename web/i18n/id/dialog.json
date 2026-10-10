@@ -1,4 +1,8 @@
 {
+    "batch.sort": "Urutkan",
+    "batch.sort_original": "Urutan asli koleksi",
+    "batch.sort_title_asc": "Judul: angka menaik",
+    "batch.sort_title_desc": "Judul: angka menurun",
     "batch.open_collection": "Buka daftar koleksi",
     "batch.select_page": "Pilih halaman ini",
     "batch.select_page_none": "Batalkan pilihan halaman ini",

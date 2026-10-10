@@ -1,4 +1,8 @@
 {
+    "batch.sort": "排序",
+    "batch.sort_original": "合集原顺序",
+    "batch.sort_title_asc": "标题：数字从小到大",
+    "batch.sort_title_desc": "标题：数字从大到小",
     "batch.open_collection": "打开合集列表",
     "batch.select_page": "选择本页",
     "batch.select_page_none": "取消本页选择",

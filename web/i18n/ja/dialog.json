@@ -1,4 +1,8 @@
 {
+    "batch.sort": "並び順",
+    "batch.sort_original": "コレクションの元の順序",
+    "batch.sort_title_asc": "タイトル：数字の昇順",
+    "batch.sort_title_desc": "タイトル：数字の降順",
     "batch.open_collection": "コレクション一覧を開く",
     "batch.select_page": "このページを選択",
     "batch.select_page_none": "このページの選択を解除",

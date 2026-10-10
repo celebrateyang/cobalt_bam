@@ -1,4 +1,8 @@
 {
+    "batch.sort": "Trier",
+    "batch.sort_original": "Ordre de la collection",
+    "batch.sort_title_asc": "Titre : nombres croissants",
+    "batch.sort_title_desc": "Titre : nombres décroissants",
     "batch.open_collection": "Ouvrir la collection",
     "batch.select_page": "Sélectionner cette page",
     "batch.select_page_none": "Désélectionner cette page",

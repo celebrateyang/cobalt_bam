@@ -28,7 +28,7 @@
     } from "$lib/state/clerk";
     import { requireDownloadAuth } from "$lib/auth/download-auth";
     import { uuid } from "$lib/util";
-    import { COLLECTION_PAGE_SIZE, COLLECTION_SELECTION_LIMIT, collectionVideoIdentity, selectCollectionPage } from "$lib/collection-selection";
+    import { COLLECTION_PAGE_SIZE, COLLECTION_SELECTION_LIMIT, collectionVideoIdentity, selectCollectionPage, collectionItemOrder } from "$lib/collection-selection";
     import {
         MEMBERSHIP_DOWNLOAD_LIMIT_ERROR,
         showMembershipDownloadLimitDialog,
@@ -66,6 +66,7 @@
 
     let selected: boolean[] = [];
     let currentPage = 1;
+    let sortOrder: "original" | "title-asc" | "title-desc" = "original";
     let selectionLimitNotice = false;
     let downloadedSelected: boolean[] = [];
     let running = false;
@@ -441,11 +442,13 @@
     $: selectedCountValue = selected.filter(Boolean).length;
     $: downloadedSelectedCountValue = downloadedSelected.filter(Boolean).length;
     $: activeItems = viewingDownloaded ? safeDownloadedItems : items;
+    $: orderedIndices = collectionItemOrder(activeItems, sortOrder, $page.params.lang || "en");
     $: pageCount = Math.max(1, Math.ceil(activeItems.length / COLLECTION_PAGE_SIZE));
     $: currentPage = Math.max(1, Math.min(currentPage, pageCount));
     $: pageStart = (currentPage - 1) * COLLECTION_PAGE_SIZE;
-    $: pageItems = activeItems.slice(pageStart, pageStart + COLLECTION_PAGE_SIZE);
-    $: pageIndices = pageItems.map((_, index) => pageStart + index)
+    $: pageItems = orderedIndices.slice(pageStart, pageStart + COLLECTION_PAGE_SIZE)
+        .map((index) => ({ item: activeItems[index], index }));
+    $: pageIndices = pageItems.map((entry) => entry.index)
         .filter((index) => !isItemRestricted(activeItems[index]));
     $: activeSelectionTotal = pageIndices.length;
     $: activeSelectedCount = pageIndices.filter((index) =>
@@ -935,6 +938,15 @@
         </div>
 
         <div class="batch-toolbar">
+            <label class="batch-sort">
+                <span>{$t("dialog.batch.sort")}</span>
+                <select bind:value={sortOrder} disabled={running || pointsCheckLoading}
+                    on:change={() => currentPage = 1}>
+                    <option value="original">{$t("dialog.batch.sort_original")}</option>
+                    <option value="title-asc">{$t("dialog.batch.sort_title_asc")}</option>
+                    <option value="title-desc">{$t("dialog.batch.sort_title_desc")}</option>
+                </select>
+            </label>
             {#if !viewingDownloaded}
                 {#if clerkEnabled && collectionKey && $isSignedIn}
                     <button
@@ -1001,8 +1013,9 @@
                 {/if}
             </div>
 
-            {#each pageItems as item, pageIndex (item.url)}
-                {@const i = pageStart + pageIndex}
+            {#each pageItems as entry (entry.item.url)}
+                {@const item = entry.item}
+                {@const i = entry.index}
                 <div
                     class="batch-item"
                     class:downloaded={viewingDownloaded}
@@ -1142,6 +1155,22 @@
 </DialogContainer>
 
 <style>
+    .batch-sort {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        max-width: 100%;
+    }
+    .batch-sort select {
+        max-width: 100%;
+        padding: 8px;
+        border-radius: 10px;
+        border: 1px solid var(--surface-2);
+        background: var(--surface-1);
+        color: var(--text);
+        font: inherit;
+    }
     .batch-pagination {
         display: flex;
         align-items: center;

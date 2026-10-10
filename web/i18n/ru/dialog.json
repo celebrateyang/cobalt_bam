@@ -1,4 +1,8 @@
 {
+    "batch.sort": "Сортировка",
+    "batch.sort_original": "Порядок коллекции",
+    "batch.sort_title_asc": "Название: числа по возрастанию",
+    "batch.sort_title_desc": "Название: числа по убыванию",
     "batch.open_collection": "Открыть список коллекции",
     "batch.select_page": "Выбрать эту страницу",
     "batch.select_page_none": "Снять выбор на странице",

@@ -1,6 +1,22 @@
 export const COLLECTION_PAGE_SIZE = 20;
 export const COLLECTION_SELECTION_LIMIT = 20;
 
+/**
+ * Sort display indices, leaving the underlying items and their selections intact.
+ * @param {{ title?: string, url: string }[]} items
+ * @param {'original' | 'title-asc' | 'title-desc'} order
+ * @param {string} locale
+ */
+export function collectionItemOrder(items, order, locale) {
+    const indices = items.map((_, index) => index);
+    if (order === 'original') return indices;
+    const collator = new Intl.Collator(locale, { numeric: true, sensitivity: 'base' });
+    const direction = order === 'title-desc' ? -1 : 1;
+    return indices.sort((a, b) => direction * collator.compare(
+        items[a].title || items[a].url, items[b].title || items[b].url,
+    ) || a - b);
+}
+
 /** @param {string} value */
 export function collectionVideoIdentity(value) {
     try {

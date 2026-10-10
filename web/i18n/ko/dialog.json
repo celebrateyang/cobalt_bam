@@ -1,4 +1,8 @@
 {
+    "batch.sort": "정렬",
+    "batch.sort_original": "컬렉션 원래 순서",
+    "batch.sort_title_asc": "제목: 숫자 오름차순",
+    "batch.sort_title_desc": "제목: 숫자 내림차순",
     "batch.open_collection": "컬렉션 목록 열기",
     "batch.select_page": "이 페이지 선택",
     "batch.select_page_none": "이 페이지 선택 해제",

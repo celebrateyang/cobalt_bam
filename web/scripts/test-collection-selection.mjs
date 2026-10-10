@@ -1,6 +1,25 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { COLLECTION_PAGE_SIZE, collectionVideoIdentity, selectCollectionPage } from '../src/lib/collection-selection.js';
+import { COLLECTION_PAGE_SIZE, collectionVideoIdentity, selectCollectionPage, collectionItemOrder } from '../src/lib/collection-selection.js';
+
+test('title sorting uses numeric order and keeps original item indices for selection', () => {
+    const items = [101, 100, 99, 20, 9, 2].map(number => ({ title: `Series (${number}) [1080P]`, url: `https://example.com/${number}` }));
+    const asc = collectionItemOrder(items, 'title-asc', 'zh');
+    assert.deepEqual(asc.map(index => items[index].title), [2, 9, 20, 99, 100, 101].map(number => `Series (${number}) [1080P]`));
+    assert.deepEqual(collectionItemOrder(items, 'original', 'zh'), [0, 1, 2, 3, 4, 5]);
+    assert.deepEqual(collectionItemOrder(items, 'title-desc', 'zh'), [0, 1, 2, 3, 4, 5]);
+    const selection = [true, false, false, false, false, false];
+    const selected = selectCollectionPage(selection, asc.slice(0, 2), true);
+    assert.deepEqual(selected, [true, false, false, false, true, true]);
+    assert.deepEqual(selectCollectionPage(selected, asc.slice(0, 2), false), selection);
+    assert.equal(items[0].title, 'Series (101) [1080P]');
+});
+
+test('title sorting is stable for equal titles and handles missing titles', () => {
+    const items = [{ title: 'Episode 2', url: 'b' }, { title: 'Episode 2', url: 'a' }, { url: 'Episode 10' }];
+    assert.deepEqual(collectionItemOrder(items, 'title-asc', 'en'), [0, 1, 2]);
+    assert.deepEqual(collectionItemOrder(items, 'title-desc', 'en'), [2, 0, 1]);
+});
 
 test('page selection preserves other pages and enforces a global limit of 20', () => {
     const original = Array(184).fill(false);

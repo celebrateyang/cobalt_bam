@@ -1,4 +1,8 @@
 {
+    "batch.sort": "Ordenar",
+    "batch.sort_original": "Orden de la colección",
+    "batch.sort_title_asc": "Título: números ascendentes",
+    "batch.sort_title_desc": "Título: números descendentes",
     "batch.open_collection": "Abrir lista de la colección",
     "batch.select_page": "Seleccionar esta página",
     "batch.select_page_none": "Desmarcar esta página",

@@ -1,4 +1,8 @@
 {
+    "batch.sort": "Sortierung",
+    "batch.sort_original": "Reihenfolge der Sammlung",
+    "batch.sort_title_asc": "Titel: Zahlen aufsteigend",
+    "batch.sort_title_desc": "Titel: Zahlen absteigend",
     "batch.open_collection": "Sammlung öffnen",
     "batch.select_page": "Diese Seite auswählen",
     "batch.select_page_none": "Seitenauswahl aufheben",

@@ -1,4 +1,8 @@
 {
+    "batch.sort": "Sắp xếp",
+    "batch.sort_original": "Thứ tự gốc của bộ sưu tập",
+    "batch.sort_title_asc": "Tiêu đề: số tăng dần",
+    "batch.sort_title_desc": "Tiêu đề: số giảm dần",
     "batch.open_collection": "Mở danh sách bộ sưu tập",
     "batch.select_page": "Chọn trang này",
     "batch.select_page_none": "Bỏ chọn trang này",

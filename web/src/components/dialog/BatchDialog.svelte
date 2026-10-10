@@ -898,7 +898,7 @@
         <div class="popup-header">
             <div class="popup-title-container">
                 <IconBoxMultiple />
-                <h2 class="popup-title" tabindex="-1">
+                <h2 class="popup-title" tabindex="-1" title={title || $t("dialog.batch.title")}>
                     {title || $t("dialog.batch.title")}
                 </h2>
             </div>
@@ -907,17 +907,17 @@
                     {$t("dialog.batch.status.running")}: {progress}/{totalToRun}
                 {:else}
                     {#if !viewingDownloaded}
-                        <div>
-                            {$t("dialog.batch.status.selected")}: {selectedCountValue}/{COLLECTION_SELECTION_LIMIT}
-                            · {$t("dialog.batch.total", { count: items.length })}
+                        <div class="summary-chip">
+                            {$t("dialog.batch.status.selected")}: <strong>{selectedCountValue}/{COLLECTION_SELECTION_LIMIT}</strong>
                         </div>
+                        <div class="summary-chip">{$t("dialog.batch.total", { count: items.length })}</div>
                     {:else}
-                        <div>
+                        <div class="summary-chip">
                             {$t("dialog.batch.status.selected")}: {downloadedSelectedCountValue}/{safeDownloadedItems.length}
                         </div>
                     {/if}
                     {#if clerkEnabled && collectionKey && $isSignedIn && safeDownloadedItems.length > 0}
-                        <div>
+                        <div class="summary-chip">
                             {$t("dialog.batch.status.downloaded")}: {safeDownloadedItems.length}
                             {#if collectionTotalCount}
                                 /{collectionTotalCount}
@@ -928,14 +928,15 @@
             </div>
         </div>
 
-        <div class="batch-notice" role="note">
+        <details class="batch-notice">
+            <summary>{$t("dialog.batch.footer_reminder")}</summary>
             <div class="batch-notice-line">
                 {$t("dialog.batch.manual_save_hint")}
             </div>
             <div class="batch-notice-line">
                 {$t("dialog.batch.keep_screen_on_hint")}
             </div>
-        </div>
+        </details>
 
         <div class="batch-toolbar">
             <label class="batch-sort">
@@ -1018,6 +1019,7 @@
                 {@const i = entry.index}
                 <div
                     class="batch-item"
+                    class:selected={viewingDownloaded ? downloadedSelected[i] : selected[i]}
                     class:downloaded={viewingDownloaded}
                     class:restricted={!viewingDownloaded && isItemRestricted(item)}
                     role="listitem"
@@ -1089,12 +1091,6 @@
         {/if}
 
         <div class="batch-footer">
-            {#if !running && !viewingDownloaded}
-                <div class="batch-footer-reminder" role="note">
-                    {$t("dialog.batch.footer_reminder")}
-                </div>
-            {/if}
-
             <div class="batch-footer-actions">
                 <button
                     class="button elevated footer-button"
@@ -1163,59 +1159,110 @@
         max-width: 100%;
     }
     .batch-sort select {
+        appearance: auto;
         max-width: 100%;
-        padding: 8px;
+        min-height: 34px;
+        padding: 5px 10px;
         border-radius: 10px;
-        border: 1px solid var(--surface-2);
-        background: var(--surface-1);
+        border: 2px solid var(--secondary);
+        background: var(--button);
         color: var(--text);
         font: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 2px 5px color-mix(in srgb, var(--secondary) 8%, transparent);
     }
+    .batch-sort select:hover:not(:disabled) {
+        background: color-mix(in srgb, var(--secondary) 8%, var(--button));
+    }
+    .batch-sort select:focus-visible {
+        outline: 2px solid var(--secondary);
+        outline-offset: 3px;
+    }
+    .batch-sort select:disabled { cursor: default; opacity: 0.6; }
     .batch-pagination {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        gap: 8px;
+        justify-content: center;
+        gap: 12px;
         flex-wrap: wrap;
+        padding-top: 0;
     }
-    .batch-pagination button { padding: 8px 12px; }
+    .batch-pagination button {
+        padding: 6px 12px;
+        min-height: 34px;
+        border: 1px solid var(--surface-2);
+        border-radius: 10px;
+    }
+    .batch-pagination span { font-size: 13px; font-variant-numeric: tabular-nums; }
+    .batch-pagination button:disabled { opacity: 0.45; }
     .batch-dialog {
-        gap: var(--padding);
-        max-height: calc(
-            90% - env(safe-area-inset-bottom) - env(safe-area-inset-top)
-        );
-        width: min(920px, calc(100% - var(--padding)));
+        --surface-1: var(--button);
+        --surface-2: var(--popup-stroke);
+        box-sizing: border-box;
+        align-items: stretch;
+        gap: 8px;
+        padding: 16px;
+        height: calc(96dvh - env(safe-area-inset-bottom) - env(safe-area-inset-top));
+        max-height: calc(96dvh - env(safe-area-inset-bottom) - env(safe-area-inset-top));
+        width: min(920px, calc(100vw - 32px));
+        overflow-x: hidden;
+        overflow-y: auto;
     }
+    .batch-dialog > * { flex-shrink: 0; }
 
     .popup-header {
         display: flex;
         flex-direction: column;
         align-items: flex-start;
-        gap: 3px;
+        gap: 6px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--surface-2);
     }
 
     .popup-title-container {
         display: flex;
         flex-direction: row;
-        align-items: center;
-        gap: calc(var(--padding) / 2);
-        color: var(--secondary);
+        align-items: flex-start;
+        gap: 6px;
+        min-width: 0;
+        color: var(--text);
     }
 
     .popup-title-container :global(svg) {
-        height: 21px;
-        width: 21px;
+        height: 18px;
+        width: 18px;
+        flex-shrink: 0;
+        color: var(--secondary);
+        margin-top: 2px;
     }
 
     .popup-title {
-        font-size: 18px;
-        line-height: 1.1;
+        font-size: 15px;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        overflow-wrap: anywhere;
         margin: 0;
     }
 
     .popup-description {
-        font-size: 13px;
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+        font-size: 11px;
         padding: 0;
+    }
+    .summary-chip {
+        padding: 3px 6px;
+        border-radius: 8px;
+        background: color-mix(in srgb, var(--secondary) 7%, var(--surface-1));
+        color: var(--text);
+        font-variant-numeric: tabular-nums;
     }
 
     .popup-title:focus-visible {
@@ -1224,45 +1271,64 @@
 
     .batch-toolbar {
         display: flex;
-        gap: calc(var(--padding) / 2);
+        gap: 6px;
+        align-items: center;
         flex-wrap: wrap;
     }
 
     .batch-notice {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        padding: 10px 12px;
-        border-radius: 10px;
-        border: 1px solid color-mix(in srgb, var(--secondary) 25%, transparent);
-        background: color-mix(in srgb, var(--secondary) 10%, var(--surface-1));
+        padding: 6px 10px;
+        border-radius: 8px;
+        border: 1px solid color-mix(in srgb, var(--secondary) 22%, transparent);
+        background: color-mix(in srgb, var(--secondary) 5%, var(--surface-1));
     }
+    .batch-notice summary {
+        font-size: 11px;
+        line-height: 1.4;
+        color: var(--gray);
+        cursor: pointer;
+    }
+    .batch-notice[open] .batch-notice-line { margin-top: 6px; }
 
     .batch-notice-line {
-        font-size: 12px;
+        font-size: 11px;
         line-height: 1.4;
-        color: var(--secondary);
+        color: color-mix(in srgb, var(--text) 82%, var(--popup-bg));
     }
 
     .toolbar-button {
-        height: 38px;
+        min-height: 34px;
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 0 12px;
+        gap: 5px;
+        padding: 5px 10px;
+        font-size: 12px;
+        border: 2px solid var(--secondary);
+        border-radius: 10px;
+        background: var(--button);
+        color: var(--text);
+        font-weight: 600;
     }
+    .toolbar-button:hover:not(:disabled) {
+        background: color-mix(in srgb, var(--secondary) 8%, var(--button));
+    }
+    .toolbar-button:disabled { opacity: 0.6; }
 
     .toolbar-button :global(svg) {
-        width: 18px;
-        height: 18px;
+        width: 15px;
+        height: 15px;
     }
 
     .batch-list {
+        flex: 1 1 auto;
+        min-height: 160px;
         overflow-y: auto;
         display: flex;
         flex-direction: column;
         gap: 8px;
-        padding-right: 2px;
+        padding: 0 6px 2px 0;
+        scrollbar-width: thin;
+        scrollbar-color: var(--input-border) transparent;
     }
 
     .batch-selection-header {
@@ -1270,7 +1336,13 @@
         flex-wrap: wrap;
         gap: 10px;
         align-items: center;
-        padding: 0 12px;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        padding: 5px 10px;
+        font-size: 12px;
+        background: var(--popup-bg);
+        border-bottom: 1px solid var(--surface-2);
     }
 
     .batch-item {
@@ -1278,10 +1350,17 @@
         grid-template-columns: 24px 1fr auto;
         gap: 10px;
         align-items: center;
-        padding: 10px 12px;
-        border-radius: 14px;
+        flex-shrink: 0;
+        padding: 14px;
+        border-radius: 12px;
         background: var(--surface-1);
         border: 1px solid var(--surface-2);
+        transition: background-color 0.15s, border-color 0.15s;
+    }
+    .batch-item:hover { border-color: color-mix(in srgb, var(--secondary) 45%, var(--surface-2)); }
+    .batch-item.selected {
+        border-color: var(--secondary);
+        background: color-mix(in srgb, var(--secondary) 8%, var(--surface-1));
     }
 
     .batch-check {
@@ -1292,8 +1371,9 @@
     }
 
     .batch-check input {
-        width: 16px;
-        height: 16px;
+        width: 18px;
+        height: 18px;
+        accent-color: var(--secondary);
     }
 
     .batch-check-master {
@@ -1327,15 +1407,21 @@
 
     .batch-title {
         font-weight: 600;
-        color: var(--secondary);
-        white-space: nowrap;
+        color: var(--text);
+        font-size: 15px;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow-wrap: anywhere;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 
     .batch-url {
         font-size: 12px;
-        opacity: 0.75;
+        color: var(--gray);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -1366,29 +1452,16 @@
     .batch-footer {
         display: flex;
         flex-direction: column;
-        gap: calc(var(--padding) / 2);
+        gap: 6px;
         width: 100%;
+        padding-top: 8px;
+        border-top: 1px solid var(--surface-2);
     }
 
     .batch-footer-actions {
         display: flex;
         gap: calc(var(--padding) / 2);
         justify-content: flex-end;
-    }
-
-    .batch-footer-reminder {
-        align-self: flex-end;
-        max-width: 520px;
-        padding: 8px 10px;
-        border: 1px solid color-mix(in srgb, var(--secondary) 34%, transparent);
-        border-left: 4px solid var(--secondary);
-        border-radius: 8px;
-        background-color: color-mix(in srgb, var(--secondary) 10%, var(--button));
-        color: color-mix(in srgb, var(--text) 82%, var(--secondary));
-        font-size: 13px;
-        line-height: 1.4;
-        font-weight: 650;
-        text-align: right;
     }
 
     .points-preview {
@@ -1403,13 +1476,14 @@
     }
 
     .footer-button {
-        height: 40px;
+        min-height: 38px;
         min-width: 140px;
         display: flex;
         justify-content: center;
         align-items: center;
         gap: 8px;
         padding: 0 14px;
+        border-radius: 10px;
     }
 
     .footer-button :global(svg) {
@@ -1424,19 +1498,24 @@
 
     @media screen and (max-width: 535px) {
         .batch-dialog {
-            width: calc(100% - var(--padding));
+            width: calc(100vw - 16px);
+            padding: 12px;
+            gap: 6px;
+            height: calc(98dvh - env(safe-area-inset-bottom) - env(safe-area-inset-top));
+            max-height: calc(98dvh - env(safe-area-inset-bottom) - env(safe-area-inset-top));
         }
+        .popup-title { font-size: 13px; }
+        .batch-sort { width: 100%; }
+        .batch-sort select { flex: 1; min-width: 0; }
+        .toolbar-button { flex: 1 1 auto; padding: 5px 8px; }
+        .batch-item { padding: 9px; gap: 8px; }
+        .batch-title { font-size: 14px; }
+        .batch-pagination { gap: 10px; }
 
         .batch-footer-actions {
             display: grid;
             grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
             width: 100%;
-        }
-
-        .batch-footer-reminder {
-            align-self: stretch;
-            max-width: none;
-            text-align: left;
         }
 
         .footer-button {
@@ -1448,7 +1527,7 @@
             text-align: center;
             white-space: normal;
             overflow-wrap: anywhere;
-            min-height: 44px;
+            min-height: 40px;
             height: auto;
         }
 

@@ -45,7 +45,7 @@
     "batch.mark_selected_pending": "移回待下载",
     "batch.download_selected": "下载已选",
     "batch.stop": "停止",
-    "batch.view_downloaded": "已下载",
+    "batch.view_downloaded": "查看已下载",
     "batch.view_pending": "返回待下载",
     "batch.memory.clear": "清除记忆",
     "batch.memory.empty.title": "已全部下载",

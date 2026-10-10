@@ -21,6 +21,28 @@ test('title sorting is stable for equal titles and handles missing titles', () =
     assert.deepEqual(collectionItemOrder(items, 'title-desc', 'en'), [2, 0, 1]);
 });
 
+test('episode numbers sort across full-width brackets and inconsistent spacing', () => {
+    const series = '\u957f\u57ce\u5185\u5916';
+    const titles = [
+        `${series} \uff0899\uff09 story [720P]`,
+        `${series} \uff08100\uff09 story [720P]`,
+        `${series}(1) story [720P]`,
+        `${series} (2) story [720P]`,
+        `${series}\uff08\uff13\uff09 story [1080P]`,
+    ];
+    const items = titles.map((title, index) => ({ title, url: String(index) }));
+    assert.deepEqual(collectionItemOrder(items, 'title-asc', 'zh'), [2, 3, 4, 0, 1]);
+    assert.deepEqual(collectionItemOrder(items, 'title-desc', 'zh'), [1, 0, 4, 3, 2]);
+});
+
+test('explicit episode markers take priority over resolution numbers', () => {
+    const items = [
+        { title: 'Series [720P] (100) story', url: '100' },
+        { title: 'Series [1080P] (1) story', url: '1' },
+    ];
+    assert.deepEqual(collectionItemOrder(items, 'title-asc', 'en'), [1, 0]);
+});
+
 test('page selection preserves other pages and enforces a global limit of 20', () => {
     const original = Array(184).fill(false);
     original[2] = true;

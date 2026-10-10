@@ -1,6 +1,20 @@
 export const COLLECTION_PAGE_SIZE = 20;
 export const COLLECTION_SELECTION_LIMIT = 20;
 
+/** @param {string} title */
+function collectionTitleKey(title) {
+    const normalized = title.normalize('NFKC').replace(/\s+/gu, '');
+    const withoutResolution = normalized.replace(/[\[\u3010](?:\d{3,4}p|\d+k)[\]\u3011]/gi, '');
+    const episode = withoutResolution.match(/\((\d{1,6})\)|\[(\d{1,6})\]|\u3010(\d{1,6})\u3011|\u7b2c(\d{1,6})(?:\u96c6|\u8bdd|\u671f)/u);
+    return {
+        title: normalized,
+        series: episode
+            ? withoutResolution.slice(0, episode.index).replace(/[\p{P}\p{S}]/gu, '')
+            : normalized,
+        episode: episode ? Number(episode.slice(1).find(value => value !== undefined)) : null,
+    };
+}
+
 /**
  * Sort display indices, leaving the underlying items and their selections intact.
  * @param {{ title?: string, url: string }[]} items
@@ -12,9 +26,15 @@ export function collectionItemOrder(items, order, locale) {
     if (order === 'original') return indices;
     const collator = new Intl.Collator(locale, { numeric: true, sensitivity: 'base' });
     const direction = order === 'title-desc' ? -1 : 1;
-    return indices.sort((a, b) => direction * collator.compare(
-        items[a].title || items[a].url, items[b].title || items[b].url,
-    ) || a - b);
+    const keys = items.map(item => collectionTitleKey(item.title || item.url));
+    return indices.sort((a, b) => {
+        const left = keys[a];
+        const right = keys[b];
+        const seriesOrder = collator.compare(left.series, right.series);
+        const episodeOrder = left.episode !== null && right.episode !== null
+            ? left.episode - right.episode : 0;
+        return direction * (seriesOrder || episodeOrder || collator.compare(left.title, right.title)) || a - b;
+    });
 }
 
 /** @param {string} value */

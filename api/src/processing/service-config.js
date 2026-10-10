@@ -314,6 +314,8 @@ export const services = {
         patterns: [
             "video/:id",
             "item/:id",
+            "i:id",
+            "a:id",
             "is/:shortLink",
             ":shortLink",
         ],

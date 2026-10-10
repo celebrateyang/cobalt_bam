@@ -1049,9 +1049,10 @@
                 type="button"
                 class="low-points-balloon-close"
                 aria-label={$t("home.points_balloon.close")}
+                title={$t("home.points_balloon.close")}
                 on:click|stopPropagation={closeLowPointsBalloon}
             >
-                <IconX size={16} />
+                <IconX size={22} stroke={2.75} />
             </button>
         </div>
     {/if}
@@ -1606,7 +1607,7 @@
             ),
             var(--surface-1);
         border-radius: 20px;
-        padding: 12px 40px 12px 14px;
+        padding: 12px 56px 12px 14px;
         box-shadow: var(--button-box-shadow);
         text-align: left;
         cursor: pointer;
@@ -1727,29 +1728,37 @@
 
     .low-points-balloon-close {
         position: absolute;
-        top: -10px;
-        right: -10px;
-        width: 32px;
-        height: 32px;
+        top: 8px;
+        right: 8px;
+        z-index: 1;
+        width: 36px;
+        height: 36px;
+        padding: 0;
         border-radius: 999px;
-        border: 1px solid var(--surface-2);
-        background: var(--surface-0);
+        border: 2px solid var(--background);
+        background: var(--text);
+        color: var(--background);
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
         pointer-events: auto;
-        box-shadow: var(--button-box-shadow);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
         transition:
-            transform 0.15s ease,
-            background 0.15s ease,
-            border-color 0.15s ease;
+            transform 0.15s ease;
     }
 
     .low-points-balloon-close:hover {
-        transform: scale(1.02);
-        background: var(--button-hover);
-        border-color: var(--popup-stroke);
+        transform: scale(1.08);
+    }
+
+    .low-points-balloon-close:active {
+        transform: scale(0.96);
+    }
+
+    .low-points-balloon-close:focus-visible {
+        outline: 3px solid var(--accent-strong);
+        outline-offset: 2px;
     }
 
     @media (max-width: 600px) {
@@ -1759,9 +1768,13 @@
             width: calc(100vw - 28px);
         }
 
+        .low-points-balloon {
+            padding-right: 64px;
+        }
+
         .low-points-balloon-close {
-            right: -8px;
-            top: -8px;
+            width: 44px;
+            height: 44px;
         }
     }
 

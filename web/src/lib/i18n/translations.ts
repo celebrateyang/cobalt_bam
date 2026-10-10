@@ -30,6 +30,8 @@ const config: Config<{
     limit?: number;
     service?: string;
     count?: number;
+    page?: number;
+    total?: number;
     days?: number;
     max?: number;
     title?: string;

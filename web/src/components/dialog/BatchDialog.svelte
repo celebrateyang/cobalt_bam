@@ -28,6 +28,7 @@
     } from "$lib/state/clerk";
     import { requireDownloadAuth } from "$lib/auth/download-auth";
     import { uuid } from "$lib/util";
+    import { COLLECTION_PAGE_SIZE, COLLECTION_SELECTION_LIMIT, collectionVideoIdentity, selectCollectionPage } from "$lib/collection-selection";
     import {
         MEMBERSHIP_DOWNLOAD_LIMIT_ERROR,
         showMembershipDownloadLimitDialog,
@@ -64,13 +65,15 @@
     let close: () => void;
 
     let selected: boolean[] = [];
+    let currentPage = 1;
+    let selectionLimitNotice = false;
     let downloadedSelected: boolean[] = [];
     let running = false;
     let cancelRequested = false;
     let progress = 0;
     let totalToRun = 0;
 
-    let itemsKey = "";
+    let itemsKey: string | null = null;
     let pointsPreviewRequired = 0;
     let pointsPreviewLoading = false;
     let pointsPreviewReady = false;
@@ -216,9 +219,18 @@
                 ? selectedUrls
                 : [],
         );
-        selected = items.map((item) => (
-            !isItemRestricted(item) && selectedUrlSet.has(item.url)
-        ));
+        const identities = new Set([...selectedUrlSet].map(collectionVideoIdentity).filter(Boolean));
+        let remaining = COLLECTION_SELECTION_LIMIT;
+        selected = items.map((item) => {
+            const identity = collectionVideoIdentity(item.url);
+            const match = selectedUrlSet.has(item.url) || (identity && identities.has(identity));
+            if (remaining > 0 && !isItemRestricted(item) && match) {
+                remaining--;
+                return true;
+            }
+            return false;
+        });
+        selectionLimitNotice = false;
         running = false;
         pointsCheckLoading = false;
         cancelRequested = false;
@@ -418,6 +430,7 @@
 
     const toggleDownloadedView = () => {
         viewingDownloaded = !viewingDownloaded;
+        currentPage = 1;
         if (viewingDownloaded) {
             cancelPointsPreview();
         } else {
@@ -427,12 +440,16 @@
 
     $: selectedCountValue = selected.filter(Boolean).length;
     $: downloadedSelectedCountValue = downloadedSelected.filter(Boolean).length;
-    $: activeSelectionTotal = viewingDownloaded
-        ? safeDownloadedItems.length
-        : items.filter((item) => !isItemRestricted(item)).length;
-    $: activeSelectedCount = viewingDownloaded
-        ? downloadedSelectedCountValue
-        : selectedCountValue;
+    $: activeItems = viewingDownloaded ? safeDownloadedItems : items;
+    $: pageCount = Math.max(1, Math.ceil(activeItems.length / COLLECTION_PAGE_SIZE));
+    $: currentPage = Math.max(1, Math.min(currentPage, pageCount));
+    $: pageStart = (currentPage - 1) * COLLECTION_PAGE_SIZE;
+    $: pageItems = activeItems.slice(pageStart, pageStart + COLLECTION_PAGE_SIZE);
+    $: pageIndices = pageItems.map((_, index) => pageStart + index)
+        .filter((index) => !isItemRestricted(activeItems[index]));
+    $: activeSelectionTotal = pageIndices.length;
+    $: activeSelectedCount = pageIndices.filter((index) =>
+        viewingDownloaded ? downloadedSelected[index] : selected[index]).length;
     $: activeSelectionAll =
         activeSelectionTotal > 0 && activeSelectedCount === activeSelectionTotal;
     $: activeSelectionPartial =
@@ -443,6 +460,11 @@
 
     const setSelectedAt = (index: number, value: boolean) => {
         if (isItemRestricted(items[index])) return;
+        if (value && !selected[index] && selectedCountValue >= COLLECTION_SELECTION_LIMIT) {
+            selectionLimitNotice = true;
+            return;
+        }
+        selectionLimitNotice = false;
         const nextSelected = selected.map((current, i) => (i === index ? value : current));
         selected = nextSelected;
         schedulePointsPreview(nextSelected);
@@ -469,13 +491,14 @@
     };
 
     const setAll = (value: boolean) => {
-        const nextSelected = items.map((item) => value && !isItemRestricted(item));
+        const nextSelected = selectCollectionPage(selected, pageIndices, value);
+        selectionLimitNotice = value && pageIndices.some((index) => !nextSelected[index]);
         selected = nextSelected;
         schedulePointsPreview(nextSelected);
     };
 
     const setAllDownloaded = (value: boolean) => {
-        downloadedSelected = downloadedSelected.map(() => value);
+        downloadedSelected = selectCollectionPage(downloadedSelected, pageIndices, value, Infinity);
     };
 
     const handleAllSelectionChange = (event: Event) => {
@@ -553,7 +576,14 @@
         );
         items = dedupeByItemKeyOrUrl([...items, ...itemsToUnmark]);
         downloadedSelected = downloadedItems.map(() => false);
-        selected = items.map((item) => unmarkedKeys.has(item.itemKey || ""));
+        let remaining = COLLECTION_SELECTION_LIMIT;
+        selected = items.map((item) => {
+            if (remaining > 0 && !isItemRestricted(item) && unmarkedKeys.has(item.itemKey || "")) {
+                remaining--;
+                return true;
+            }
+            return false;
+        });
         viewingDownloaded = downloadedItems.length > 0;
         schedulePointsPreview();
     };
@@ -617,6 +647,7 @@
 
     const downloadSelected = async () => {
         if (running || pointsCheckLoading) return;
+        if (selectedCountValue > COLLECTION_SELECTION_LIMIT) return;
         if (clerkEnabled && (!pointsPreviewReady || pointsPreviewLoading)) return;
 
         if (!$isSignedIn) {
@@ -874,7 +905,8 @@
                 {:else}
                     {#if !viewingDownloaded}
                         <div>
-                            {$t("dialog.batch.status.selected")}: {selectedCountValue}/{items.length}
+                            {$t("dialog.batch.status.selected")}: {selectedCountValue}/{COLLECTION_SELECTION_LIMIT}
+                            · {$t("dialog.batch.total", { count: items.length })}
                         </div>
                     {:else}
                         <div>
@@ -953,16 +985,24 @@
                         on:change={handleAllSelectionChange}
                         disabled={running || pointsCheckLoading || activeSelectionTotal === 0}
                         aria-label={activeSelectionAll
-                            ? $t("dialog.batch.select_none")
-                            : $t("dialog.batch.select_all")}
+                            ? $t("dialog.batch.select_page_none")
+                            : $t("dialog.batch.select_page")}
                         title={activeSelectionAll
-                            ? $t("dialog.batch.select_none")
-                            : $t("dialog.batch.select_all")}
+                            ? $t("dialog.batch.select_page_none")
+                            : $t("dialog.batch.select_page")}
                     />
+                    <span>{activeSelectionAll ? $t("dialog.batch.select_page_none") : $t("dialog.batch.select_page")}</span>
                 </label>
+                {#if activeSelectedCount > 0 && !activeSelectionAll}
+                    <button class="button elevated page-clear" disabled={running || pointsCheckLoading}
+                        on:click={() => viewingDownloaded ? setAllDownloaded(false) : setAll(false)}>
+                        {$t("dialog.batch.select_page_none")}
+                    </button>
+                {/if}
             </div>
 
-            {#each viewingDownloaded ? safeDownloadedItems : items as item, i (item.url)}
+            {#each pageItems as item, pageIndex (item.url)}
+                {@const i = pageStart + pageIndex}
                 <div
                     class="batch-item"
                     class:downloaded={viewingDownloaded}
@@ -985,7 +1025,7 @@
                                 type="checkbox"
                                 checked={selected[i]}
                                 on:change={(event) => handleItemSelectionChange(i, event)}
-                                disabled={running || pointsCheckLoading}
+                                disabled={running || pointsCheckLoading || isItemRestricted(item) || (!selected[i] && selectedCountValue >= COLLECTION_SELECTION_LIMIT)}
                                 aria-label={$t("a11y.dialog.batch.select_item")}
                             />
                         </label>
@@ -1023,6 +1063,17 @@
                 </div>
             {/each}
         </div>
+
+        <div class="batch-pagination">
+            <button class="button elevated" disabled={currentPage === 1}
+                on:click={() => currentPage--}>{$t("dialog.batch.page_previous")}</button>
+            <span aria-live="polite">{$t("dialog.batch.page_status", { page: currentPage, total: pageCount })}</span>
+            <button class="button elevated" disabled={currentPage === pageCount}
+                on:click={() => currentPage++}>{$t("dialog.batch.page_next")}</button>
+        </div>
+        {#if !viewingDownloaded && (selectionLimitNotice || selectedCountValue >= COLLECTION_SELECTION_LIMIT)}
+            <div class="batch-notice-line" role="status">{$t("dialog.batch.selection_limit", { max: COLLECTION_SELECTION_LIMIT })}</div>
+        {/if}
 
         <div class="batch-footer">
             {#if !running && !viewingDownloaded}
@@ -1069,7 +1120,7 @@
                             on:click={downloadSelected}
                         >
                             <IconDownload />
-                            {$t("dialog.batch.download_selected")}
+                            {$t("dialog.batch.download_selected")} ({selectedCountValue})
                         </button>
                     {/if}
                 {/if}
@@ -1091,6 +1142,14 @@
 </DialogContainer>
 
 <style>
+    .batch-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .batch-pagination button { padding: 8px 12px; }
     .batch-dialog {
         gap: var(--padding);
         max-height: calc(
@@ -1178,8 +1237,8 @@
     }
 
     .batch-selection-header {
-        display: grid;
-        grid-template-columns: 24px 1fr auto;
+        display: flex;
+        flex-wrap: wrap;
         gap: 10px;
         align-items: center;
         padding: 0 12px;
@@ -1209,8 +1268,11 @@
     }
 
     .batch-check-master {
-        height: 24px;
+        justify-content: flex-start;
+        gap: 10px;
+        min-height: 24px;
     }
+    .page-clear { padding: 6px 10px; }
 
     .batch-item.downloaded .batch-title {
         color: var(--gray);

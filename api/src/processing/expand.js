@@ -1383,6 +1383,7 @@ const expandBilibili = async (inputUrl) => {
                     const selectedItemKey = `bilibili:video:${data.bvid || id}:p=${partId}`;
                     return {
                         ...multi,
+                        currentUrl: currentSingle?.items?.[0]?.url,
                         items: sliceCollectionFromItemKey(
                             multi.items,
                             selectedItemKey,
@@ -1399,13 +1400,13 @@ const expandBilibili = async (inputUrl) => {
             const season = await bilibiliUgcSeasonFromView(data);
 
             const seasonPages = await bilibiliUgcSeasonPagesFromView(data);
-            if (seasonPages && !seasonPages.error) return seasonPages;
+            if (seasonPages && !seasonPages.error) return { ...seasonPages, currentUrl: currentSingle?.items?.[0]?.url };
 
             const multi = bilibiliMultiPageFromView(data);
             if (multi?.error) return currentSingle;
-            if (multi) return multi;
+            if (multi) return { ...multi, currentUrl: currentSingle?.items?.[0]?.url };
 
-            if (season && !season.error) return season;
+            if (season && !season.error) return { ...season, currentUrl: currentSingle?.items?.[0]?.url };
 
             return currentSingle;
         }
@@ -1610,6 +1611,7 @@ const expandDouyin = async (inputUrl) => {
         service: "douyin",
         kind: "douyin-mix",
         collectionKey: buildCollectionKey("douyin", "mix", String(mixId)),
+        currentUrl: canonicalUrl,
         title: enrichedItem?.mix_info?.mix_name,
         items: expandedItems,
     };
@@ -1737,6 +1739,7 @@ const expandTikTok = async (inputUrl) => {
         service: "tiktok",
         kind: "tiktok-playlist",
         collectionKey: buildCollectionKey("tiktok", "playlist", String(playlistId)),
+        currentUrl: canonicalUrl,
         title: authorId ? `@${authorId} playlist` : undefined,
         items: playlistItems,
     };
@@ -1787,7 +1790,7 @@ const expandYouTube = async (inputUrl) => {
             (item) => item.url,
         );
 
-        if (items.length > 1) {
+        if (items.length > 0) {
             const resolvedPlaylistId = toStringId(playlistInfo?.id) || playlistId;
             const title =
                 typeof playlistInfo?.title === "string" && playlistInfo.title.trim()

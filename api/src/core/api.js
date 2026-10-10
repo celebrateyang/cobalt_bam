@@ -951,6 +951,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 kind: result?.kind || "single",
                 title: result?.title,
                 collectionKey: result?.collectionKey,
+                currentUrl: result?.currentUrl,
                 items,
             });
         } catch (error) {

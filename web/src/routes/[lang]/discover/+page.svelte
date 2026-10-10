@@ -20,7 +20,6 @@
     import { buildSaveRequest, savingHandler } from "$lib/api/saving-handler";
     import API from "$lib/api/api";
     import { createDialog } from "$lib/state/dialogs";
-    import cachedInfo from "$lib/state/server-info";
     import {
         checkSignedIn,
         clerkEnabled,
@@ -43,21 +42,10 @@
     const SUPPORTED_PLATFORMS = new Set(["tiktok", "instagram"]);
     const LATEST_PAGE_SIZE = 24;
     const BLIND_BOX_PAGE_SIZE = 20;
-    const DEFAULT_BATCH_MAX_ITEMS = 20;
     const FREE_VIDEO_LIMIT = 8;
     const VIEW_POINT_COST = 1;
     const STREAM_SESSION_SEED_KEY = "discover_stream_seed_v1";
     let streamSessionSeed = "";
-
-    const resolveBatchMaxItems = (value: unknown) => {
-        if (typeof value === "number" && Number.isFinite(value)) {
-            const normalized = Math.floor(value);
-            if (normalized === 0) return Number.POSITIVE_INFINITY;
-            if (normalized > 0) return normalized;
-        }
-
-        return DEFAULT_BATCH_MAX_ITEMS;
-    };
 
     const normalizeAccountKey = (video: SocialVideo) => {
         if (video.account_id !== null && video.account_id !== undefined) {
@@ -224,12 +212,7 @@
     let blindBoxPages = 0;
     let blindBoxTotal = 0;
 
-    let batchMaxItems: number = DEFAULT_BATCH_MAX_ITEMS;
-    let batchLimitEnabled = true;
-
     $: locale = $page.params.lang;
-    $: batchMaxItems = resolveBatchMaxItems($cachedInfo?.info?.cobalt?.batchMaxItems);
-    $: batchLimitEnabled = Number.isFinite(batchMaxItems) && batchMaxItems > 0;
 
     const normalize = (list: SocialVideo[]) =>
         list.filter((video) => SUPPORTED_PLATFORMS.has(video.platform) && !video.is_pinned);
@@ -330,53 +313,6 @@
         void ensureCurrentStreamPlayable(false);
     };
 
-    const showBatchLimitDialog = (count: number, onDownloadFirst?: (count: number) => void) => {
-        if (!batchLimitEnabled) return;
-
-        const subsetCounts = (() => {
-            if (!onDownloadFirst) return [];
-            const limit = batchMaxItems;
-            const candidates = [limit, 50, 20, 10, 5];
-            const unique = new Set<number>();
-
-            for (const candidate of candidates) {
-                if (
-                    typeof candidate === "number" &&
-                    Number.isFinite(candidate) &&
-                    candidate > 1 &&
-                    candidate <= limit
-                ) {
-                    unique.add(candidate);
-                }
-            }
-
-            return [...unique].sort((a, b) => b - a).slice(0, 3);
-        })();
-
-        createDialog({
-            id: "batch-limit",
-            type: "small",
-            meowbalt: "error",
-            title: $t("dialog.batch.limit.title"),
-            bodyText: $t("dialog.batch.limit.body", {
-                count,
-                max: batchMaxItems,
-            }),
-            buttons: [
-                ...subsetCounts.map((subsetCount, index) => ({
-                    text: $t("dialog.batch.limit.download_first", { count: subsetCount }),
-                    main: index === 0,
-                    action: () => onDownloadFirst?.(subsetCount),
-                })),
-                {
-                    text: $t("button.gotit"),
-                    main: subsetCounts.length === 0,
-                    action: () => {},
-                },
-            ],
-        });
-    };
-
     const spawnBatchDialog = (
         items: DialogBatchItem[],
         title?: string,
@@ -402,19 +338,6 @@
         collectionSourceUrl?: string,
         downloadMode?: "auto" | "audio",
     ) => {
-        if (batchLimitEnabled && items.length > batchMaxItems) {
-            const batchTitle = title || $t("dialog.batch.title");
-            showBatchLimitDialog(items.length, (count) => {
-                const subset = items.slice(0, count);
-                const nextTitle =
-                    subset.length < items.length
-                        ? `${batchTitle} (${subset.length}/${items.length})`
-                        : batchTitle;
-                spawnBatchDialog(subset, nextTitle, collectionKey, collectionSourceUrl, downloadMode);
-            });
-            return;
-        }
-
         spawnBatchDialog(items, title, collectionKey, collectionSourceUrl, downloadMode);
     };
 

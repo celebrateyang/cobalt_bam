@@ -21,6 +21,7 @@ export type CobaltExpandOkResponse = {
         | "youtube-playlist";
     title?: string;
     collectionKey?: string;
+    currentUrl?: string;
     items: CobaltExpandItem[];
 };
 

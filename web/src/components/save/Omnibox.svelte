@@ -512,8 +512,8 @@
             }
 
             return (
-                host === "youtu.be" ||
-                parsed.pathname === "/watch" ||
+                (host === "youtu.be" && /^\/[A-Za-z0-9_-]{11}\/?$/.test(parsed.pathname)) ||
+                (parsed.pathname === "/watch" && /^[A-Za-z0-9_-]{11}$/.test(parsed.searchParams.get("v") || "")) ||
                 parsed.pathname.startsWith("/shorts/") ||
                 parsed.pathname.startsWith("/live/")
             );
@@ -566,11 +566,6 @@
         selectedUrls?: string[],
         autoStart?: boolean,
     ) => {
-        if (batchLimitEnabled && items.length > batchMaxItems) {
-            showBatchLimitDialog(items.length);
-            return;
-        }
-
         createDialog({
             id: "batch-download",
             type: "batch",
@@ -633,6 +628,19 @@
 
             const url = detectedUrls[0];
             if (!url) return;
+            const inputIsVideo = isBilibiliVideoPage(url) || isDouyinVideoPage(url) ||
+                isTikTokVideoPage(url) || isYouTubeVideoPage(url);
+            const isExplicitCollection = !inputIsVideo && (
+                isYouTubePlaylistCandidateUrl(url) || isPodcastFeedCandidateUrl(url) ||
+                /\/(?:playlist|mix|collection|lists|medialist|list\/ml|channel\/collectiondetail)(?:\/|\?|$)/i.test(url)
+            );
+            const showCollectionLoadFailure = () => createDialog({
+                id: "collection-load-failed", type: "small", meowbalt: "error",
+                title: $t("dialog.error.title"),
+                bodyText: $t("dialog.batch.collection_load_failed"),
+                buttons: [{ text: $t("button.retry"), main: true,
+                    action: () => setTimeout(() => void submit(), 200) }],
+            });
 
             // Only expand for services or URL shapes that support collection/playlist detection.
             if (
@@ -650,6 +658,10 @@
             try {
                 expanded = await API.expand(url);
             } catch {
+                if (isExplicitCollection) {
+                    showCollectionLoadFailure();
+                    return;
+                }
                 handedOffToSavingHandler = true;
                 return saveCurrentVideo(url);
             }
@@ -674,17 +686,22 @@
             }
 
             if (!expanded) {
+                if (isExplicitCollection) {
+                    showCollectionLoadFailure();
+                    return;
+                }
                 handedOffToSavingHandler = true;
                 return saveCurrentVideo(url);
             }
 
             const items = expanded.items ?? [];
-            const hasBatch = expanded.kind !== "single" && (
-                items.length > 1 ||
-                items.some((item) => item.availability === "platform_restricted")
-            );
+            const hasBatch = expanded.kind !== "single" && items.length > 0;
 
             if (!hasBatch) {
+                if (isExplicitCollection) {
+                    showCollectionLoadFailure();
+                    return;
+                }
                 handedOffToSavingHandler = true;
                 return saveCurrentVideo(url);
             }
@@ -719,124 +736,18 @@
                 );
             }
 
-            if (visibleBatchItems.length === 0) {
-                createDialog({
-                    id: "batch-memory-empty",
-                    type: "small",
-                    title: $t("dialog.batch.memory.empty.title"),
-                    bodyText: $t("dialog.batch.memory.empty.body"),
-                    buttons: [
-                        {
-                            text: $t("button.gotit"),
-                            main: true,
-                            action: () => {},
-                        },
-                        ...(memoryInfo?.downloadedItems?.length
-                            ? [
-                                  {
-                                      text: $t("dialog.batch.view_downloaded"),
-                                      main: false,
-                                      action: () =>
-                                          openBatchDialog(
-                                              [],
-                                              expanded.title || $t("dialog.batch.title"),
-                                              collectionKey,
-                                              url,
-                                              memoryInfo,
-                                          ),
-                                  },
-                              ]
-                            : []),
-                    ],
-                });
-                return;
-            }
         }
 
-        const selectedInputUrls = isBilibiliVideoPage(url) ||
-            isDouyinVideoPage(url) ||
-            isTikTokVideoPage(url) ||
-            isYouTubeVideoPage(url)
-                ? [url]
+        const currentVideoUrl = expanded.currentUrl || url;
+        const selectedInputUrls = isBilibiliVideoPage(currentVideoUrl) ||
+            isDouyinVideoPage(currentVideoUrl) ||
+            isTikTokVideoPage(currentVideoUrl) ||
+            isYouTubeVideoPage(currentVideoUrl)
+                ? [currentVideoUrl]
                 : undefined;
 
-        if (batchLimitEnabled && visibleBatchItems.length > batchMaxItems) {
-            const canFallbackToSingle =
-                isBilibiliVideoPage(url) ||
-                isDouyinVideoPage(url) ||
-                isTikTokVideoPage(url) ||
-                isYouTubeVideoPage(url);
-
-            const subsetCounts = (() => {
-                const limit = batchMaxItems;
-                const candidates = [5, 10, 20];
-
-                return candidates.filter(
-                    (candidate) =>
-                        Number.isFinite(candidate) &&
-                        candidate > 1 &&
-                        candidate <= limit,
-                );
-            })();
-
-            const batchTitle = expanded.title || $t("dialog.batch.title");
-            const openSubset = (count: number) => {
-                const subset = visibleBatchItems.slice(0, count);
-                const title =
-                    subset.length < visibleBatchItems.length
-                        ? `${batchTitle} (${subset.length}/${memoryInfo?.collectionTotalCount || visibleBatchItems.length})`
-                        : batchTitle;
-                openBatchDialog(
-                    subset,
-                    title,
-                    collectionKey,
-                    url,
-                    memoryInfo,
-                    selectedInputUrls,
-                );
-            };
-
-            createDialog({
-                id: "batch-limit-expanded",
-                type: "small",
-                meowbalt: "error",
-                title: $t("dialog.batch.limit.title"),
-                bodyText: $t("dialog.batch.limit.body", {
-                    count: visibleBatchItems.length,
-                    max: batchMaxItems,
-                }),
-                buttons: [
-                    ...(canFallbackToSingle
-                        ? [
-                              {
-                                  text: $t("dialog.batch.detect.download_single"),
-                                  main: true,
-                                  action: () => {
-                                      setTimeout(
-                                          () => void saveCurrentVideo(url),
-                                          200,
-                                      );
-                                  },
-                              },
-                          ]
-                        : []),
-                    ...subsetCounts.map((count) => ({
-                        text: $t("dialog.batch.limit.download_first", { count }),
-                        main: !canFallbackToSingle && count === subsetCounts[0],
-                        action: () => openSubset(count),
-                    })),
-                ],
-            });
-            return;
-        }
-
         // If user pasted an explicit collection URL, go straight to batch list.
-        if (
-            !isBilibiliVideoPage(url) &&
-            !isDouyinVideoPage(url) &&
-            !isTikTokVideoPage(url) &&
-            !isYouTubeVideoPage(url)
-        ) {
+        if (!selectedInputUrls) {
             openBatchDialog(
                 visibleBatchItems,
                 expanded.title || $t("dialog.batch.title"),
@@ -856,11 +767,11 @@
             expanded.kind === "youtube-playlist";
         const promptBody =
             isCollection
-                ? $t("dialog.batch.detect.body.collection", {
+                 ? $t("dialog.batch.collection_detected", {
                       title: expanded.title ?? url,
                       count: items.length,
                   })
-                : $t("dialog.batch.detect.body.parts", {
+                 : $t("dialog.batch.parts_detected", {
                       title: expanded.title ?? url,
                       count: items.length,
                   });
@@ -872,14 +783,14 @@
             bodyText: promptBody,
             buttons: [
                 {
-                    text: $t("dialog.batch.detect.download_single"),
+                    text: $t("dialog.batch.continue_current"),
                     main: false,
                     action: () => {
                         setTimeout(() => void saveCurrentVideo(url), 200);
                     },
                 },
                 {
-                    text: $t("dialog.batch.detect.download_batch"),
+                    text: $t("dialog.batch.open_collection"),
                     main: true,
                     action: () => {
                         setTimeout(

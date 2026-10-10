@@ -155,6 +155,7 @@ test("an explicit TikTok creator playlist expands into batch items", async () =>
 
     assert.equal(result.kind, "tiktok-playlist");
     assert.equal(result.collectionKey, "tiktok:playlist:7407927138970110726");
+    assert.equal(result.currentUrl, undefined);
     assert.deepEqual(
         result.items.map((item) => item.url),
         [
@@ -186,6 +187,7 @@ test("a TikTok short link that redirects to a creator playlist expands it", asyn
         const result = await expandURL("https://vt.tiktok.com/playlist-example/");
         assert.equal(result.kind, "tiktok-playlist");
         assert.equal(result.items.length, 2);
+        assert.equal(result.currentUrl, undefined);
     } finally {
         globalThis.fetch = originalFetch;
     }
@@ -229,6 +231,7 @@ test("a TikTok video in a creator playlist expands the surrounding playlist", as
         );
         assert.equal(result.kind, "tiktok-playlist");
         assert.equal(result.items.length, 2);
+        assert.equal(result.currentUrl, "https://www.tiktok.com/@creator/video/7531234567890123456");
     } finally {
         globalThis.fetch = originalFetch;
     }
@@ -243,6 +246,7 @@ test("an explicit Bilibili p parameter expands the remaining pages from the sele
     );
 
     assert.equal(result.kind, "bilibili-multi-page");
+    assert.equal(result.currentUrl, "https://www.bilibili.com/video/BV1zy4y1L7Xd?p=2");
     assert.equal(result.items.length, 2);
     assert.equal(result.items[0].url, "https://www.bilibili.com/video/BV1zy4y1L7Xd?p=2");
     assert.equal(result.items[0].duration, 180);

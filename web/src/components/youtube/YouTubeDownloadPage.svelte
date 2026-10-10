@@ -222,19 +222,6 @@
         await Promise.all(['button', 'dialog', 'error', 'auth'].map(key => loadTranslations(lang, key)));
         if (disposed) return;
         const { createDialog } = await import('$lib/state/dialogs');
-        const { get } = await import('svelte/store');
-        const { default: serverInfo } = await import('$lib/state/server-info');
-        const configuredMax = get(serverInfo)?.info.cobalt.batchMaxItems;
-        const max = typeof configuredMax === 'number' && configuredMax >= 0 ? Math.floor(configuredMax) : 20;
-        if (max > 0 && items.length > max) {
-            createDialog({
-                id: 'youtube-playlist-limit', type: 'small', meowbalt: 'error',
-                title: get(t)('dialog.batch.limit.title'),
-                bodyText: get(t)('dialog.batch.limit.body', { count: items.length, max }),
-                buttons: [{ text: get(t)('button.gotit'), main: true, action: () => {} }],
-            });
-            return;
-        }
         const allowedIds = new Set(items.map(item => item.id));
         createDialog({
             id: 'youtube-playlist', type: 'batch', title: playlist.title || copy.playlist,

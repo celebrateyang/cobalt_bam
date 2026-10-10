@@ -272,6 +272,8 @@
     let pointsErrorKey = "";
     let pointsLoading = false;
     let lastPointsUserId: string | null = null;
+    let pointsRequestId = 0;
+    let pendingPointsUserId: string | null = null;
     let referralCode: string | null = null;
     let referralLink = "";
     let referralCopyState: "idle" | "copied" | "failed" = "idle";
@@ -326,20 +328,27 @@
         const userId = $clerkUser?.id;
         if (!userId) return;
         if (lastPointsUserId === userId) return;
+        if (pendingPointsUserId === userId) return;
 
+        const requestId = ++pointsRequestId;
+        pendingPointsUserId = userId;
+        const isCurrentRequest = () => requestId === pointsRequestId && userId === $clerkUser?.id;
         pointsLoading = true;
         pointsErrorKey = "";
         try {
             const token = await getClerkToken();
+            if (!isCurrentRequest()) return;
             if (!token) throw new Error("missing token");
 
             const apiBase = currentApiURL();
             const res = await fetch(`${apiBase}/user/me`, {
+                signal: AbortSignal.timeout(15000),
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
             });
             const data = await res.json().catch(() => ({}));
+            if (!isCurrentRequest()) return;
             if (!res.ok || data?.status !== "success") {
                 throw new Error(data?.error?.message || "failed to load points");
             }
@@ -349,16 +358,23 @@
             referralCode = data.data?.user?.referral_code ?? null;
             lastPointsUserId = userId;
         } catch (error) {
+            if (!isCurrentRequest()) return;
             pointsErrorKey = "auth.points_load_failed";
             console.debug("load points failed", error);
         } finally {
-            pointsLoading = false;
+            if (isCurrentRequest()) {
+                pointsLoading = false;
+                pendingPointsUserId = null;
+            }
         }
     };
 
     $: if (browser && $clerkUser) {
         void fetchPoints();
     } else {
+        pointsRequestId += 1;
+        pendingPointsUserId = null;
+        pointsLoading = false;
         points = null;
         membership = null;
         referralCode = null;
@@ -1000,6 +1016,7 @@
     };
 
     onDestroy(() => {
+        pointsRequestId += 1;
         stopPolling();
         if (referralCopyTimer) {
             clearTimeout(referralCopyTimer);
@@ -1997,6 +2014,9 @@
                                         <div class="points-value loading">...</div>
                                     {:else if pointsErrorKey}
                                         <div class="points-value error">{$t(pointsErrorKey)}</div>
+                                        <button class="button elevated" on:click={() => fetchPoints()}>
+                                            {$t("button.retry")}
+                                        </button>
                                     {:else if points !== null}
                                         <div class="points-value">{points}</div>
                                     {:else}
@@ -2008,6 +2028,8 @@
                                     <div class="points-label">{$t("auth.membership_label")}</div>
                                     {#if pointsLoading}
                                         <div class="points-value loading">...</div>
+                                    {:else if pointsErrorKey}
+                                        <div class="points-value error">{$t(pointsErrorKey)}</div>
                                     {:else if membership?.active}
                                         <div class="points-value membership-active">
                                             {membershipPlanLabel(membership.planKey)}

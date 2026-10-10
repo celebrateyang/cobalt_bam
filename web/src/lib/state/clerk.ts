@@ -133,6 +133,8 @@ let lastSyncedUserId: string | null = null;
 let syncPromise: Promise<void> | null = null;
 
 const CLERK_INIT_TIMEOUT_MS = 12000;
+const CLERK_TOKEN_TIMEOUT_MS = 10000;
+const USER_SYNC_TIMEOUT_MS = 15000;
 const META_COMPLETE_REGISTRATION_WINDOW_MS = 10 * 60 * 1000;
 const META_COMPLETE_REGISTRATION_TRACKED_PREFIX =
     "meta_complete_registration_tracked:";
@@ -280,11 +282,14 @@ const syncUserToAPI = async (instance: ClerkInstance | null | undefined) => {
 
     syncPromise = (async () => {
         try {
-            const token = await instance.session?.getToken();
+            const token = await withTimeout(
+                instance.session!.getToken(), CLERK_TOKEN_TIMEOUT_MS, "Clerk token",
+            );
             if (!token) return;
 
             const apiBase = currentApiURL();
             const response = await fetch(`${apiBase}/user/me`, {
+                signal: AbortSignal.timeout(USER_SYNC_TIMEOUT_MS),
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -307,7 +312,7 @@ const syncUserToAPI = async (instance: ClerkInstance | null | undefined) => {
                 }
             }
 
-            lastSyncedUserId = userId;
+            if (response?.ok) lastSyncedUserId = userId;
         } catch (error) {
             console.debug("Clerk syncUserToAPI failed", error);
         } finally {
@@ -352,8 +357,6 @@ export const initClerk = async () => {
                 markClerkSignInSeenLocally();
             }
 
-            await syncUserToAPI(instance);
-
             instance.addListener((resources) => {
                 clerkUser.set(resources.user as unknown as ClerkUser | null);
                 clerkSession.set(resources.session as unknown as ClerkSession | null);
@@ -363,6 +366,9 @@ export const initClerk = async () => {
                     void syncUserToAPI(instance);
                 }
             });
+
+            // Profile synchronization must not block authentication or token reads.
+            void syncUserToAPI(instance);
 
             return instance;
         } catch (error) {
@@ -449,7 +455,13 @@ export const signOut = async () => {
 export const getClerkToken = async () => {
     const instance = await initClerk();
     const session = instance?.session as unknown as ClerkSession | null | undefined;
-    return (await session?.getToken()) ?? null;
+    if (!session) return null;
+    try {
+        return await withTimeout(session.getToken(), CLERK_TOKEN_TIMEOUT_MS, "Clerk token");
+    } catch (error) {
+        console.debug("Clerk token failed", error);
+        return null;
+    }
 };
 
 export const isSignedIn = derived(

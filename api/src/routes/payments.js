@@ -2,7 +2,7 @@ import express from "express";
 import { clerkClient, clerkMiddleware, getAuth } from "@clerk/express";
 import { nanoid } from "nanoid";
 
-import { MEMBER_DOWNLOAD_LIMITS, upsertUserFromClerk, getActiveMembershipForUser } from "../db/users.js";
+import { MEMBER_DOWNLOAD_LIMITS, getUserByClerkId, upsertUserFromClerk, getActiveMembershipForUser } from "../db/users.js";
 import { recordBuyMeACoffeeReceipt } from "../db/buymeacoffee-receipts.js";
 import { BUYMEACOFFEE_STEPS, recordBuyMeACoffeeStep } from "../payments/buymeacoffee-steps.js";
 import {
@@ -69,7 +69,10 @@ const userPaymentHandlers = new Map();
 const paymentAuth = req => internalUsers.has(req) ? { userId: internalUsers.get(req).clerk_user_id } : getAuth(req);
 const paymentUser = async req => {
     if (internalUsers.has(req)) return internalUsers.get(req);
-    const profile = await clerkClient.users.getUser(getAuth(req).userId);
+    const clerkUserId = getAuth(req).userId;
+    const existing = await getUserByClerkId(clerkUserId);
+    if (existing) return existing;
+    const profile = await clerkClient.users.getUser(clerkUserId);
     return upsertUserFromClerk(mapClerkUser(profile));
 };
 const userPaymentRoute = (method, paths, handler) => {

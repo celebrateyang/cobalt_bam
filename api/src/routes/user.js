@@ -2383,8 +2383,7 @@ if (!isClerkApiConfigured) {
                     );
                 }
 
-                const clerkUser = await clerkClient.users.getUser(auth.userId);
-                const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+                const user = await ensureLocalUserByClerkId(auth.userId);
 
                 const { memory, itemKeys } =
                     await getDownloadedItemKeysForCollection({
@@ -2462,8 +2461,7 @@ if (!isClerkApiConfigured) {
                         ? req.body.sourceUrl
                         : undefined;
 
-                const clerkUser = await clerkClient.users.getUser(auth.userId);
-                const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+                const user = await ensureLocalUserByClerkId(auth.userId);
 
                 const result = await markDownloadedItemsForCollection({
                     userId: user.id,
@@ -2537,8 +2535,7 @@ if (!isClerkApiConfigured) {
                     });
                 }
 
-                const clerkUser = await clerkClient.users.getUser(auth.userId);
-                const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+                const user = await ensureLocalUserByClerkId(auth.userId);
 
                 const result = await unmarkDownloadedItemsForCollection({
                     userId: user.id,
@@ -2599,8 +2596,7 @@ if (!isClerkApiConfigured) {
                     );
                 }
 
-                const clerkUser = await clerkClient.users.getUser(auth.userId);
-                const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+                const user = await ensureLocalUserByClerkId(auth.userId);
 
                 const result = await clearCollectionMemoryForUser({
                     userId: user.id,
@@ -2732,8 +2728,7 @@ if (!isClerkApiConfigured) {
                     );
                 }
 
-                const clerkUser = await clerkClient.users.getUser(auth.userId);
-                const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+                const user = await ensureLocalUserByClerkId(auth.userId);
 
                 const created = await createPromotionSubmission({
                     userId: user.id,
@@ -2940,8 +2935,7 @@ if (!isClerkApiConfigured) {
                     );
                 }
 
-                const clerkUser = await clerkClient.users.getUser(auth.userId);
-                const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+                const user = await ensureLocalUserByClerkId(auth.userId);
 
                 const feedback = await createFeedback({
                     userId: user.id,

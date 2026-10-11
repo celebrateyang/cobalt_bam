@@ -53,8 +53,8 @@ export const selectFfmpegExecutable = (
     streamInfo,
     platform = process.platform,
 ) =>
-    (['amazon', 'cctv', 'iqiyi', 'sooplive'].includes(streamInfo?.service)
-        || (streamInfo?.isHLS && (streamInfo?.genericDownload || isGenericHostService(streamInfo?.service)))) && platform !== 'win32'
+    (['amazon', 'cctv', 'dailymotion', 'iqiyi', 'sooplive'].includes(streamInfo?.service)
+        || streamInfo?.isHLS === true) && platform !== 'win32'
         ? '/usr/bin/ffmpeg'
         : ffmpeg;
 
@@ -168,6 +168,7 @@ const render = async (res, streamInfo, ffargs, estimateMultiplier, inputStream) 
     let stderrBuffer = '';
     const urls = Array.isArray(streamInfo.urls) ? streamInfo.urls : [streamInfo.urls];
     const diagnostics = isDiagnosticService(streamInfo);
+    const executable = selectFfmpegExecutable(streamInfo);
     const shutdown = (reason = 'unknown', error) => {
         if (finalized) return;
         finalized = true;
@@ -192,12 +193,13 @@ const render = async (res, streamInfo, ffargs, estimateMultiplier, inputStream) 
 
     try {
         const args = [
-            '-loglevel', diagnostics ? 'warning' : '-8',
+            '-loglevel', 'warning',
             ...ffargs,
         ];
 
         if (diagnostics) {
             console.log('[ffmpeg.render][niconico] spawn:', {
+                executable,
                 type: streamInfo.type,
                 filename: streamInfo.filename,
                 urlCount: urls.length,
@@ -248,6 +250,7 @@ const render = async (res, streamInfo, ffargs, estimateMultiplier, inputStream) 
         process.on('close', (code, signal) => {
             if (code !== 0 || muxBytes === 0) {
                 console.warn('[ffmpeg.render] process failed:', {
+                    executable,
                     service: streamInfo.service,
                     type: streamInfo.type,
                     code,

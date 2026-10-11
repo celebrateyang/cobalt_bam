@@ -37,6 +37,14 @@ test("avoids the static ffmpeg SOOP crash on Linux", () => {
     );
 });
 
+test("avoids the static ffmpeg Dailymotion HLS crash on Linux", () => {
+    for (const type of ['merge', 'mute', 'audio']) {
+        const info = { service: 'dailymotion', isHLS: true, type };
+        assert.equal(selectFfmpegExecutable(info, 'linux'), '/usr/bin/ffmpeg');
+        assert.equal(selectFfmpegExecutable(info, 'win32'), ffmpeg);
+    }
+});
+
 test("uses the static ffmpeg for other services", () => {
     assert.equal(
         selectFfmpegExecutable({ service: "youtube" }, "linux"),
@@ -47,6 +55,23 @@ test("uses the static ffmpeg for other services", () => {
 test("avoids the static FFmpeg crash for generic Youku HLS", () => {
     assert.equal(selectFfmpegExecutable({ service: 'v.youku.com', isHLS: true }, 'linux'), '/usr/bin/ffmpeg');
     assert.equal(selectFfmpegExecutable({ service: 'v.youku.com', isHLS: true }, 'win32'), ffmpeg);
+});
+
+test("uses system ffmpeg for HLS regardless of platform adapter or output mode", () => {
+    const services = ['bjnews', 'niconico', 'weibo', 'vimeo', 'rutube', 'bsky', 'pinterest', 'soundcloud', 'new-hls-service'];
+    for (const service of services) {
+        for (const type of ['merge', 'remux', 'mute', 'audio', 'gif']) {
+            const info = { service, type, isHLS: true };
+            assert.equal(selectFfmpegExecutable(info, 'linux'), '/usr/bin/ffmpeg');
+            assert.equal(selectFfmpegExecutable(info, 'win32'), ffmpeg);
+        }
+    }
+});
+
+test("keeps packaged ffmpeg for non-HLS inputs without a service workaround", () => {
+    for (const service of ['weibo', 'vimeo', 'soundcloud', 'example.com']) {
+        assert.equal(selectFfmpegExecutable({ service, isHLS: false }, 'linux'), ffmpeg);
+    }
 });
 
 test("does not select the Linux system ffmpeg on Windows", () => {

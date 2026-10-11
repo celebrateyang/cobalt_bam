@@ -38,6 +38,13 @@
 ## Supported download services
 - List is in `README.md` / `api/README.md` (core logic + patterns live in `api/src/processing/service-config.js`)
 
+## FFmpeg reliability (2026-10-11)
+- Read `docs/ffmpeg-hls-incident-2026-10-11.md` when investigating empty downloads, FFmpeg crashes, or HLS processing.
+- Linux HLS processing (`isHLS === true`) must use `/usr/bin/ffmpeg` via `selectFfmpegExecutable` in `api/src/stream/ffmpeg.js`; do not rely on a platform-specific allowlist for HLS. Windows keeps the packaged binary. Preserve existing system-FFmpeg service workarounds for non-HLS inputs.
+- Dailymotion `xbdiup6` reproduced `ffmpeg-static` SIGSEGV with zero output; the system binary produced a valid five-second H.264/AAC MP4 using the same inputs and parameters. This is sample validation, not full browser download validation; other platforms were assessed from code, not proven to crash.
+- yt-dlp metadata extraction and FFmpeg processing are separate stages. Using yt-dlp for extraction does not ensure that the later API merge uses system FFmpeg. The generic full-file fallback explicitly supplies the system FFmpeg location on Linux.
+- Keep FFmpeg warning diagnostics and the selected executable in failure logs. Do not interpret every download failure as this binary issue or assume all static builds are unreliable.
+
 ## Direct Bridge download flow
 - "Direct Bridge" means: the API extracts real media resource URLs, returns them to the browser as `redirect` metadata, and avoids creating a `/tunnel` URL for that service.
 - Use Direct Bridge for services where browser/CDN direct download is stable and server proxying is unnecessary or less reliable. Current examples: `deeplearningai`, `tiktok`.

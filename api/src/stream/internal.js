@@ -374,6 +374,15 @@ async function handleChunkedStream(streamInfo, res) {
                 }
             }
 
+            // Internal tunnels retain a track-bound transplant callback, not
+            // originalRequest. Refresh during the initial probe too, before
+            // readChunks has a chance to handle an expired media URL.
+            if (responseStatus === 403 && streamInfo.transplant && attempts > 0) {
+                tunnelDebugWarn(`[handleYoutubeStream] Probe forbidden; refreshing stream attempts_left=${attempts}`);
+                await streamInfo.transplant(streamInfo.dispatcher);
+                continue;
+            }
+
             if (responseStatus === 403 && streamInfo.originalRequest && attempts > 0) {
                 tunnelDebugLog(`[handleYoutubeStream] Got 403, attempting fresh YouTube API call (attempts left: ${attempts})`);
                 try {

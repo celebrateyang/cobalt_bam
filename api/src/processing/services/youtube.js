@@ -6,6 +6,7 @@ import { mkdtemp, writeFile, rm } from "node:fs/promises";
 import { getCookie } from "../cookie/manager.js";
 import { sanitizeString } from "../create-filename.js";
 import { exceedsYoutubeDurationLimit } from "../youtube-duration.js";
+import { waitForYoutubeMedia } from "../youtube-availability.js";
 
 const DEFAULT_TIMEOUT_MS = 45000;
 const MIN_GOOD_URL_SCORE = -140;
@@ -1093,6 +1094,16 @@ export default async function youtube(o) {
         }
 
         if (!built?.error) {
+            // Some web_embedded URLs are gated until the pre-roll can be
+            // skipped. Metadata extraction alone does not wait for this;
+            // yt-dlp's downloader honors the selected formats' available_at.
+            const ready = await waitForYoutubeMedia(extracted.info, built, {
+                maxWaitMs: DEFAULT_TIMEOUT_MS - (Date.now() - startedAt),
+                onWait: waitMs => console.log(
+                    `[YOUTUBE STAGE] trace_id=${o.traceId || "n/a"} event=media_availability_wait id=${o.id} wait_ms=${waitMs}`,
+                ),
+            });
+            if (!ready) return { error: "youtube.timeout" };
             console.log(
                 `[YOUTUBE STAGE] trace_id=${o.traceId || "n/a"} event=parse_complete id=${o.id} build_ms=${Date.now() - buildStartedAt} elapsed_ms=${Date.now() - startedAt}`,
             );

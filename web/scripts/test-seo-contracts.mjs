@@ -96,6 +96,30 @@ const links = load('src/lib/seo/internal-links.ts');
 const { supportedLanguages } = load('src/lib/seo/language-routing.ts');
 const { seoLandingSlugs, getSeoLandingPage, getSeoLandingLocale } = load('src/lib/seo/landing-pages.ts');
 
+test('Dailymotion landing is bilingual, discoverable and honest about playlist and speed limits', async () => {
+    const slug = 'dailymotion-video-downloader';
+    assert.deepEqual(routes.getDownloadSeoLanguages(slug), ['en', 'zh']);
+    assert(links.featuredDownloadLinks.some(item => item.slug === slug));
+    const detail = await component('src/routes/[lang]/download/[slug]/+page.svelte');
+    const landing = getSeoLandingPage(slug);
+    for (const lang of ['en', 'zh']) {
+        setTestLocale(lang, `download/${slug}`);
+        const result = detail.render({ data: { lang, slug, landing, guideSlug: null, relatedPages: [], relatedLearnPages: [] } });
+        assert(result.html.includes('id="dailymotion-url"'));
+        assert(result.html.includes('name="u"'));
+        assert(result.html.includes(escapeText(landing.locales[lang].h1)));
+        assert(result.html.includes(escapeText(landing.locales[lang].faqs[2].a)), lang);
+        const schema = [...result.head.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(m => JSON.parse(m[1]));
+        assert(!schema.find(item => item['@type'] === 'HowTo').totalTime);
+        assert(!schema.find(item => item['@type'] === 'WebPage').mainEntity.offers);
+        assert(!schema.find(item => item['@type'] === 'WebPage').mainEntity.knowsAbout.includes('playlist download'));
+    }
+    setTestLocale('en');
+    const xml = await load('src/routes/sitemap.xml/+server.ts').GET().text();
+    for (const lang of ['en', 'zh']) assert(xml.includes(`<loc>https://freesavevideo.online/${lang}/download/${slug}</loc>`));
+    assert(!xml.includes(`/fr/download/${slug}`));
+});
+
 test('remux delegates its canonical link to the shared language layout', () => {
     const layout = readFileSync(resolve(root, 'src/routes/[lang]/+layout.svelte'), 'utf8');
     const remux = readFileSync(resolve(root, 'src/routes/[lang]/remux/+page.svelte'), 'utf8');
@@ -276,6 +300,7 @@ test('every advertised download and guide detail renders localized shared labels
         const page = await component(`src/routes/[lang]/${kind}/[slug]/+page.svelte`);
         const loader = load(`src/routes/[lang]/${kind}/[slug]/+page.ts`);
         for (const params of loader.entries()) {
+            setTestLocale(params.lang, `${kind}/${params.slug}`);
             const labels = getSeoRuntimeContent(params.lang).labels;
             const html = page.render({ data: await loader.load({ params }) }).html;
             const context = `${params.lang}/${kind}/${params.slug}`;
@@ -283,12 +308,15 @@ test('every advertised download and guide detail renders localized shared labels
                 .some(match => match[1] === escapeText(value));
             if (kind === 'download' && params.slug === 'youtube-download') {
                 const copy = load('src/lib/youtube/copy.ts').getYouTubeCopy(params.lang);
-                assert(html.includes(escapeText(copy.search)), context);
+                assert(html.includes(escapeText(copy.input)), context);
                 assert(html.includes(escapeText(copy.placeholder)), context);
                 assert(html.includes('id="youtube-query"'), context);
                 assert(!html.includes('class="omnibox'), context);
             } else if (kind === 'download') {
-                assert(hasLabel('h2', labels.toolsWithoutPoints), context);
+                const focused = params.slug === 'dailymotion-video-downloader'
+                    || (params.lang === 'de' && load('src/lib/seo/de-priority-landings.ts').isDePriorityLanding(params.slug))
+                    || (params.lang === 'th' && load('src/lib/seo/th-priority-landings.ts').isThPriorityLanding(params.slug));
+                if (!focused) assert(hasLabel('h2', labels.toolsWithoutPoints), context);
                 assert(hasLabel('h3', labels.corePages), context);
                 assert(hasLabel('h3', labels.similarDownloads), context);
             } else {

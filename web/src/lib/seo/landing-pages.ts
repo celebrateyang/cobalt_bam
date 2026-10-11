@@ -4,6 +4,7 @@ import { thPriorityLandingLocales } from '$lib/seo/th-priority-landings';
 import { xinpianchangLanding } from '$lib/seo/xinpianchang-landing';
 import { soopliveLanding } from '$lib/seo/sooplive-landing';
 import { magnificLanding } from '$lib/seo/magnific-landing';
+import { dailymotionLanding } from '$lib/seo/dailymotion-landing';
 
 export type SeoLandingFaqItem = {
     q: string;
@@ -856,6 +857,7 @@ const buildGenericWorkflowLocales = (
 });
 
 export const seoLandingPages: SeoLandingPage[] = [
+    dailymotionLanding,
     magnificLanding,
     soopliveLanding,
     xinpianchangLanding,

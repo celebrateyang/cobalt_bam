@@ -95,6 +95,12 @@
       "color": "#000000"
     },
     {
+      "id": "dailymotion",
+      "name": "Dailymotion",
+      "logo": "dailymotion",
+      "color": "#0A0A0A"
+    },
+    {
       "id": "vimeo",
       "name": "Vimeo",
       "logo": "vimeo",
@@ -175,12 +181,6 @@
       "name": "CCTV",
       "image": "/platforms/cctv-favicon.ico",
       "imageSource": "https://www.cctv.com/favicon.ico"
-    },
-    {
-      "id": "dailymotion",
-      "name": "Dailymotion",
-      "logo": "dailymotion",
-      "color": "#0A0A0A"
     },
     {
       "id": "loom",

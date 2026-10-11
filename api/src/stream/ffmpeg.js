@@ -81,6 +81,24 @@ const isGenericHostService = (service) => {
     return value.includes(".") && !hlsExceptions.has(value);
 };
 
+export const selectHlsAudioArgs = (streamInfo, format) => {
+    if (streamInfo.type === 'mute' || !streamInfo.isHLS || !hlsExceptions.has(streamInfo.service)) {
+        return [];
+    }
+
+    // The Dailymotion manifest advertises AAC-LC. Preserve its audio instead of
+    // spending CPU re-encoding AAC to AAC; keep the legacy policy for unknown
+    // codecs, other containers, and other services with HLS workarounds.
+    if (streamInfo.service === 'dailymotion' && format === 'mp4'
+        && streamInfo.hlsAudioCodec === 'mp4a.40.2') {
+        return ['-c:a', 'copy', '-bsf:a', 'aac_adtstoasc'];
+    }
+
+    return streamInfo.service === 'youtube' && format === 'webm'
+        ? ['-c:a', 'libopus']
+        : ['-c:a', 'aac', '-bsf:a', 'aac_adtstoasc'];
+};
+
 const redactUrl = (value) => {
     if (typeof value !== 'string' || !/^https?:\/\//i.test(value)) {
         return value;
@@ -415,17 +433,8 @@ const remux = async (streamInfo, res) => {
         }
     }
 
-    if (
-        !shouldTranscodeCorruptCctv &&
-        streamInfo.type !== 'mute' &&
-        streamInfo.isHLS &&
-        hlsExceptions.has(streamInfo.service)
-    ) {
-        if (streamInfo.service === 'youtube' && format === 'webm') {
-            args.push('-c:a', 'libopus');
-        } else {
-            args.push('-c:a', 'aac', '-bsf:a', 'aac_adtstoasc');
-        }
+    if (!shouldTranscodeCorruptCctv) {
+        args.push(...selectHlsAudioArgs(streamInfo, format));
     }
 
     if (streamInfo.metadata) {

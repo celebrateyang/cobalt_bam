@@ -3,7 +3,7 @@ import test from "node:test";
 
 import ffmpeg from "ffmpeg-static";
 
-import { selectFfmpegExecutable } from "./ffmpeg.js";
+import { selectFfmpegExecutable, selectHlsAudioArgs } from "./ffmpeg.js";
 
 test("uses the system ffmpeg for Amazon HLS on Linux", () => {
     assert.equal(
@@ -79,4 +79,25 @@ test("does not select the Linux system ffmpeg on Windows", () => {
         selectFfmpegExecutable({ service: "amazon" }, "win32"),
         ffmpeg,
     );
+});
+
+test('copies advertised Dailymotion AAC-LC only for MP4 video downloads', () => {
+    const info = { service: 'dailymotion', isHLS: true, type: 'merge', hlsAudioCodec: 'mp4a.40.2' };
+    assert.deepEqual(selectHlsAudioArgs(info, 'mp4'), ['-c:a', 'copy', '-bsf:a', 'aac_adtstoasc']);
+    for (const hlsAudioCodec of [undefined, 'opus', 'mp4a.40.5']) {
+        assert.deepEqual(selectHlsAudioArgs({ ...info, hlsAudioCodec }, 'mp4'),
+            ['-c:a', 'aac', '-bsf:a', 'aac_adtstoasc']);
+    }
+    assert.deepEqual(selectHlsAudioArgs(info, 'mkv'), ['-c:a', 'aac', '-bsf:a', 'aac_adtstoasc']);
+    assert.deepEqual(selectHlsAudioArgs({ ...info, type: 'mute' }, 'mp4'), []);
+    assert.deepEqual(selectHlsAudioArgs({ ...info, isHLS: false }, 'mp4'), []);
+});
+
+test('preserves HLS audio workarounds for other services', () => {
+    for (const service of ['vimeo', 'rutube', 'bsky', 'cctv', 'niconico', 'weibo', 'sooplive']) {
+        assert.deepEqual(selectHlsAudioArgs({ service, isHLS: true, type: 'merge', hlsAudioCodec: 'mp4a.40.2' }, 'mp4'),
+            ['-c:a', 'aac', '-bsf:a', 'aac_adtstoasc']);
+    }
+    assert.deepEqual(selectHlsAudioArgs({ service: 'youtube', isHLS: true }, 'webm'), ['-c:a', 'libopus']);
+    assert.deepEqual(selectHlsAudioArgs({ service: 'example.com', isHLS: true }, 'mp4'), []);
 });

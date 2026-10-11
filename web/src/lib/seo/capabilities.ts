@@ -123,6 +123,20 @@ const defaultUnsupportedCases = [
 
 export const capabilityServices: CapabilityService[] = [
     {
+        id: 'dailymotion',
+        name: 'Dailymotion',
+        category: 'video',
+        publicOnly: true,
+        audioMode: true,
+        noWatermark: false,
+        batchFriendly: true,
+        collectionFriendly: false,
+        landingSlug: 'dailymotion-video-downloader',
+        searchIntents: ['dailymotion video downloader', 'download dailymotion videos', 'dailymotion to mp4'],
+        unsupportedCases: [...defaultUnsupportedCases, 'automatic Dailymotion playlist or channel expansion'],
+        notes: ['Accepts public video and dai.ly links; prepares MP4 with available audio.', 'Selects the highest-bandwidth available H.264 stream; the general quality setting does not override selection.', 'Multiple individual video URLs can use the batch queue; playlist URLs do not expand automatically.'],
+    },
+    {
         id: 'youtube',
         name: 'YouTube',
         category: 'video',
@@ -573,7 +587,6 @@ export const additionalSupportedServices = [
     'Amazon Live',
     'Bluesky',
     'CCTV',
-    'Dailymotion',
     'Loom',
     'Newgrounds',
     'OK.ru',

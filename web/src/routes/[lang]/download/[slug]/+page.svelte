@@ -66,6 +66,7 @@
     $: runtimeContent = getSeoRuntimeContent(data.lang);
     $: platformKey = getPlatformKey(data.slug);
     $: usesFocusedPriorityContent =
+        data.slug === 'dailymotion-video-downloader' ||
         (data.lang === 'de' && isDePriorityLanding(data.slug)) ||
         (data.lang === 'th' && isThPriorityLanding(data.slug));
     $: productFaqs = usesFocusedPriorityContent ? [] : runtimeContent.productFaqs;
@@ -147,7 +148,7 @@
               '@type': 'HowTo',
               name: localeContent.stepsTitle,
               description: localeContent.lede,
-              ...(data.slug === 'xinpianchang-video-download' ? {} : { totalTime: 'PT1M' }),
+              ...(['xinpianchang-video-download', 'dailymotion-video-downloader'].includes(data.slug) ? {} : { totalTime: 'PT1M' }),
               tool: [
                   {
                       '@type': 'HowToTool',
@@ -190,15 +191,13 @@
                       localeContent.h1,
                       ...localeContent.metaKeywords,
                       'public video download',
-                      'batch download',
-                      'playlist download',
-                      'audio extraction',
+                      ...(data.slug === 'dailymotion-video-downloader' ? [] : ['batch download', 'playlist download', 'audio extraction']),
                   ],
-                  offers: {
+                  ...(data.slug === 'dailymotion-video-downloader' ? {} : { offers: {
                       '@type': 'Offer',
                       price: '0',
                       priceCurrency: 'USD',
-                  },
+                  } }),
                   potentialAction: {
                       '@type': 'UseAction',
                       target: canonicalUrl,
@@ -279,6 +278,12 @@
             <div class="hero-omnibox">
                 {#if OmniboxComponent}
                     <svelte:component this={OmniboxComponent} />
+                {:else if data.slug === 'dailymotion-video-downloader'}
+                    <form class="dailymotion-form" action={homeUrl} method="GET">
+                        <label for="dailymotion-url">{isZh ? 'Dailymotion 视频链接' : 'Dailymotion video URL'}</label>
+                        <input id="dailymotion-url" name="u" type="url" placeholder="https://www.dailymotion.com/video/..." required />
+                        <button type="submit">{isZh ? '继续下载' : 'Continue to download'}</button>
+                    </form>
                 {:else}
                     <a class="downloader-fallback" href={homeUrl}>
                         {isJa ? 'ダウンローダーを開く' : isZh ? '打开下载器' : isTh ? 'เปิดเครื่องมือดาวน์โหลด' : localCopy?.downloader ?? 'Open downloader'}
@@ -331,7 +336,7 @@
 
                 {#if data.landing.supportedLinkFormats?.length}
                     <div class="format-list">
-                        <h3>{localCopy?.collection ?? 'Other supported collection formats'}</h3>
+                        <h3>{data.slug === 'dailymotion-video-downloader' ? 'Supported video URL formats' : localCopy?.collection ?? 'Other supported collection formats'}</h3>
                         <ul class="feature-list">
                             {#each data.landing.supportedLinkFormats as format}
                                 <li>{format}</li>
@@ -470,6 +475,8 @@
             </div>
         </section>
 
+        {/if}
+
         <section class="card faq">
             <h2>{localeContent.faqTitle}</h2>
             <div class="faq-list">
@@ -549,8 +556,6 @@
                 {/if}
             </div>
         </section>
-        {/if}
-
         {#if localeContent.supportedLinksTitle && localeContent.supportedLinks?.length}
             <section class="card practical">
                 <h2>{localeContent.supportedLinksTitle}</h2>
@@ -613,6 +618,10 @@
 {/if}
 
 <style>
+    .dailymotion-form { display: grid; gap: 12px; width: 100%; }
+    .dailymotion-form label { font-weight: 600; }
+    .dailymotion-form input { box-sizing: border-box; width: 100%; min-width: 0; padding: 14px; border: 1px solid var(--button); border-radius: 12px; background: var(--background); color: var(--text); font: inherit; }
+    .dailymotion-form button { padding: 14px 20px; border: 0; border-radius: 12px; background: var(--button); color: var(--text); font: inherit; font-weight: 600; cursor: pointer; }
     .xinpianchang-install {
         display: flex;
         align-items: center;

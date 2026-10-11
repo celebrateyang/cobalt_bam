@@ -88,6 +88,7 @@ export function createStream(obj) {
             audioFormat: obj.audioFormat,
 
             isHLS: obj.isHLS || false,
+            hlsAudioCodec: obj.hlsAudioCodec,
             iqiyiTsConcat: obj.iqiyiTsConcat === true,
             bypassTunnelRateLimit: obj.bypassTunnelRateLimit === true,
             originalRequest: obj.originalRequest,

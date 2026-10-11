@@ -133,7 +133,9 @@ function generateSitemap(): string {
             urls.push(
                 urlEntry(
                     `${site}${path}`,
-                    slug === 'xinpianchang-video-download'
+                    slug === 'dailymotion-video-downloader'
+                        ? '2026-10-11'
+                        : slug === 'xinpianchang-video-download'
                         ? '2026-09-19'
                         : ['de', 'th'].includes(lang) && priorityLandingLastModified.has(slug)
                           ? '2026-09-21'

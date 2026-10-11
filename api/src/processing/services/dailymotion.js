@@ -95,6 +95,8 @@ export default async function({ id }) {
     return {
         urls: bestAudio ? [bestQuality.uri, bestAudio.uri] : bestQuality.uri,
         isHLS: true,
+        hlsAudioCodec: bestQuality.codecs.split(',').map(codec => codec.trim())
+            .find(codec => codec.startsWith('mp4a.')),
         duration: media.duration,
         filenameAttributes: {
             service: 'dailymotion',

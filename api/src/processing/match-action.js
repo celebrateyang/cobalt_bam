@@ -75,6 +75,7 @@ export default function({
             cover: !disableMetadata ? r.cover : false,
             cropCover: !disableMetadata ? r.cropCover : false,
             duration: r.duration,
+            hlsAudioCodec: r.hlsAudioCodec,
             iqiyiTsConcat: r.iqiyiTsConcat === true,
             genericDownload: host === "generic" ? r.genericDownload : undefined,
         },

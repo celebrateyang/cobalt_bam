@@ -19,6 +19,10 @@ export type LinkAudience = 'all' | 'international';
 
 const crossLinkEntries: CrossLinkEntry[] = [
     {
+        platform: 'Dailymotion',
+        downloadSlug: 'dailymotion-video-downloader',
+    },
+    {
         platform: 'Douyin',
         downloadSlug: 'douyin-no-watermark',
         guideSlug: 'douyin-download-guide',
@@ -196,6 +200,7 @@ const entryByDownloadSlug = new Map(
 );
 
 const strategicDownloadOrder = [
+    'dailymotion-video-downloader',
     'youtube-download',
     'youtube-playlist-downloader',
     'youtube-shorts-download',
@@ -232,6 +237,7 @@ const strategicDownloadOrder = [
 ] as const;
 
 const internationalDownloadSlugs = new Set([
+    'dailymotion-video-downloader',
     'magnific-download',
     'xinpianchang-video-download',
     'youtube-download',
@@ -310,6 +316,7 @@ const matchesAudience = (slug: string, audience: LinkAudience): boolean =>
 // Keep links and route generation on the same language policy. Do not advertise
 // translated URLs merely because an English fallback can render their content.
 export const isDownloadAvailableInLanguage = (slug: string, lang: string): boolean => {
+    if (slug === 'dailymotion-video-downloader') return lang === 'en' || lang === 'zh';
     if (slug === 'sooplive-video-download') return ['en', 'ko', 'ja', 'th'].includes(lang);
     if (slug === 'xinpianchang-video-download') return lang === 'en' || lang === 'zh';
     if (slug === 'youtube-playlist-to-mp3') return lang === 'en' || lang === 'zh';
@@ -318,6 +325,7 @@ export const isDownloadAvailableInLanguage = (slug: string, lang: string): boole
 };
 
 export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
+    'dailymotion-video-downloader': ['vimeo-video-download', 'youtube-download', 'batch-video-downloader', 'playlist-downloader'],
     'magnific-download': [
         'pinterest-video-download',
         'instagram-video-download',

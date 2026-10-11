@@ -17,13 +17,55 @@ const fixture = (responses) => {
         tunnelDebugLog() {}, tunnelDebugWarn() {},
         request: async (url, options) => {
             calls.push({ url, range: options.headers.Range });
-            const next = responses.shift(); assert.ok(next, 'unexpected extra request'); return next;
+            const next = responses.shift(); assert.ok(next, 'unexpected extra request');
+            if (next.statusCode === 206 && !next.headers['content-range']) {
+                next.headers['content-range'] = options.headers.Range.replace('=', ' ') + '/' + (next.total ?? 4);
+            }
+            return next;
         },
     });
     return { readChunks, calls, discarded };
 };
-const response = (statusCode, data = []) => ({
-    statusCode, headers: {}, body: (async function* () { for (const value of data) yield Buffer.from(value); })(),
+const response = (statusCode, data = [], total = 4) => ({
+    statusCode, total, headers: {}, body: (async function* () { for (const value of data) yield Buffer.from(value); })(),
+});
+
+test('a resumed bounded range starts at its offset and stops at its end', async () => {
+    const f = fixture([response(206, ['cd'], 6), response(206, ['e'], 6)]);
+    const output = [];
+    for await (const part of f.readChunks(stream(), 6n, 2n, 4n)) output.push(part);
+    assert.equal(Buffer.concat(output).toString(), 'cde');
+    assert.deepEqual(f.calls.map(call => call.range), ['bytes=2-3', 'bytes=4-4']);
+});
+
+test('refreshing a resumed range preserves its nonzero offset', async () => {
+    const f = fixture([response(403), response(206, ['cd'])]);
+    const info = stream(); info.transplant = async () => { info.url = 'https://cdn.test/new'; };
+    const output = [];
+    for await (const part of f.readChunks(info, 4n, 2n)) output.push(part);
+    assert.equal(Buffer.concat(output).toString(), 'cd');
+    assert.deepEqual(f.calls.map(call => call.range), ['bytes=2-3', 'bytes=2-3']);
+});
+
+test('ignored or mismatched source ranges cannot be appended as resumed bytes', async () => {
+    for (const headers of [null, { 'content-range': 'bytes 0-1/4' }, { 'content-range': 'bytes 2-3/5' }]) {
+        const next = response(headers ? 206 : 200, ['ab']);
+        if (headers) next.headers = headers;
+        const f = fixture([next]); const output = [];
+        await assert.rejects(async () => {
+            for await (const part of f.readChunks(stream(), 4n, 2n)) output.push(part);
+        }, /youtube_chunk_range_mismatch/);
+        assert.equal(output.length, 0);
+    }
+});
+
+test('short or oversized source segments fail instead of completing a corrupt download', async () => {
+    for (const data of [['a'], ['abc']]) {
+        const f = fixture([response(206, data)]);
+        await assert.rejects(async () => {
+            for await (const part of f.readChunks(stream(), 4n)) {}
+        }, /youtube_chunk_(incomplete|range_mismatch)/);
+    }
 });
 const stream = () => ({ url: 'https://cdn.test/audio-old', service: 'youtube', controller: new AbortController() });
 

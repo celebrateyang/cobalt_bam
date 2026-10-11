@@ -1,5 +1,6 @@
 import { request } from "undici";
 import { safeDestroyStream } from "./safe-destroy.js";
+import { resolveByteRange } from "./byte-range.js";
 import { Readable } from "node:stream";
 import { closeRequest, getHeaders, pipe } from "./shared.js";
 import { tunnelDebugLog, tunnelDebugWarn } from "./debug-log.js";
@@ -125,18 +126,18 @@ const safeDestroyBody = (body) => {
     safeDestroyStream(body);
 };
 
-async function* readChunks(streamInfo, size) {
-    let read = 0n, chunksSinceTransplant = 0, forbiddenRetries = 0;    // console.log(`[readChunks] Starting chunk download - Total size: ${size}, URL: ${streamInfo.url}`);
+async function* readChunks(streamInfo, size, start = 0n, end = size - 1n) {
+    let read = start, chunksSinceTransplant = 0, forbiddenRetries = 0;
     // console.log(`======> [readChunks] YouTube chunk download with authentication started`);
 
-    while (read < size) {
+    while (read <= end) {
         if (streamInfo.controller.signal.aborted) {
             // console.log(`[readChunks] Controller aborted at read=${read}/${size}`);
             throw new Error("controller aborted");
         }
 
         const rangeStart = read;
-        const rangeEnd = min(size - 1n, read + CHUNK_SIZE - 1n);
+        const rangeEnd = min(end, read + CHUNK_SIZE - 1n);
         // console.log(`[readChunks] Requesting chunk: bytes=${rangeStart}-${rangeEnd}, read=${read}/${size}`);
 
         const chunk = await request(streamInfo.url, {
@@ -243,14 +244,28 @@ async function* readChunks(streamInfo, size) {
             throw new Error(`youtube_chunk_http_${chunk.statusCode}`);
         }
 
-        const expected = min(CHUNK_SIZE, size - read);
+        const expected = rangeEnd - rangeStart + 1n;
         const headerLength = parseBigIntHeaderValue(chunk.headers["content-length"]);
         const headerRange = String(chunk.headers["content-range"] || "none");
         const statusCode = Number(chunk.statusCode || 0);
 
+        // Never label a full-file response or the wrong offset as a resumed
+        // segment: doing so would append duplicate bytes and corrupt the file.
+        const bounds = /^bytes\s+(\d+)-(\d+)\/(\d+)$/i.exec(headerRange);
+        const validPartial = statusCode === 206 && bounds
+            && BigInt(bounds[1]) === rangeStart && BigInt(bounds[2]) === rangeEnd
+            && BigInt(bounds[3]) === size;
+        const validFull = statusCode === 200 && rangeStart === 0n
+            && rangeEnd === size - 1n;
+        if ((!validPartial && !validFull) || (headerLength > 0n && headerLength !== expected)) {
+            safeDestroyBody(chunk.body);
+            throw new Error("youtube_chunk_range_mismatch");
+        }
+
         let chunkDataSize = 0n;
         for await (const data of chunk.body) {
             chunkDataSize += BigInt(data.length || 0);
+            if (chunkDataSize > expected) throw new Error("youtube_chunk_range_mismatch");
             yield data;
         }
 
@@ -263,10 +278,7 @@ async function* readChunks(streamInfo, size) {
             throw new Error("youtube_chunk_empty");
         }
 
-        // Ignore suspiciously tiny chunks unless this is the final expected tail.
-        if (received < expected / 2n && read + received < size) {
-            throw new Error("youtube_chunk_too_small");
-        }
+        if (chunkDataSize !== expected) throw new Error("youtube_chunk_incomplete");
 
         tunnelDebugLog(`[readChunks] Chunk processed: data size=${chunkDataSize}, header size=${headerLength}, read progress=${read + received}/${size}`);
         read += received;
@@ -432,7 +444,20 @@ async function handleChunkedStream(streamInfo, res) {
         }
 
         // console.log(`[handleYoutubeStream] Creating generator for size: ${size}`);
-        const generator = readChunks(streamInfo, size);
+        const requestedRange = streamInfo.headers instanceof Map
+            ? streamInfo.headers.get("range") ?? streamInfo.headers.get("Range")
+            : streamInfo.headers?.range ?? streamInfo.headers?.Range;
+        const range = resolveByteRange(requestedRange, size);
+        res.setHeader("accept-ranges", "bytes");
+        if (range?.unsatisfiable) {
+            res.status(416);
+            res.setHeader("content-range", `bytes */${size}`);
+            res.setHeader("content-length", "0");
+            return cleanup(undefined);
+        }
+        const start = range?.start ?? 0n;
+        const end = range?.end ?? size - 1n;
+        const generator = readChunks(streamInfo, size, start, end);
 
         const abortGenerator = () => {
             // console.log(`[handleYoutubeStream] Abort generator called`);
@@ -450,9 +475,9 @@ async function handleChunkedStream(streamInfo, res) {
             res.setHeader("content-type", responseContentType);
         }
 
-        if (size > 0n) {
-            res.setHeader("content-length", size.toString());
-        }
+        res.status(range ? 206 : 200);
+        if (range) res.setHeader("content-range", `bytes ${start}-${end}/${size}`);
+        res.setHeader("content-length", (end - start + 1n).toString());
 
         // console.log(`[handleYoutubeStream] Starting pipe operation`);
         pipe(stream, res, (error) => {

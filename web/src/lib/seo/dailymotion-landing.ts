@@ -1,12 +1,14 @@
 import type { SeoLandingPage } from './landing-pages';
+import { dailymotionTranslations } from './dailymotion-translations';
 
 export const dailymotionLanding: SeoLandingPage = {
     slug: 'dailymotion-video-downloader',
     supportedLinkFormats: ['https://www.dailymotion.com/video/VIDEO_ID', 'https://dai.ly/VIDEO_ID'],
     locales: {
+        ...dailymotionTranslations,
         en: {
             metaTitle: 'Dailymotion Video Downloader - Save MP4 | FreeSaveVideo',
-            metaDescription: 'Download public Dailymotion videos as MP4 with sound. Paste a video or dai.ly link, check available quality, and save online. Playlist support explained.',
+            metaDescription: 'Download public Dailymotion videos as MP4 with sound. Paste a video URL or dai.ly link and save in your browser. Sign-in required; source quality applies.',
             metaKeywords: ['dailymotion video downloader', 'download dailymotion videos', 'dailymotion to mp4'],
             h1: 'Dailymotion Video Downloader',
             lede: 'Download Dailymotion videos as MP4 with sound. Paste a public video link or dai.ly short link below and save the available source quality in your browser.',
@@ -20,7 +22,7 @@ export const dailymotionLanding: SeoLandingPage = {
             steps: [
                 'Open the public Dailymotion video you want to save and copy its video URL or dai.ly share link.',
                 'Paste the link into the downloader above and sign in to FreeSaveVideo when prompted.',
-                'Check the parsed result and the points or membership usage shown by the downloader.',
+                'Review the video details and the points or membership usage shown by the downloader.',
                 'Start the download and keep the page open until the MP4 with sound has finished saving.',
             ],
             featuresTitle: 'Dailymotion to MP4: what you can save',
@@ -47,6 +49,50 @@ export const dailymotionLanding: SeoLandingPage = {
                 { q: 'What should I do if a Dailymotion download fails?', a: 'Check that you pasted an individual video link and that the video is still publicly playable. Retry the failed task to request a fresh result. Private, deleted, login-only, or otherwise restricted videos may not be available.' },
             ],
             disclaimer: 'Save only videos you own or have permission to download. Availability and quality depend on the source video.',
+        },
+        fr: {
+            metaTitle: 'Télécharger une vidéo Dailymotion en MP4 | FreeSaveVideo',
+            metaDescription: 'Téléchargez des vidéos publiques Dailymotion en MP4 avec le son. Collez un lien vidéo ou dai.ly. Connexion requise ; qualité selon la source disponible.',
+            metaKeywords: ['télécharger vidéo Dailymotion', 'téléchargeur Dailymotion', 'Dailymotion en MP4'],
+            h1: 'Téléchargeur de vidéos Dailymotion',
+            lede: 'Téléchargez des vidéos Dailymotion en MP4 avec le son. Collez le lien d’une vidéo publique ou un lien court dai.ly ci-dessous pour enregistrer la vidéo dans votre navigateur, dans la qualité disponible.',
+            heroTags: ['MP4 avec le son', 'Vidéos publiques', 'Liens courts dai.ly', 'Sans application à installer'],
+            facts: [
+                'Utilisez le lien d’une vidéo précise. Une page de chaîne ou une playlist ne remplace pas un lien vidéo individuel.',
+                'Le fichier conserve la résolution de la source disponible. Une vidéo en 480p n’est pas convertie en HD.',
+                'Connectez-vous à FreeSaveVideo pour télécharger. Les points ou le quota de votre abonnement sont indiqués avant l’enregistrement.',
+            ],
+            stepsTitle: 'Comment télécharger une vidéo Dailymotion',
+            steps: [
+                'Ouvrez la vidéo publique à enregistrer et copiez son adresse ou son lien de partage dai.ly.',
+                'Collez le lien dans le téléchargeur ci-dessus et connectez-vous à FreeSaveVideo si nécessaire.',
+                'Vérifiez les informations de la vidéo ainsi que les points ou le quota d’abonnement affichés.',
+                'Lancez le téléchargement et gardez la page ouverte jusqu’à la fin de l’enregistrement du MP4 avec le son.',
+            ],
+            featuresTitle: 'Dailymotion en MP4 : les possibilités',
+            features: [
+                'Enregistrez les vidéos publiques compatibles en MP4 avec leur piste audio disponible.',
+                'Utilisez une adresse /video/ classique ou un lien court dai.ly.',
+                'Conservez la qualité proposée par la source : le 1080p ou la 4K ne sont pas disponibles pour toutes les vidéos.',
+                'Téléchargez depuis un navigateur sur ordinateur ou mobile, sans installer d’application de téléchargement.',
+                'Suivez la progression dans la file de téléchargements. Les vidéos longues peuvent demander davantage de temps de préparation et de transfert.',
+            ],
+            supportedLinksTitle: 'Liens vidéo et limites des playlists',
+            supportedLinks: [
+                { title: 'Page vidéo Dailymotion', description: 'Copiez l’adresse dailymotion.com/video/VIDEO_ID depuis la page de la vidéo.' },
+                { title: 'Lien de partage dai.ly', description: 'Un lien court dai.ly/VIDEO_ID désigne la même vidéo individuelle.' },
+                { title: 'Playlists Dailymotion', description: 'Les adresses dailymotion.com/playlist/ ne sont pas développées automatiquement. Ouvrez chaque vidéo et copiez son lien individuel.' },
+            ],
+            faqTitle: 'Questions sur le téléchargement Dailymotion',
+            faqs: [
+                { q: 'Comment enregistrer une vidéo Dailymotion en MP4 avec le son ?', a: 'Collez le lien d’une vidéo publique compatible, puis lancez le téléchargement. FreeSaveVideo prépare un MP4 contenant la vidéo et sa piste audio disponible. Vous n’avez pas à enregistrer les deux pistes séparément.' },
+                { q: 'Les vidéos Dailymotion sont-elles toujours téléchargées en 480p ?', a: 'Non. La qualité dépend des flux disponibles pour la vidéo. Le téléchargeur sélectionne actuellement le flux H.264 disponible ayant le débit le plus élevé ; le réglage général de qualité ne modifie pas cette sélection. Si la source sélectionnée est en 480p, le MP4 reste en 480p.' },
+                { q: 'Puis-je télécharger une playlist Dailymotion entière ?', a: 'Les playlists Dailymotion ne sont pas développées automatiquement pour le moment. Copiez les liens individuels des vidéos et utilisez la file de téléchargements pour plusieurs liens. Coller uniquement l’adresse d’une playlist ne permet pas de télécharger toutes ses vidéos.' },
+                { q: 'Pourquoi le téléchargement d’une longue vidéo prend-il du temps ?', a: 'Certaines vidéos sont fournies en nombreux segments, avec une piste audio séparée. La préparation du MP4 et le transfert prennent du temps. La durée dépend de la longueur de la vidéo, de la disponibilité de la source, du réseau et de la charge du serveur. Un téléchargement en moins d’une minute n’est pas garanti.' },
+                { q: 'Faut-il un compte Dailymotion ou une application ?', a: 'Pour les vidéos publiques compatibles, vous n’avez pas besoin de vous connecter à Dailymotion ni d’installer une application. Une connexion à FreeSaveVideo est nécessaire. Les points ou le quota de votre abonnement sont indiqués dans le téléchargeur.' },
+                { q: 'Que faire si le téléchargement échoue ?', a: 'Vérifiez que le lien correspond à une vidéo précise et que celle-ci est toujours accessible publiquement. Relancez la tâche pour obtenir un nouveau résultat. Les vidéos privées, supprimées, réservées aux utilisateurs connectés ou soumises à d’autres restrictions peuvent être indisponibles.' },
+            ],
+            disclaimer: 'Enregistrez uniquement les vidéos qui vous appartiennent ou que vous êtes autorisé à télécharger. La disponibilité et la qualité dépendent de la vidéo source.',
         },
         zh: {
             metaTitle: 'Dailymotion 视频下载器 - 保存带声音的 MP4 | FreeSaveVideo',

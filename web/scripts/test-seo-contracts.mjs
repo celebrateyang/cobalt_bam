@@ -96,28 +96,61 @@ const links = load('src/lib/seo/internal-links.ts');
 const { supportedLanguages } = load('src/lib/seo/language-routing.ts');
 const { seoLandingSlugs, getSeoLandingPage, getSeoLandingLocale } = load('src/lib/seo/landing-pages.ts');
 
-test('Dailymotion landing is bilingual, discoverable and honest about playlist and speed limits', async () => {
+test('Dailymotion landing is fully localized in every supported language with accurate download limits', async () => {
     const slug = 'dailymotion-video-downloader';
-    assert.deepEqual(routes.getDownloadSeoLanguages(slug), ['en', 'zh']);
+    assert.deepEqual(routes.getDownloadSeoLanguages(slug), [...supportedLanguages]);
     assert(links.featuredDownloadLinks.some(item => item.slug === slug));
     const detail = await component('src/routes/[lang]/download/[slug]/+page.svelte');
     const landing = getSeoLandingPage(slug);
-    for (const lang of ['en', 'zh']) {
+    const { dailymotionUiLocales } = load('src/lib/seo/dailymotion-ui.ts');
+    assert.deepEqual(Object.keys(landing.locales).sort(), [...supportedLanguages].sort());
+    assert.deepEqual(Object.keys(dailymotionUiLocales).sort(), [...supportedLanguages].sort());
+    for (const lang of supportedLanguages) {
+        const content = landing.locales[lang];
+        const ui = dailymotionUiLocales[lang];
+        assert.deepEqual(getSeoLandingLocale(landing, lang).faqs, content.faqs);
+        assert.equal(content.faqs.length, 6, lang);
+        assert.equal(content.steps.length, 4, lang);
+        assert.equal(content.supportedLinks.length, 3, lang);
+        if (lang !== 'en') {
+            assert.notEqual(content.lede, landing.locales.en.lede, lang);
+            for (const faq of content.faqs) assert(!landing.locales.en.faqs.some(item => item.a === faq.a), lang);
+        }
         setTestLocale(lang, `download/${slug}`);
         const result = detail.render({ data: { lang, slug, landing, guideSlug: null, relatedPages: [], relatedLearnPages: [] } });
         assert(result.html.includes('id="dailymotion-url"'));
         assert(result.html.includes('name="u"'));
         assert(result.html.includes(escapeText(landing.locales[lang].h1)));
         assert(result.html.includes(escapeText(landing.locales[lang].faqs[2].a)), lang);
+        for (const label of [ui.urlLabel, ui.continueLabel, ui.exampleTitle, ui.formatsTitle]) {
+            assert(result.html.includes(escapeText(label)), `${lang}: ${label}`);
+        }
+        assert(result.head.includes(escapeText(content.metaTitle)), lang);
+        if (lang !== 'en') {
+            assert(!result.html.includes('Continue to download'), lang);
+            assert(!result.html.includes('Supported video URL formats'), lang);
+        }
+        if (lang === 'fr') {
+            assert(result.html.includes('Liens vid\u00e9o compatibles'));
+            assert(result.html.includes('Continuer le t\u00e9l\u00e9chargement'));
+            assert(!result.html.includes('Continue to download'));
+            assert(!result.html.includes('Supported video URL formats'));
+            assert(result.head.includes(escapeText(landing.locales.fr.metaTitle)));
+        }
         const schema = [...result.head.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(m => JSON.parse(m[1]));
+        assert.equal(schema.find(item => item['@type'] === 'WebPage').inLanguage, lang);
+        assert.equal(schema.find(item => item['@type'] === 'WebPage').mainEntity.operatingSystem, ui.browserLabel);
+        assert.deepEqual(schema.find(item => item['@type'] === 'FAQPage').mainEntity.map(item => item.acceptedAnswer.text), content.faqs.map(item => item.a));
         assert(!schema.find(item => item['@type'] === 'HowTo').totalTime);
         assert(!schema.find(item => item['@type'] === 'WebPage').mainEntity.offers);
         assert(!schema.find(item => item['@type'] === 'WebPage').mainEntity.knowsAbout.includes('playlist download'));
     }
     setTestLocale('en');
     const xml = await load('src/routes/sitemap.xml/+server.ts').GET().text();
-    for (const lang of ['en', 'zh']) assert(xml.includes(`<loc>https://freesavevideo.online/${lang}/download/${slug}</loc>`));
-    assert(!xml.includes(`/fr/download/${slug}`));
+    for (const lang of supportedLanguages) {
+        assert(xml.includes(`<loc>https://freesavevideo.online/${lang}/download/${slug}</loc>`));
+        assert(xml.includes(`hreflang="${lang}" href="https://freesavevideo.online/${lang}/download/${slug}"`));
+    }
 });
 
 test('remux delegates its canonical link to the shared language layout', () => {

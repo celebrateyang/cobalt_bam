@@ -316,7 +316,7 @@ const matchesAudience = (slug: string, audience: LinkAudience): boolean =>
 // Keep links and route generation on the same language policy. Do not advertise
 // translated URLs merely because an English fallback can render their content.
 export const isDownloadAvailableInLanguage = (slug: string, lang: string): boolean => {
-    if (slug === 'dailymotion-video-downloader') return lang === 'en' || lang === 'zh';
+    if (slug === 'dailymotion-video-downloader') return ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de', 'id'].includes(lang);
     if (slug === 'sooplive-video-download') return ['en', 'ko', 'ja', 'th'].includes(lang);
     if (slug === 'xinpianchang-video-download') return lang === 'en' || lang === 'zh';
     if (slug === 'youtube-playlist-to-mp3') return lang === 'en' || lang === 'zh';

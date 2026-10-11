@@ -3,6 +3,7 @@
 
     import env from '$lib/env';
     import { getSeoLandingLocale } from '$lib/seo/landing-pages';
+    import { getDailymotionUi } from '$lib/seo/dailymotion-ui';
     import { getYouTubeCopy } from '$lib/youtube/copy';
     import { isDePriorityLanding } from '$lib/seo/de-priority-landings';
     import { isThPriorityLanding } from '$lib/seo/th-priority-landings';
@@ -25,6 +26,7 @@
 
     $: localeContent = getSeoLandingLocale(data.landing, data.lang);
     $: isZh = data.lang === 'zh';
+    $: dailymotionUi = getDailymotionUi(data.lang);
     $: isJa = data.lang === 'ja';
     $: isTh = data.lang === 'th';
     const extraCopy: Record<string, Record<string, string>> = {
@@ -185,7 +187,7 @@
                   name: localeContent.h1,
                   description: pageDesc,
                   applicationCategory: 'MultimediaApplication',
-                   operatingSystem: data.slug === 'xinpianchang-video-download' ? 'Chrome or Edge on desktop' : isJa ? 'Web ブラウザ' : isZh ? '\u6d4f\u89c8\u5668' : isTh ? 'เว็บเบราว์เซอร์' : localCopy?.browser ?? 'Web browser',
+                   operatingSystem: data.slug === 'dailymotion-video-downloader' ? dailymotionUi.browserLabel : data.slug === 'xinpianchang-video-download' ? 'Chrome or Edge on desktop' : isJa ? 'Web ブラウザ' : isZh ? '\u6d4f\u89c8\u5668' : isTh ? 'เว็บเบราว์เซอร์' : localCopy?.browser ?? 'Web browser',
                   featureList: localeContent.features,
                   knowsAbout: [
                       localeContent.h1,
@@ -246,7 +248,7 @@
     <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={pageDesc} />
     <meta name="twitter:image" content={`https://${fallbackHost}/og.png`} />
-    <meta name="twitter:image:alt" content="FreeSaveVideo video downloader preview" />
+    <meta name="twitter:image:alt" content={data.slug === 'dailymotion-video-downloader' ? localeContent.h1 : 'FreeSaveVideo video downloader preview'} />
     {#if structuredData.length}
         {#each structuredData as ld}
             {@html `<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>`}
@@ -257,7 +259,7 @@
 {#if data.slug === 'youtube-download'}
     <YouTubeDownloadPage lang={data.lang} content={{ ...localeContent, faqs: mergedFaqs }} guideSlug={data.guideSlug} />
 {:else}
-<div class="page">
+<div class="page" class:dailymotion-page={data.slug === 'dailymotion-video-downloader'}>
     <div class="services">
         <SupportedServices />
     </div>
@@ -265,24 +267,44 @@
     <main class="container" tabindex="-1" data-first-focus data-focus-ring-hidden>
         <section class="hero">
             <div class="hero-copy">
+                {#if data.slug === 'dailymotion-video-downloader'}
+                    <div class="dm-eyebrow"><span></span> FreeSaveVideo / Dailymotion</div>
+                {/if}
                 <h1>{localeContent.h1}</h1>
                 <p class="lede">{localeContent.lede}</p>
                 {#if localeContent.heroTags?.length}
-                    <ul class="hero-tags" aria-label={isJa ? '対応機能' : isZh ? '支持功能' : isTh ? 'คุณสมบัติที่รองรับ' : 'Supported features'}>
+                    <ul class="hero-tags" aria-label={isJa ? '対応機能' : isZh ? '支持功能' : isTh ? 'คุณสมบัติที่รองรับ' : data.slug === 'dailymotion-video-downloader' ? dailymotionUi.featuresLabel : 'Supported features'}>
                         {#each localeContent.heroTags as tag}
                             <li>{tag}</li>
                         {/each}
                     </ul>
                 {/if}
             </div>
+            {#if data.slug === 'dailymotion-video-downloader'}
+                <div class="dm-art" aria-hidden="true">
+                    <div class="dm-orbit"></div>
+                    <div class="dm-video-card">
+                        <div class="dm-video-top"><span>dailymotion</span><span class="dm-video-dot"></span></div>
+                        <div class="dm-play">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                        </div>
+                        <div class="dm-timeline"><span></span><i></i><span></span></div>
+                    </div>
+                    <div class="dm-file-card">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M9 14l3 3 3-3M12 11v6" /></svg>
+                        <div><strong>MP4</strong><span>{dailymotionUi.videoAudio}</span></div>
+                        <span class="dm-file-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 12 4 4L19 6" /></svg></span>
+                    </div>
+                </div>
+            {/if}
             <div class="hero-omnibox">
                 {#if OmniboxComponent}
                     <svelte:component this={OmniboxComponent} />
                 {:else if data.slug === 'dailymotion-video-downloader'}
                     <form class="dailymotion-form" action={homeUrl} method="GET">
-                        <label for="dailymotion-url">{isZh ? 'Dailymotion 视频链接' : 'Dailymotion video URL'}</label>
+                        <label for="dailymotion-url">{dailymotionUi.urlLabel}</label>
                         <input id="dailymotion-url" name="u" type="url" placeholder="https://www.dailymotion.com/video/..." required />
-                        <button type="submit">{isZh ? '继续下载' : 'Continue to download'}</button>
+                        <button type="submit">{dailymotionUi.continueLabel}</button>
                     </form>
                 {:else}
                     <a class="downloader-fallback" href={homeUrl}>
@@ -292,16 +314,20 @@
             </div>
         </section>
 
-        {#if data.lang === 'en' && (data.landing.examples?.length || data.landing.supportedLinkFormats?.length)}
+        {#if (data.lang === 'en' || data.slug === 'dailymotion-video-downloader') && (data.landing.examples?.length || data.landing.supportedLinkFormats?.length)}
             <section class="card example-section" aria-labelledby="supported-example-links">
                 <div class="example-heading">
                     <div>
-                        <p class="example-eyebrow">Try a supported URL shape</p>
-                        <h2 id="supported-example-links">Supported example links</h2>
+                        <p class="example-eyebrow">{data.slug === 'dailymotion-video-downloader' ? dailymotionUi.exampleEyebrow : 'Try a supported URL shape'}</p>
+                        <h2 id="supported-example-links">{data.slug === 'dailymotion-video-downloader' ? dailymotionUi.exampleTitle : 'Supported example links'}</h2>
                     </div>
                     <p>
+                        {#if data.slug === 'dailymotion-video-downloader'}
+                            {localeContent.disclaimer}
+                        {:else}
                         Examples are public links for demonstrating URL input. Only save content you
                         own, have permission to use, or are legally allowed to download.
+                        {/if}
                     </p>
                 </div>
 
@@ -336,7 +362,7 @@
 
                 {#if data.landing.supportedLinkFormats?.length}
                     <div class="format-list">
-                        <h3>{data.slug === 'dailymotion-video-downloader' ? 'Supported video URL formats' : localCopy?.collection ?? 'Other supported collection formats'}</h3>
+                        <h3>{data.slug === 'dailymotion-video-downloader' ? dailymotionUi.formatsTitle : localCopy?.collection ?? 'Other supported collection formats'}</h3>
                         <ul class="feature-list">
                             {#each data.landing.supportedLinkFormats as format}
                                 <li>{format}</li>
@@ -1180,5 +1206,96 @@
             width: 26px;
             height: 26px;
         }
+    }
+    /* Dailymotion uses the site's theme tokens and keeps the shared downloader. */
+    .dailymotion-page {
+        --download-surface: var(--background);
+        --download-panel: color-mix(in srgb, var(--background) 60%, var(--popup-bg));
+        --download-border: var(--popup-stroke);
+        box-sizing: border-box;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        padding-bottom: 64px;
+        background: radial-gradient(ellipse at 75% 0%, rgba(var(--accent-rgb), 0.09), transparent 38%);
+    }
+    .dailymotion-page .container { gap: 28px; padding-top: 12px; }
+    .dailymotion-page :global(*) { font-family: inherit; }
+    .dailymotion-page .crumb-links { order: -1; padding: 0 4px; font-size: 0.8rem; }
+    .dailymotion-page .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr);
+        align-items: center;
+        gap: 32px;
+        padding: clamp(24px, 4vw, 48px);
+        border-radius: 28px;
+        background: linear-gradient(125deg, var(--background) 15%, color-mix(in srgb, var(--background) 90%, var(--accent)));
+        border: 1px solid var(--download-border);
+        box-shadow: 0 16px 48px rgba(var(--accent-rgb), 0.06);
+    }
+    .dm-eyebrow { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; color: var(--download-accent); font-size: 0.76rem; font-weight: 700; letter-spacing: 0.04em; }
+    .dm-eyebrow > span { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+    .dailymotion-page .hero-copy h1 { max-width: 620px; font-size: clamp(32px, 4.1vw, 52px); font-weight: 750; letter-spacing: -0.045em; line-height: 1.08; text-wrap: balance; }
+    .dailymotion-page .lede { max-width: 560px; margin-top: 20px; font-size: 1rem; line-height: 1.75; }
+    .dailymotion-page .hero-tags { gap: 8px 12px; margin-top: 22px; }
+    .dailymotion-page .hero-tags li { padding: 0; border: 0; background: none; font-size: 0.76rem; font-weight: 500; color: var(--download-muted); }
+    .dailymotion-page .hero-tags li::before { content: '\2713'; margin-right: 6px; color: var(--download-accent); font-weight: 700; }
+    .dm-art { position: relative; height: 260px; min-width: 0; display: grid; align-content: center; padding: 20px 0 40px; }
+    .dm-orbit { position: absolute; width: 240px; height: 240px; border: 1px solid rgba(var(--accent-rgb), 0.15); border-radius: 50%; top: 0; left: 50%; transform: translateX(-50%); box-shadow: 0 0 0 25px rgba(var(--accent-rgb), 0.04), 0 0 0 50px rgba(var(--accent-rgb), 0.02); }
+    .dm-video-card { position: relative; width: 100%; max-width: 300px; margin: auto; padding: 20px; box-sizing: border-box; border: 1px solid rgba(var(--accent-rgb), 0.24); border-radius: 18px; background: linear-gradient(140deg, color-mix(in srgb, var(--background) 84%, var(--accent)), var(--background)); box-shadow: 0 16px 32px rgba(var(--accent-rgb), 0.12); transform: rotate(-5deg); }
+    .dm-video-top { display: flex; align-items: center; justify-content: space-between; color: var(--download-heading); font-size: 0.8rem; font-weight: 700; }
+    .dm-video-dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; }
+    .dm-play { width: 64px; height: 64px; margin: 22px auto; border-radius: 50%; display: grid; place-items: center; color: var(--button-active-text); background: var(--button-active-bg); box-shadow: 0 0 0 10px rgba(var(--accent-rgb), 0.1); }
+    .dm-play svg { width: 30px; height: 30px; }
+    .dm-timeline { display: flex; align-items: center; gap: 5px; }
+    .dm-timeline span { height: 3px; border-radius: 4px; background: var(--accent); width: 36%; }
+    .dm-timeline span:last-child { flex: 1; background: rgba(var(--accent-rgb), 0.2); }
+    .dm-timeline i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+    .dm-file-card { position: absolute; right: 0; bottom: 12px; display: flex; align-items: center; gap: 12px; padding: 16px 18px; border-radius: 14px; border: 1px solid var(--download-border); background: var(--background); box-shadow: 0 12px 32px rgba(var(--accent-rgb), 0.12); transform: rotate(3deg); }
+    .dm-file-card > svg { width: 30px; height: 34px; color: var(--download-accent); }
+    .dm-file-card strong { display: block; font-size: 0.9rem; color: var(--text); }
+    .dm-file-card div > span { font-size: 0.7rem; color: var(--subtext); }
+    .dm-file-check { width: 24px; height: 24px; margin-left: 12px; display: grid; place-items: center; border-radius: 50%; background: rgba(var(--accent-rgb), 0.13); color: var(--download-accent); }
+    .dm-file-check svg { width: 14px; height: 14px; }
+    .dailymotion-page .hero-omnibox { grid-column: 1 / -1; padding: 20px; background: var(--background); border: 1px solid var(--download-border); border-radius: 18px; box-shadow: 0 6px 24px rgba(var(--accent-rgb), 0.05); }
+    .dailymotion-page .dailymotion-form { grid-template-columns: minmax(0, 1fr) auto; }
+    .dailymotion-page .dailymotion-form label { grid-column: 1 / -1; font-size: 0.85rem; }
+    .dailymotion-page .dailymotion-form input { border-color: var(--input-border); }
+    .dailymotion-page .dailymotion-form button { background: var(--button-active-bg); color: var(--button-active-text); }
+    .dailymotion-page .card { min-width: 0; padding: 28px; border: 1px solid var(--download-border); border-radius: 20px; box-shadow: none; }
+    .dailymotion-page .card h2 { margin-bottom: 22px; font-size: 1.3rem; line-height: 1.3; letter-spacing: -0.025em; }
+    .dailymotion-page .fact-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; background: var(--download-panel); }
+    .dailymotion-page .fact-summary p { padding-left: 14px; border-left: 2px solid rgba(var(--accent-rgb), 0.45); font-size: 0.83rem; color: var(--download-muted); }
+    .dailymotion-page .section-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+    .dailymotion-page .step-list { gap: 16px; }
+    .dailymotion-page .step-list li { border: 0; background: transparent; padding: 0; font-size: 0.88rem; }
+    .dailymotion-page .step-list li::before { border-radius: 50%; background: rgba(var(--accent-rgb), 0.1); }
+    .dailymotion-page .features .feature-list { gap: 20px; font-size: 0.88rem; }
+    .dailymotion-page .faq-list { grid-template-columns: 1fr; gap: 0; }
+    .dailymotion-page .faq-item { border: 0; border-bottom: 1px solid var(--download-border); border-radius: 0; background: none; padding: 18px 0; }
+    .dailymotion-page .faq-item:first-child { padding-top: 0; }
+    .dailymotion-page .faq-item:last-child { border-bottom: 0; padding-bottom: 0; }
+    .dailymotion-page .faq-item summary { display: flex; justify-content: space-between; align-items: center; gap: 20px; line-height: 1.5; font-size: 0.92rem; }
+    .dailymotion-page .faq-item summary::after { content: '+'; flex-shrink: 0; font-size: 1.25rem; font-weight: 400; color: var(--download-accent); }
+    .dailymotion-page .faq-item[open] summary::after { content: '\2212'; }
+    .dailymotion-page .faq-item summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 5px; border-radius: 3px; }
+    .dailymotion-page .faq-item p { max-width: 850px; margin-top: 12px; font-size: 0.88rem; }
+    .dailymotion-page .format-list { gap: 16px; }
+    .dailymotion-page .example-heading > p { color: var(--download-muted); opacity: 1; font-size: 0.86rem; }
+    .dailymotion-page .format-list h3 { color: var(--download-heading); font-size: 0.9rem; }
+    .dailymotion-page .format-list .feature-list { overflow-wrap: anywhere; font-family: var(--font-mono, monospace); font-size: 0.8rem; }
+    .dailymotion-page .link-type { background: var(--download-panel); padding: 20px; border-radius: 14px; }
+    .dailymotion-page .link-type p { font-size: 0.86rem; margin-top: 10px; }
+    .dailymotion-page .related-link { padding: 14px; background: var(--download-panel); }
+    .dailymotion-page .related-link-desc { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+    .dailymotion-page .disclaimer { max-width: 760px; margin: 0 auto; }
+    @media (max-width: 760px) {
+        .dailymotion-page .container { gap: 20px; }
+        .dailymotion-page .hero { grid-template-columns: minmax(0, 1fr); gap: 24px; padding: 26px 22px; border-radius: 22px; }
+        .dm-art { display: none; }
+        .dailymotion-page .hero-omnibox { padding: 14px; }
+        .dailymotion-page .fact-summary, .dailymotion-page .section-grid { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+        .dailymotion-page .card { padding: 22px; border-radius: 18px; }
+        .dailymotion-page .dailymotion-form { grid-template-columns: minmax(0, 1fr); }
+        .dailymotion-page .example-heading { grid-template-columns: minmax(0, 1fr); }
+        .dailymotion-page .related-grid, .dailymotion-page .link-type-grid { grid-template-columns: minmax(0, 1fr); }
     }
 </style>

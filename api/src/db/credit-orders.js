@@ -461,6 +461,12 @@ export const markCreditOrderPaid = async ({
     try {
         await client.query("BEGIN");
 
+        // Receipt-first lock order also used by automatic account matching.
+        const provider = await client.query("SELECT provider FROM credit_orders WHERE out_trade_no = $1", [outTradeNo]);
+        if (provider.rows[0]?.provider === "buymeacoffee") {
+            await client.query("SELECT transaction_id FROM buymeacoffee_receipts WHERE transaction_id = $1 FOR UPDATE", [providerTransactionId]);
+        }
+
         const orderResult = await client.query(
             `SELECT * FROM credit_orders WHERE out_trade_no = $1 FOR UPDATE`,
             [outTradeNo],

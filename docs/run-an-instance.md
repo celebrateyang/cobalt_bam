@@ -105,30 +105,43 @@ https://api.freesavevideo.online/payments/buymeacoffee/webhook
 
 Subscribe to `extra_purchase.created`, `extra_purchase.updated`, and
 `extra_purchase.refunded`. Copy the
-webhook detail page's Signing Secret into `BUYMEACOFFEE_WEBHOOK_SECRET`. Each
-Shop product must enable "Ask a question" asking for the FreeSaveVideo payment
-code. This question is answered AFTER purchase, not in the card checkout form.
-Keep quantity selection and pay-what-you-want off. The website must show the code
-and instructions before opening checkout. Buyers save it, pay, then submit the
-code in the post-purchase question and submit the answer. Use the exact question
-"Paste your FreeSaveVideo payment code here (starts with cpt_)." on both products.
-The success message must explain that submitting the answer is needed to match
-the purchase, rather than promising credits immediately after card payment.
-Purchases without an answer are acknowledged as `awaiting_order_code` without
-granting credits. The updated event is also processed with the same validation.
-Verify a real purchase and subsequent answer delivery before promising automatic
-fulfillment; a dashboard test only verifies connectivity and signatures. Missing
-answers need manual reconciliation using the merchant order and payment receipt.
-Production verification on 2026-10-01: a real 600-credit purchase was credited
-from `extra_purchase.updated` with the order code in `question_answers` on its
-first delivery. A created event without the answer preceded it.
+webhook detail page's Signing Secret into `BUYMEACOFFEE_WEBHOOK_SECRET`.
+Keep quantity selection and pay-what-you-want off. Remove the payment-code
+question from all Shop credit and membership products, and update their
+descriptions and thank-you messages to ask buyers to use the same verified email
+as their FreeSaveVideo account in **Contact information > Email** at checkout.
+These merchant-dashboard changes are separate from deploying this repository.
+
+Signed successful callbacks without a code match `supporter_email` against Clerk
+and the local users table. Only a unique enabled account with that exact verified
+email is eligible. Addresses are trimmed and lowercased; dots and plus aliases
+are never removed. A matching pending product order is reserved; if none exists,
+an order is created from the validated product. Credits or membership duration
+are then granted using the existing transactional fulfillment logic. Legacy
+order-code callbacks remain supported for purchases made before this change.
+Clerk/network/database errors return HTTP 500 for provider retry. Missing,
+unverified, ambiguous, or unmatched emails remain in the admin receipt list.
+
+Each receipt is locked and bound to one order. Both credit and membership
+fulfillment check the same receipt and both order tables, so repeated callbacks
+or later code submissions cannot reuse a transaction. Membership activation
+starts at fulfillment and extends existing membership without losing paid days.
+
+Before enabling the new production callback handler, reconcile payments already
+granted manually. The admin receipt list has **Grant benefits** (grant the paid
+product once) and **Record already granted manually** (mark the order paid and
+receipt fulfilled without changing points or subscriptions). Both require an
+explicit website user ID. Do not use Grant benefits for a payment already added
+through the user balance editor. There is no automatic historical backfill.
+See [rollout details](buymeacoffee-email-fulfillment.md).
+Verify a real same-email purchase without submitting a code after deployment;
+a dashboard test only verifies connectivity and signatures.
 The account page preserves `bmc_order` in its URL so refreshing restores the
-authenticated order and code. Closing the instructions does not cancel the
+authenticated order. Closing the instructions does not cancel the
 provider payment. Keep the receipt if reconciliation is needed; do not pay again.
 The API verifies `x-signature-sha256` against the raw request body, then checks
-the local order code, Shop product ID, USD amount, quantity, and transaction ID
-before granting credits. Dashboard test events (`live_mode=false`) never grant
-credits.
+Shop product ID, USD amount, quantity, and transaction ID before granting
+benefits. Dashboard test events (`live_mode=false`) never grant benefits.
 
 ### optional: discover/social module
 if you want to use the Discover page (`/discover`) and the admin console (`/console-manage-2025`), initialize the social tables (and re-run after pulling schema updates):

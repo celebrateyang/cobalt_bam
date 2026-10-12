@@ -134,15 +134,12 @@ export const parseBuyMeACoffeePurchaseEvent = (payload) => {
   const transactionId = clean(data.transaction_id);
   if (!transactionId) return { ok: false, code: "TRANSACTION_ID_MISSING" };
 
-  // Shop questions are answered after purchase. A later updated event can
-  // include the answer; retrying the original created payload cannot add it.
-  if (!outTradeNo) return { ok: false, code: "ORDER_CODE_MISSING" };
-
   return {
     ok: true,
     product,
     outTradeNo,
     transactionId,
+    supporterEmail: clean(data.supporter_email).toLowerCase(),
     amountFen,
     paidAt:
       Number(data.created_at) > 0 ? Number(data.created_at) * 1000 : Date.now(),

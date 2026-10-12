@@ -454,6 +454,11 @@ export const markMembershipOrderPaid = async ({
   try {
     await client.query("BEGIN");
 
+    const provider = await client.query("SELECT provider FROM membership_orders WHERE out_trade_no = $1", [outTradeNo]);
+    if (provider.rows[0]?.provider === "buymeacoffee") {
+      await client.query("SELECT transaction_id FROM buymeacoffee_receipts WHERE transaction_id = $1 FOR UPDATE", [providerTransactionId]);
+    }
+
     const orderResult = await client.query(
       `SELECT * FROM membership_orders WHERE out_trade_no = $1 FOR UPDATE`,
       [outTradeNo],

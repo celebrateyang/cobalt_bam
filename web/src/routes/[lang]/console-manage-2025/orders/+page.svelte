@@ -71,6 +71,40 @@
     let receiptsLoading = false;
     let receiptsPage = 1;
     let receiptsTotal = 0;
+    let receiptResolving = false;
+    const receiptReason: Record<string, string> = {
+        ORDER_CODE_MISSING: "已付款，需要核对账号",
+        PAYMENT_EMAIL_MISSING: "付款邮箱缺失或格式错误",
+        EMAIL_ACCOUNT_NOT_FOUND: "付款邮箱未匹配到网站账号",
+        EMAIL_AMBIGUOUS: "邮箱匹配到多个账号，需要人工确认",
+        EMAIL_NOT_VERIFIED: "账号邮箱尚未验证",
+        ACCOUNT_DISABLED: "账号已禁用或锁定",
+        ACCOUNT_LOOKUP_FAILED: "账号查询暂时失败，等待重试",
+        MEMBERSHIP_INCOMPATIBLE: "当前会员权益不兼容，需要人工核对",
+        ORDER_PRODUCT_MISMATCH: "付款商品与关联订单不一致",
+        BOUND_ACCOUNT_MISMATCH: "付款已关联其他账号",
+    };
+    async function resolveReceipt(receipt: PaymentReceipt, mode: "grant" | "record_manual") {
+        const value = window.prompt("Website user ID (check the Users page):");
+        if (!value || !Number.isSafeInteger(Number(value)) || Number(value) <= 0) return;
+        const message = mode === "grant"
+            ? `Grant this payment's credits or membership to user ${value}? Only continue if it has not been manually granted.`
+            : `Record that user ${value} already received this payment manually? This does not add credits or membership.`;
+        if (!window.confirm(message)) return;
+        receiptResolving = true;
+        receiptsError = "";
+        try {
+            const res = await fetch(`${currentApiURL()}/user/admin/buymeacoffee-receipts/${encodeURIComponent(receipt.transaction_id)}/resolve`, {
+                method: "POST", headers: { Authorization: `Bearer ${getToken()}`, "Content-Type": "application/json" },
+                body: JSON.stringify({ userId: Number(value), mode }),
+            });
+            const data = await res.json();
+            if (!res.ok || data.status !== "success") throw new Error(data?.error?.code || "Unable to resolve payment");
+            await loadReceipts();
+            await loadOrders();
+        } catch (e) { receiptsError = e instanceof Error ? e.message : "Unable to resolve payment"; }
+        finally { receiptResolving = false; }
+    }
 
     async function loadReceipts(nextPage = receiptsPage) {
         if (receiptsLoading) return;
@@ -339,7 +373,7 @@
         {#if receipts.length}
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>平台交易号</th><th>付款邮箱</th><th>金额</th><th>订单码</th><th>核对原因</th><th>首次回调</th></tr></thead>
+                    <thead><tr><th>平台交易号</th><th>付款邮箱</th><th>金额</th><th>订单码</th><th>核对原因</th><th>首次回调</th><th>处理</th></tr></thead>
                     <tbody>
                         {#each receipts as receipt (receipt.transaction_id)}
                             <tr>
@@ -347,8 +381,12 @@
                                 <td class="selectable">{receipt.supporter_email || "-"}</td>
                                 <td>{receipt.amount} {receipt.currency}</td>
                                 <td class="mono selectable">{receipt.order_code || "未提交"}</td>
-                                <td>{receipt.refunded ? `退款待核对${receipt.credited_order_id ? `（积分订单 ${receipt.credited_order_id}）` : receipt.membership_order_id ? `（会员订单 ${receipt.membership_order_id}）` : ""}` : receipt.review_reason === "ORDER_CODE_MISSING" ? "已付款，等待订单码" : receipt.review_reason || "已付款，尚未入账或开通"}</td>
+                                <td>{receipt.refunded ? `退款待核对${receipt.credited_order_id ? `（积分订单 ${receipt.credited_order_id}）` : receipt.membership_order_id ? `（会员订单 ${receipt.membership_order_id}）` : ""}` : receiptReason[receipt.review_reason || ""] || receipt.review_reason || "已付款，尚未入账或开通"}</td>
                                 <td>{formatDate(receipt.first_received_at)}</td>
+                                <td>{#if !receipt.refunded}
+                                    <button class="btn-secondary" disabled={receiptResolving} on:click={() => resolveReceipt(receipt, "grant")}>补发权益</button>
+                                    <button class="btn-secondary" disabled={receiptResolving} on:click={() => resolveReceipt(receipt, "record_manual")}>登记已人工补发</button>
+                                {/if}</td>
                             </tr>
                         {/each}
                     </tbody>

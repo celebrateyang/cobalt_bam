@@ -704,9 +704,6 @@
     let codeUrl = "";
     let qrDataUrl = "";
     let buyMeACoffeeCheckoutUrl = "";
-    let buyMeACoffeePaymentCode = "";
-    let buyMeACoffeeCodeSaved = false;
-    let buyMeACoffeeCopyFailed = false;
     let buyMeACoffeeRecoveryUserId = "";
     let buyMeACoffeeCheckoutOpened = false;
     let buyMeACoffeeLastReturnCheck = 0;
@@ -959,9 +956,6 @@
         codeUrl = "";
         qrDataUrl = "";
         buyMeACoffeeCheckoutUrl = "";
-        buyMeACoffeePaymentCode = "";
-        buyMeACoffeeCodeSaved = false;
-        buyMeACoffeeCopyFailed = false;
         orderStatusLoading = false;
     };
 
@@ -1084,7 +1078,6 @@
             if (order) {
                 if (order.provider === "buymeacoffee") {
                     buyMeACoffeeStatusError = false;
-                    buyMeACoffeePaymentCode = order.out_trade_no;
                     buyMeACoffeeCheckoutUrl = safeBuyMeACoffeeCheckoutUrl(order.provider_data?.checkout_url);
                     if (order.status !== "CREATED" && buyMeACoffeeSavedOrderId === order.id && buyMeACoffeeSavedKind === "credit") {
                         forgetBuyMeACoffeeOrder();
@@ -1169,7 +1162,6 @@
             if (order) {
                 if (order.provider === "buymeacoffee") {
                     buyMeACoffeeStatusError = false;
-                    buyMeACoffeePaymentCode = order.out_trade_no;
                     buyMeACoffeeCheckoutUrl = safeBuyMeACoffeeCheckoutUrl(order.provider_data?.checkout_url);
                     if (order.status !== "CREATED" && buyMeACoffeeSavedOrderId === order.id && buyMeACoffeeSavedKind === "membership") {
                         forgetBuyMeACoffeeOrder();
@@ -1305,31 +1297,10 @@
         }
     };
 
-    const copyBuyMeACoffeePaymentCode = async () => {
-        if (!buyMeACoffeePaymentCode) return;
-        const order = activeOrder;
-        const requestViewVersion = paymentViewVersion;
-        const code = buyMeACoffeePaymentCode;
-        try {
-            await navigator.clipboard.writeText(code);
-            if (requestViewVersion !== paymentViewVersion) return;
-            buyMeACoffeeCodeSaved = true;
-            buyMeACoffeeCopyFailed = false;
-            if (order) trackBuyMeACoffeeStep("code_copied", order.id, order.kind);
-        } catch {
-            if (requestViewVersion !== paymentViewVersion) return;
-            buyMeACoffeeCopyFailed = true;
-            if (order) trackBuyMeACoffeeStep("code_copy_failed", order.id, order.kind);
-        }
-    };
-
     const openBuyMeACoffeeCheckout = () => {
         if (!activeOrder || !buyMeACoffeeCheckoutUrl) return;
         buyMeACoffeeCheckoutOpened = true;
         trackBuyMeACoffeeStep("checkout_opened", activeOrder.id, activeOrder.kind);
-        // Keep native link navigation in the user gesture. Awaiting clipboard
-        // access before opening a window can trigger mobile popup blockers.
-        void copyBuyMeACoffeePaymentCode();
     };
 
     const startBuyMeACoffeePay = async (productKey: string, kind: "credit" | "membership" = "credit") => {
@@ -1369,8 +1340,7 @@
             }
             const order = data?.data?.order as CreditOrder | MembershipOrder | undefined;
             const checkoutUrl = safeBuyMeACoffeeCheckoutUrl(data?.data?.buymeacoffee?.checkoutUrl);
-            const paymentCode = String(data?.data?.buymeacoffee?.paymentCode || "");
-            if (!order?.id || !checkoutUrl || !paymentCode) {
+            if (!order?.id || !checkoutUrl) {
                 throw new Error("invalid create order response");
             }
 
@@ -1384,9 +1354,6 @@
             });
             activeOrder = kind === "membership" ? { ...(order as MembershipOrder), kind } : { ...(order as CreditOrder), kind };
             buyMeACoffeeCheckoutUrl = checkoutUrl;
-            buyMeACoffeePaymentCode = paymentCode;
-            buyMeACoffeeCodeSaved = false;
-            buyMeACoffeeCopyFailed = false;
             buyMeACoffeeStatusError = false;
             buyMeACoffeeStatusErrorTracked = false;
             buyMeACoffeeCheckoutOpened = false;
@@ -2671,21 +2638,9 @@
                                 </div>
                             {:else if activeOrder.provider === "buymeacoffee"}
                                 <div class="bmc-payment-code">
-                                    <strong>{$t("auth.bmc_step_save")}</strong>
-                                    <input
-                                        class="bmc-code-input"
-                                        aria-label={$t("auth.bmc_step_save")}
-                                        value={buyMeACoffeePaymentCode}
-                                        readonly
-                                        on:focus={(event) => event.currentTarget.select()}
-                                        on:click={(event) => event.currentTarget.select()}
-                                    />
-                                    <span class="subtext" aria-live="polite">
-                                        {#if buyMeACoffeeCodeSaved}{$t("button.copied")}{/if}
-                                    </span>
-                                    {#if buyMeACoffeeCopyFailed}
-                                        <p role="alert">{$t("auth.bmc_copy_failed")}</p>
-                                    {/if}
+                                    <strong>{$t("auth.bmc_email_checkout_hint")}</strong>
+                                    <input class="bmc-code-input" aria-label="Account email"
+                                        value={$clerkUser?.primaryEmailAddress?.emailAddress || ""} readonly />
                                     {#if buyMeACoffeeCheckoutUrl}
                                         <a
                                             class="button elevated active"
@@ -2694,12 +2649,10 @@
                                             rel="noreferrer noopener nofollow"
                                             on:click={openBuyMeACoffeeCheckout}
                                         >
-                                            {$t(buyMeACoffeeCodeSaved ? "auth.bmc_step_pay" : "auth.bmc_copy_continue")}
+                                            {$t("auth.bmc_step_pay")}
                                         </a>
                                     {/if}
-                                    <button type="button" class="bmc-copy-link" on:click={copyBuyMeACoffeePaymentCode}>
-                                        {$t(buyMeACoffeeCodeSaved ? "button.copied" : "button.copy")}
-                                    </button>
+
                                 </div>
                             {:else if qrDataUrl}
                                 <img
@@ -2749,12 +2702,11 @@
                                 <div class="payment-wait">{$t("auth.payment_waiting")}</div>
                                 <div class="subtext payment-hint">
                                     {#if activeOrder.provider === "buymeacoffee"}
-                                        <strong>{$t("auth.bmc_step_submit")}</strong>
-                                        <p>{$t(activeOrder.kind === "membership" ? "auth.bmc_member_submit_hint" : "auth.bmc_submit_hint")}</p>
+                                        <strong>{$t("auth.bmc_automatic_delivery")}</strong>
                                         <p>{$t(activeOrder.kind === "membership" ? "auth.bmc_member_return_hint" : "auth.bmc_return_hint")}</p>
                                         <a
                                             class="bmc-help-link"
-                                            href={`mailto:celebrateyang@gmail.com?subject=${encodeURIComponent(`FreeSaveVideo payment help: ${buyMeACoffeePaymentCode}`)}&body=${encodeURIComponent(`Payment code: ${buyMeACoffeePaymentCode}\nPlease attach your Buy Me a Coffee receipt. Do not include card details.`)}`}
+                                            href={`mailto:celebrateyang@gmail.com?subject=${encodeURIComponent(`FreeSaveVideo payment help: order ${activeOrder.id}`)}&body=${encodeURIComponent(`Account email: ${$clerkUser?.primaryEmailAddress?.emailAddress || ""}\nOrder: ${activeOrder.id}\nPlease attach your Buy Me a Coffee receipt. Do not include card details.`)}`}
                                             on:click={() => activeOrder && trackBuyMeACoffeeStep("help_opened", activeOrder.id, activeOrder.kind)}
                                         >{$t(activeOrder.kind === "membership" ? "auth.bmc_member_help" : "auth.bmc_help")}</a>
                                         <p>{$t("auth.bmc_help_hint")}</p>
@@ -3873,22 +3825,6 @@
     .bmc-seller-copy .subtext {
         margin: 0;
         padding: 0;
-    }
-
-    .bmc-copy-link {
-        align-self: center;
-        padding: 4px 8px;
-        border: 0;
-        background: transparent;
-        color: var(--subtext);
-        font-size: 0.8rem;
-        text-decoration: underline;
-        text-underline-offset: 3px;
-        cursor: pointer;
-    }
-
-    .bmc-copy-link:hover {
-        color: var(--text);
     }
 
     .bmc-creator-identity > img {

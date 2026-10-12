@@ -4,6 +4,7 @@ import { nanoid } from "nanoid";
 
 import { MEMBER_DOWNLOAD_LIMITS, getUserByClerkId, upsertUserFromClerk, getActiveMembershipForUser } from "../db/users.js";
 import { recordBuyMeACoffeeReceipt } from "../db/buymeacoffee-receipts.js";
+import { fulfillBuyMeACoffeePurchase } from "../payments/buymeacoffee-fulfill.js";
 import { BUYMEACOFFEE_STEPS, recordBuyMeACoffeeStep } from "../payments/buymeacoffee-steps.js";
 import {
     createCreditOrder,
@@ -649,62 +650,20 @@ router.post("/buymeacoffee/webhook", async (req, res) => {
         // A database failure returns 500 so the provider can retry rather than lose a receipt.
         await recordBuyMeACoffeeReceipt(req.body, parsed);
         if (!parsed.ok) {
-            if (parsed.code === "ORDER_CODE_MISSING") {
-                console.warn("Buy Me a Coffee purchase awaiting order code", {
-                    eventId: req.body?.event_id || null,
-                    transactionId: req.body?.data?.transaction_id || null,
-                    eventType: req.body?.type || null,
-                });
-                return res.status(200).json({ status: "awaiting_order_code" });
-            }
             console.error("Buy Me a Coffee webhook rejected", {
                 code: parsed.code,
                 eventId: req.body?.event_id || null,
             });
             return res.status(200).json({ status: "ignored", code: parsed.code });
         }
-        const isMembership = parsed.product.kind === "membership";
-        const order = await (isMembership ? getMembershipOrderByOutTradeNo : getCreditOrderByOutTradeNo)(parsed.outTradeNo);
-        if (!order) {
-            return jsonError(res, 500, "ORDER_NOT_FOUND", "payment order not found");
-        }
-        if (order.provider !== "buymeacoffee" || order.product_key !== parsed.product.key) {
-            console.error("Buy Me a Coffee order/product mismatch", {
-                orderId: order.id,
-                provider: order.provider,
-                productKey: order.product_key,
-            });
-            return res.status(200).json({ status: "ignored", code: "ORDER_PRODUCT_MISMATCH" });
-        }
-        if (order.status === "PAID" && order.provider_transaction_id !== parsed.transactionId) {
-            console.error("Buy Me a Coffee paid order received a different transaction", { orderId: order.id });
-            return res.status(200).json({ status: "manual_review", code: "TRANSACTION_MISMATCH" });
-        }
-        const result = await (isMembership ? markMembershipOrderPaid : markCreditOrderPaid)({
-            outTradeNo: parsed.outTradeNo,
-            providerTransactionId: parsed.transactionId,
-            paidAt: parsed.paidAt,
-            totalFen: parsed.amountFen,
-            rawNotify: { source: "buymeacoffee_webhook", event: req.body || {} },
-        });
+        const result = await fulfillBuyMeACoffeePurchase(parsed, req.body || {});
         if (!result.ok) {
-            const retryable = result.code === "ORDER_NOT_FOUND";
-            return retryable
-                ? jsonError(res, 500, result.code, "credit order update failed")
-                : res.status(200).json({ status: "ignored", code: result.code });
-        }
-        if (result.code === "PAID") {
-            await (isMembership ? updateMembershipOrderProviderData : updateCreditOrderProviderData)(order.id, {
-                buymeacoffee_event_id: String(req.body?.event_id || ""),
-                buymeacoffee_product_id: parsed.product.productId,
-                supporter_email: String(req.body?.data?.supporter_email || ""),
-            });
+            console.warn("Buy Me a Coffee payment requires review", { transactionId: parsed.transactionId, code: result.code });
+            if (result.code === "ORDER_NOT_FOUND") return jsonError(res, 500, result.code, "payment order not found");
+            return res.status(200).json({ status: "manual_review", code: result.code });
         }
         console.info("Buy Me a Coffee payment processed", {
-            orderId: order.id,
-            eventType: req.body?.type,
-            eventId: req.body?.event_id,
-            result: result.code,
+            transactionId: parsed.transactionId, result: result.code,
         });
         return res.status(200).json({ status: "success" });
     } catch (error) {
@@ -998,7 +957,7 @@ if (!isClerkAuthConfigured) {
                     order,
                     buymeacoffee: {
                         checkoutUrl: product.checkoutUrl,
-                        paymentCode: outTradeNo,
+                        paymentEmail: user.primary_email,
                         productId: product.productId,
                     },
                 },

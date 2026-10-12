@@ -121,11 +121,10 @@ const purchase = (type, answers = []) => ({
   },
 });
 
-test("waits for a post-purchase answer, then accepts the updated purchase", () => {
+test("accepts payment before any code is submitted, and retains legacy codes", () => {
   const created = purchase("extra_purchase.created");
-  assert.deepEqual(parseBuyMeACoffeePurchaseEvent(created), {
-    ok: false, code: "ORDER_CODE_MISSING",
-  });
+  assert.equal(parseBuyMeACoffeePurchaseEvent(created).ok, true);
+  assert.equal(parseBuyMeACoffeePurchaseEvent(created).outTradeNo, undefined);
   const updated = purchase("extra_purchase.updated", ["cpt_abcdefghijklmnopqrst"]);
   const result = parseBuyMeACoffeePurchaseEvent(updated);
   assert.equal(result.ok, true);
@@ -161,7 +160,5 @@ test("accepts surrounding whitespace but never guesses between different order c
   assert.deepEqual(parseBuyMeACoffeePurchaseEvent(purchase("extra_purchase.updated", [code, "cpt_12345678901234567890"])), {
     ok: false, code: "AMBIGUOUS_ORDER_CODE",
   });
-  assert.deepEqual(parseBuyMeACoffeePurchaseEvent(purchase("extra_purchase.updated", ["invalid"])), {
-    ok: false, code: "ORDER_CODE_MISSING",
-  });
+  assert.equal(parseBuyMeACoffeePurchaseEvent(purchase("extra_purchase.updated", ["invalid"])).ok, true);
 });

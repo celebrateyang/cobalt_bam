@@ -76,7 +76,6 @@ test('a late response for the old order cannot replace the new membership', asyn
     await oldRequest;
     assert.equal(h.context.activeOrder.id, 2);
     assert.equal(h.context.activeOrder.kind, 'membership');
-    assert.equal(h.context.buyMeACoffeePaymentCode, 'mbr_2');
 });
 test('closing the payment window still permits reopening the saved order', async () => {
     const h = harness(async () => response({ order: order(1) }));
@@ -88,47 +87,14 @@ test('closing the payment window still permits reopening the saved order', async
     assert.equal(h.context.activeOrder.id, 1);
 });
 
-test('checkout click starts copying without waiting for clipboard permission', async () => {
-    const h = harness(async () => response({}));
-    let finishCopy;
-    h.context.navigator.clipboard.writeText = () => new Promise(resolve => { finishCopy = resolve; });
-    h.context.activeOrder = order(1);
-    h.context.buyMeACoffeePaymentCode = 'cpt_1';
-    h.context.buyMeACoffeeCheckoutUrl = 'https://buymeacoffee.com/example/e/123';
-    assert.equal(h.call('openBuyMeACoffeeCheckout'), undefined);
+test('checkout needs no code or clipboard permission', async () => {
+    const h = harness(async () => response({ order: order(2), buymeacoffee: { checkoutUrl: 'https://buymeacoffee.com/example/e/123' } }));
+    h.context.navigator.clipboard.writeText = () => { throw new Error('Clipboard must not be used'); };
+    await h.call('startBuyMeACoffeePay', 'selected_product');
+    assert.equal(h.context.activeOrder.id, 2);
+    h.call('openBuyMeACoffeeCheckout');
     assert.equal(h.context.buyMeACoffeeCheckoutOpened, true);
     assert.equal(h.events[0][0], 'checkout_opened');
-    assert.equal(h.context.buyMeACoffeeCodeSaved, false);
-    finishCopy();
-    await new Promise(resolve => setImmediate(resolve));
-    assert.equal(h.context.buyMeACoffeeCodeSaved, true);
-});
-
-test('clipboard failure keeps checkout available and reports the failure', async () => {
-    const h = harness(async () => response({}));
-    h.context.activeOrder = order(1);
-    h.context.buyMeACoffeePaymentCode = 'cpt_1';
-    h.context.buyMeACoffeeCheckoutUrl = 'https://buymeacoffee.com/example/e/123';
-    h.context.navigator.clipboard.writeText = async () => { throw new Error('denied'); };
-    h.call('openBuyMeACoffeeCheckout');
-    await new Promise(resolve => setImmediate(resolve));
-    assert.equal(h.context.buyMeACoffeeCopyFailed, true);
-    assert.equal(h.context.buyMeACoffeeCheckoutOpened, true);
-    assert.equal(h.events[1][0], 'code_copy_failed');
-});
-
-test('late clipboard response cannot mark a replacement order copied', async () => {
-    const h = harness(async () => response({}));
-    let finishCopy;
-    h.context.navigator.clipboard.writeText = () => new Promise(resolve => { finishCopy = resolve; });
-    h.context.activeOrder = order(1);
-    h.context.buyMeACoffeePaymentCode = 'cpt_1';
-    const pending = h.call('copyBuyMeACoffeePaymentCode');
-    h.call('clearActiveOrder');
-    h.context.activeOrder = order(2);
-    finishCopy();
-    await pending;
-    assert.equal(h.context.buyMeACoffeeCodeSaved, false);
 });
 
 test('fresh visit restores a pending reference inline without opening a modal', async () => {

@@ -33,6 +33,9 @@ import {
 } from "../db/credit-orders.js";
 import { listMembershipOrders } from "../db/membership-orders.js";
 import { listUnmatchedBuyMeACoffeeReceipts } from "../db/buymeacoffee-receipts.js";
+import { query as paymentQuery } from "../db/pg-client.js";
+import { parseBuyMeACoffeePurchaseEvent } from "../payments/buymeacoffee.js";
+import { fulfillBuyMeACoffeePurchase } from "../payments/buymeacoffee-fulfill.js";
 import {
     getDownloadAttemptById,
     listDownloadAttempts,
@@ -396,6 +399,31 @@ router.get("/admin/buymeacoffee-receipts", requireAdminAuth, async (req, res) =>
 });
 
 // Admin-only: list credit orders (paginated)
+router.post("/admin/buymeacoffee-receipts/:transactionId/resolve", requireAdminAuth, async (req, res) => {
+    try {
+        const userId = Number(req.body?.userId);
+        const mode = req.body?.mode;
+        if (!Number.isSafeInteger(userId) || userId <= 0 || !["grant", "record_manual"].includes(mode)) {
+            return jsonError(res, 400, "INVALID_REQUEST", "A user ID and resolution mode are required");
+        }
+        const user = (await paymentQuery("SELECT id,clerk_user_id,is_disabled FROM users WHERE id=$1", [userId])).rows[0];
+        if (!user || user.is_disabled) return jsonError(res, 400, "INVALID_USER", "User is missing or disabled");
+        const receipt = (await paymentQuery("SELECT * FROM buymeacoffee_receipts WHERE transaction_id=$1", [req.params.transactionId])).rows[0];
+        if (!receipt || receipt.refunded) return jsonError(res, 400, "RECEIPT_NOT_PAYABLE", "Payment is missing or refunded");
+        const parsed = parseBuyMeACoffeePurchaseEvent(receipt.raw_notify);
+        if (!parsed.ok || parsed.test) return jsonError(res, 400, parsed.code || "INVALID_RECEIPT", "Receipt cannot be fulfilled");
+        const result = await fulfillBuyMeACoffeePurchase(parsed, receipt.raw_notify, {
+            user, manual: mode === "record_manual",
+            note: JSON.stringify({ adminId: req.user?.id, mode, note: String(req.body?.note || "").slice(0, 1000) }),
+        });
+        if (!result.ok) return jsonError(res, 409, result.code, "Payment needs further review");
+        return res.json({ status: "success", data: { code: result.code } });
+    } catch (error) {
+        console.error("Resolve Buy Me a Coffee receipt error:", error);
+        return jsonError(res, 500, "SERVER_ERROR", "Failed to resolve payment");
+    }
+});
+
 router.get("/admin/orders", requireAdminAuth, async (req, res) => {
     try {
         const page = req.query?.page;

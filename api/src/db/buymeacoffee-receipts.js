@@ -12,11 +12,16 @@ const SCHEMA = `CREATE TABLE IF NOT EXISTS buymeacoffee_receipts (
     first_received_at BIGINT NOT NULL,
     updated_at BIGINT NOT NULL
 );`;
+const MIGRATION = `ALTER TABLE buymeacoffee_receipts
+    ADD COLUMN IF NOT EXISTS bound_order_code TEXT,
+    ADD COLUMN IF NOT EXISTS fulfilled_manually BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS manual_user_id INTEGER,
+    ADD COLUMN IF NOT EXISTS resolution_note TEXT;`;
 let schemaReady;
 const ensureSchema = async (queryFn) => {
-    if (queryFn !== query) return queryFn(SCHEMA);
+    if (queryFn !== query) { await queryFn(SCHEMA); return queryFn(MIGRATION); }
     if (!schemaReady) {
-        schemaReady = query(SCHEMA).catch((error) => {
+        schemaReady = query(SCHEMA).then(() => query(MIGRATION)).catch((error) => {
             schemaReady = undefined;
             throw error;
         });
@@ -63,10 +68,10 @@ export const listUnmatchedBuyMeACoffeeReceipts = async ({ page = 1, limit = 20 }
             AND o.provider_transaction_id = r.transaction_id AND o.status = 'PAID'
         LEFT JOIN membership_orders m ON m.provider = 'buymeacoffee'
             AND m.provider_transaction_id = r.transaction_id AND m.status = 'PAID'
-        WHERE (o.id IS NULL AND m.id IS NULL) OR r.refunded = TRUE`;
+        WHERE (o.id IS NULL AND m.id IS NULL AND r.fulfilled_manually = FALSE) OR r.refunded = TRUE`;
     const count = await queryFn(`SELECT COUNT(*)::int AS total ${filter}`);
     const result = await queryFn(`SELECT r.transaction_id, r.supporter_email,
-        r.amount, r.currency, r.order_code, r.review_reason, r.refunded,
+        r.amount, r.currency, COALESCE(r.bound_order_code, r.order_code) AS order_code, r.review_reason, r.refunded,
         r.first_received_at, r.updated_at, o.id AS credited_order_id, m.id AS membership_order_id
         ${filter} ORDER BY r.updated_at DESC, r.transaction_id LIMIT $1 OFFSET $2`,
     [safeLimit, (safePage - 1) * safeLimit]);
@@ -80,8 +85,10 @@ export const listUnmatchedBuyMeACoffeeReceipts = async ({ page = 1, limit = 20 }
 // the same provider transaction, including callbacks with a changed order code.
 export const validateBuyMeACoffeeFulfillment = async (client, transactionId, outTradeNo) => {
     const receipt = await client.query(
-        "SELECT refunded FROM buymeacoffee_receipts WHERE transaction_id = $1 FOR UPDATE", [transactionId]);
+        "SELECT refunded, fulfilled_manually, bound_order_code FROM buymeacoffee_receipts WHERE transaction_id = $1 FOR UPDATE", [transactionId]);
     if (!receipt.rows[0] || receipt.rows[0].refunded) return "RECEIPT_NOT_PAYABLE";
+    if (receipt.rows[0].fulfilled_manually) return "ALREADY_FULFILLED_MANUALLY";
+    if (receipt.rows[0].bound_order_code && receipt.rows[0].bound_order_code !== outTradeNo) return "TRANSACTION_ALREADY_USED";
     const used = await client.query(`
         SELECT out_trade_no FROM credit_orders WHERE provider = 'buymeacoffee'
           AND provider_transaction_id = $1 AND status = 'PAID'

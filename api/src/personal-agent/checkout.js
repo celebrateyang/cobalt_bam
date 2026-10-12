@@ -46,8 +46,7 @@ export const createCheckoutService = ({db, payments=paymentAdapter}) => {
         if (includePayment && order.status==="CREATED") {
             const data = order.provider_data || {};
             view.payment = checkout.provider==="wechat" ? {codeUrl:data.code_url}
-                : {checkoutUrl:data.invoice_url || data.checkout_url,
-                    ...(checkout.provider==="buymeacoffee" ? {paymentCode:order.out_trade_no} : {})};
+                : {checkoutUrl:data.invoice_url || data.checkout_url};
         }
         return view;
     };

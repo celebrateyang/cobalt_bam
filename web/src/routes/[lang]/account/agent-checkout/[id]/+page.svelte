@@ -6,7 +6,7 @@
     import { clerkLoaded, clerkUser, initClerk, getClerkToken, signIn } from '$lib/state/clerk';
     type Checkout = { checkoutId:string; kind:string; provider:string; status:string; readyToContinue:boolean;
         product:{key:string; amountFen:number; currency:string; points?:number; durationDays?:number; entitlements?:string[]};
-        payment?:{codeUrl?:string; checkoutUrl?:string; paymentCode?:string} };
+        payment?:{codeUrl?:string; checkoutUrl?:string} };
     let checkout:Checkout | null = null, error='', busy=false, consent=false, qr='', mounted=false, disposed=false, loadedKey='';
     $: chinese=$page.params.lang==='zh';
     $: copy=(en:string,zh:string) => chinese ? zh : en;
@@ -87,7 +87,7 @@
                 {#if checkout.status==='CREATED'}
                 {#if qr}<img src={qr} alt={copy('Scan with WeChat to pay','\u4f7f\u7528\u5fae\u4fe1\u626b\u7801\u4ed8\u6b3e')} width="260" height="260" />{/if}
                 {#if trustedLink(checkout.payment?.checkoutUrl)}<p><a href={trustedLink(checkout.payment?.checkoutUrl)} target="_blank" rel="noreferrer noopener">{copy('Open payment page','\u6253\u5f00\u4ed8\u6b3e\u9875\u9762')}</a></p>{/if}
-                {#if checkout.payment?.paymentCode}<p>{copy('Include this order code with your payment:','\u4ed8\u6b3e\u65f6\u8bf7\u586b\u5199\u8ba2\u5355\u7801\uff1a')} <code>{checkout.payment.paymentCode}</code></p>{/if}
+                {#if checkout.provider==='buymeacoffee'}<p>{copy('Use this account email in Contact information > Email at checkout. Credits or membership are added automatically after payment. No payment code is needed.','\u4ed8\u6b3e\u65f6\u8bf7\u5728 Contact information > Email \u586b\u5199\u4ee5\u4e0b\u8d26\u53f7\u90ae\u7bb1\u3002\u4ed8\u6b3e\u540e\u81ea\u52a8\u53d1\u653e\u79ef\u5206\u6216\u5f00\u901a\u4f1a\u5458\uff0c\u65e0\u9700\u586b\u5199\u4ed8\u6b3e\u7801\u3002')} <strong>{$clerkUser.primaryEmailAddress?.emailAddress || ''}</strong></p>{/if}
                 {/if}
             </section>
         {/if}

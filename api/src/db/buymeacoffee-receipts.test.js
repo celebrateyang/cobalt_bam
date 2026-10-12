@@ -24,7 +24,7 @@ test("retains unmatched payments, deduplicates retries, and handles late answers
         await recordBuyMeACoffeeReceipt(event, parseBuyMeACoffeePurchaseEvent(event), query);
         let result = await listUnmatchedBuyMeACoffeeReceipts({}, query);
         assert.equal(result.pagination.total, 1);
-        assert.equal(result.receipts[0].review_reason, "ORDER_CODE_MISSING");
+        assert.equal(result.receipts[0].review_reason, null);
         assert.equal(result.receipts[0].supporter_email, "buyer@example.com");
 
         const answered = purchase(["cpt_abcdefghijklmnopqrst"]);

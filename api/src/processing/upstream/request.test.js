@@ -49,6 +49,12 @@ test("routes Tencent Video to the domestic upstream first", () => {
     );
 });
 
+test("routes Reddit share fallback only to global upstreams", () => {
+    assert.deepEqual(resolveRegionPlan({
+        service: "www.reddit.com", targetHost: "www.reddit.com", path: "/",
+    }), { name: "global-only", groups: [["global"]] });
+});
+
 test("fails over after a structured 4xx business error", () => {
     assert.equal(
         isStructuredUpstreamError({

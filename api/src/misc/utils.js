@@ -14,8 +14,15 @@ export async function getRedirectingURL(url, dispatcher, headers) {
     };
 
     const callback = (r) => {
-        if (redirectStatuses.has(r.statusCode) && r.headers['location']) {
-            return r.headers['location'];
+        const status = r.statusCode ?? r.status;
+        const location = typeof r.headers?.get === 'function'
+            ? r.headers.get('location')
+            : r.headers?.location;
+        // undici request bodies must be consumed or discarded, even when
+        // only the redirect headers are needed.
+        r.body?.dump?.().catch(() => {});
+        if (redirectStatuses.has(status) && location) {
+            return new URL(location, url).toString();
         }
     }
 

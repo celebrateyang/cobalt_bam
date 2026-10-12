@@ -113,7 +113,46 @@ test("resolves the shared qy.net URL and rejects external redirects", async () =
 
 test("decodes the page slug into the target tvid", () => {
     assert.equal(decodeIqiyiTvid("dwo67tu164"), tvid);
+    assert.equal(decodeIqiyiTvid("1jm50v4hx7c"), "5739997997499700");
     assert.equal(decodeIqiyiTvid("not-valid!"), null);
+});
+
+test("extracts mainland programs spanning multiple progressive TS objects", async () => {
+    const playerData = {
+        code: "A00000",
+        data: {
+            tvid: internationalTvid,
+            program: { video: [{
+                vid: "main", bid: 500, duration: 12, ispre: 1,
+                m3u8: internationalManifest, fs: [],
+            }] },
+        },
+    };
+    const pageUrl = `https://www.iqiyi.com/v_${internationalPageId}.html`;
+    const extract = () => iqiyi({
+        pageId: internationalPageId, quality: 720, url: pageUrl,
+        fetchImpl: async () => new Response(JSON.stringify({
+            videoInfo: { tvId: internationalTvid, effective: true, downloadAllowed: true },
+            ev: encodePlayerData(playerData),
+        })),
+    });
+    const result = await extract();
+    assert.deepEqual(result.urls, buildIqiyiInternationalUrls(internationalManifest, 12));
+    assert.equal(result.iqiyiTsConcat, true);
+    assert.equal(result.duration, 12);
+    assert.equal(result.headers.referer, pageUrl);
+    assert.equal(result.filenameAttributes.resolution, "720p");
+
+    const video = playerData.data.program.video[0];
+    video.m3u8 = internationalManifest.replace("start=100", "start=101");
+    assert.deepEqual(await extract(), { error: "fetch.empty" });
+    video.m3u8 = internationalManifest.replace("#EXT-X-ENDLIST", "");
+    assert.deepEqual(await extract(), { error: "fetch.empty" });
+    video.m3u8 = internationalManifest.replace("#EXTM3U", '#EXTM3U\n#EXT-X-KEY:METHOD=AES-128,URI="key"');
+    assert.deepEqual(await extract(), { error: "fetch.empty" });
+    video.m3u8 = internationalManifest;
+    video.isPreview = 1;
+    assert.deepEqual(await extract(), { error: "fetch.empty" });
 });
 
 test("builds a full CORS-friendly CDN object URL from byte-range HLS", () => {

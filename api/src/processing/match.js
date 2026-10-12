@@ -76,6 +76,11 @@ const vimeoUpstreamFallbackErrors = new Set([
     "fetch.empty",
     "content.video.unavailable",
 ]);
+const redditUpstreamFallbackErrors = new Set([
+    "fetch.short_link",
+    "fetch.fail",
+    "fetch.empty",
+]);
 const isUpstreamServer = (() => {
     const raw = String(process.env.IS_UPSTREAM_SERVER || "").toLowerCase().trim();
     return raw === "true" || raw === "1";
@@ -809,6 +814,19 @@ export default async function({ host, patternMatch, params, authType }) {
 
                 console.log("[tiktok] upstream fallback unavailable, returning local result");
             }
+        }
+
+        if (
+            host === "reddit"
+            && !isUpstreamServer
+            && redditUpstreamFallbackErrors.has(r?.error)
+        ) {
+            console.log(`[reddit] local error=${r.error}, trying global upstream fallback`);
+            const upstream = await requestUpstreamCobalt(params);
+            if (upstream?.body?.status && upstream.body.status !== "error") {
+                return upstream;
+            }
+            console.log("[reddit] upstream fallback unavailable, returning local error");
         }
 
         if (host === "vimeo" && !isUpstreamServer) {

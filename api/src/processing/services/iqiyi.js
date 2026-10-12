@@ -378,9 +378,10 @@ export const selectIqiyiVideo = ({ playerData, tvid, quality }) => {
         .map((video) => ({
             video,
             directUrl: buildIqiyiDirectUrl(video.m3u8, video.duration),
+            tsUrls: buildIqiyiInternationalUrls(video.m3u8, video.duration),
             fragmentPaths: getIqiyiFragmentPaths(video),
         }))
-        .filter((candidate) => candidate.directUrl || candidate.fragmentPaths)
+        .filter((candidate) => candidate.directUrl || candidate.tsUrls || candidate.fragmentPaths)
         .sort((a, b) => qualityDistance(a.video, quality) - qualityDistance(b.video, quality));
 
     return candidates[0] || null;
@@ -458,13 +459,15 @@ export default async function({ pageId, intlPageId, tvid: suppliedTvid, shortLin
         const selected = selectIqiyiVideo({ playerData, tvid, quality });
         if (!selected) return { error: "fetch.empty" };
 
-        const { video, directUrl, fragmentPaths } = selected;
-        const urls = directUrl || await resolveIqiyiFragments(fragmentPaths, url, fetchImpl);
+        const { video, directUrl, tsUrls, fragmentPaths } = selected;
+        const urls = directUrl || tsUrls || await resolveIqiyiFragments(fragmentPaths, url, fetchImpl);
         if (!urls) return { error: "fetch.empty" };
         const height = qualityHeight.get(Number(video.bid));
         return {
             service: "iqiyi",
             urls,
+            headers: browserHeaders(url),
+            iqiyiTsConcat: !directUrl && Boolean(tsUrls && tsUrls.length > 1),
             duration: Number(video.duration) || undefined,
             filenameAttributes: {
                 service: "iqiyi",

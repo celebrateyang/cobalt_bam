@@ -160,7 +160,7 @@ export default async function(obj) {
         );
     }
 
-    if (!params.id && params.shareId) {
+    if (!params?.id && params?.shareId) {
         params = await resolveRedirectingURL(
             `https://www.reddit.com/r/${params.sub}/s/${params.shareId}`,
             obj.dispatcher, headers

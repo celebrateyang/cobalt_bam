@@ -81,6 +81,13 @@ const isGenericHostService = (service) => {
     return value.includes(".") && !hlsExceptions.has(value);
 };
 
+export const selectMp4MovFlags = (streamInfo) => {
+    // ADTS-to-ASC produces AAC extradata only after the first audio packet.
+    // Delay iQIYI's fragmented MP4 header until that configuration is available.
+    const delayHeader = streamInfo.service === 'iqiyi' && streamInfo.type !== 'mute';
+    return 'faststart+frag_keyframe+empty_moov' + (delayHeader ? '+delay_moov' : '');
+};
+
 export const selectHlsAudioArgs = (streamInfo, format) => {
     if (streamInfo.type === 'mute' || !streamInfo.isHLS || !hlsExceptions.has(streamInfo.service)) {
         return [];
@@ -425,7 +432,7 @@ const remux = async (streamInfo, res) => {
     }
 
     if (format === 'mp4') {
-        args.push('-movflags', 'faststart+frag_keyframe+empty_moov');
+        args.push('-movflags', selectMp4MovFlags(streamInfo));
         if (streamInfo.service === 'iqiyi' && streamInfo.type !== 'mute') {
             // iQIYI's progressive MPEG-TS object carries AAC in ADTS framing.
             // MP4 requires AudioSpecificConfig instead.

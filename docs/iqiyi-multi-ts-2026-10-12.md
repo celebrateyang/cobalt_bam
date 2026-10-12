@@ -34,3 +34,45 @@ flow. Keep the single-object and legacy fragment routes.
   without decode errors. The extraction fix does not repair source packet damage.
 - This is local full-file validation and production extraction diagnosis; the
   patch has not been deployed and browser download has not been validated.
+
+## Follow-up: silent playback after deployment
+
+The extraction patch was deployed, and request
+`247e8137-590d-42af-985e-6ae3c5249902` successfully entered the server remux path.
+The user reported silent playback of the downloaded file.
+
+The production muxer uses `faststart+frag_keyframe+empty_moov` and streams MP4
+through `pipe:3`. Unlike the ordinary MP4 used in the original local validation,
+this writes the initial header before `aac_adtstoasc` has generated AAC
+AudioSpecificConfig. An isolated production-container comparison of the same
+60-second source showed:
+
+| Output | AAC profile | Decoder configuration | Mean volume |
+| --- | --- | --- | --- |
+| Current fragmented MP4 | -1 (unknown) | Missing | -17.0 dB |
+| Fragmented MP4 with `delay_moov` | LC | 2 bytes | -17.0 dB |
+| Ordinary MP4 | LC | 2 bytes | -17.0 dB |
+
+FFmpeg can decode the original fragmented output despite the missing header
+configuration, so decode-only validation did not catch this player compatibility
+defect. The user's exact downloaded artifact was not inspected.
+
+Add `delay_moov` to iQIYI MP4 video downloads with audio. This delays the initial
+header until the first fragment, allowing AAC configuration to be included while
+keeping stream-copy processing. Other services and mute mode retain their flags.
+See [FFmpeg MOV/MP4 muxer documentation](https://ffmpeg.org/ffmpeg-formats.html#mov_002c-mp4_002c-ismv).
+
+Validation of the follow-up:
+
+- 56 targeted tests passed locally, including a generated MPEG-TS -> streaming
+  MP4 test asserting AAC configuration, profile, and non-silent decoded audio.
+- The same regression test passed in an isolated production-container process
+  with the proposed flag selector, without changing the running service.
+- A complete seven-object remux with production Linux FFmpeg and `pipe:3`
+  produced a 387217118-byte MP4, duration 2757.044535 seconds, AAC-LC with 2-byte
+  decoder configuration. Ten-second audio samples at 0, 1380, and 2740 seconds
+  decoded without errors, with mean volume -16.2, -16.1, and -18.0 dB respectively.
+- The source's end-of-stream PES warning remains. This change addresses missing
+  audio header configuration, not damaged source packets.
+- The follow-up parameter fix has not been deployed. Browser playback and the
+  user's original downloaded file still require verification after deployment.

@@ -56,7 +56,7 @@
         donateLinks[currentLocale as keyof typeof donateLinks] ??
         donateLinks.en;
 
-    let showNotification = true;
+    let showNotification = false;
     const notificationStorageKey = "notification-youtube-outage-2026-10-13-closed";
     const youtubeRecoveryAt = new Date("2026-10-14T09:15:00Z");
     $: youtubeRecoveryDate = new Intl.DateTimeFormat(currentLocale, {

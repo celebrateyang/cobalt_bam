@@ -9,6 +9,7 @@
         "description2": "除了单条链接下载，还支持批次下载、合集与 Playlist 解析，并可在保存前切换音频提取或静音模式。"
     },
     "notification": {
+        "youtube_outage": "由于网络故障，YouTube 下载暂时不可用，预计在本通告发布后 18 小时恢复（{{date}} UTC）。感谢你的耐心等待。",
         "title": "通知",
         "close": "关闭通知",
         "youtube_restriction": "现已支持 YouTube 直接下载。若个别链接暂时无法解析，请稍后重试或反馈链接。"

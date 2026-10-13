@@ -10,6 +10,7 @@
         "description2": "You can process single links, batch downloads, collection and playlist pages, then switch to audio-only or mute mode before saving."
     },
     "notification": {
+        "youtube_outage": "YouTube downloads are temporarily unavailable due to a network outage. Service is expected to resume 18 hours after this notice is published ({{date}} UTC). Thank you for your patience.",
         "title": "Notice:",
         "close": "Close notification",
         "youtube_restriction": "YouTube direct downloads are now supported. If a specific link fails to parse, please retry later or send feedback."

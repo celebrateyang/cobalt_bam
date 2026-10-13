@@ -10,6 +10,7 @@
         "description2": "Anda dapat memproses tautan tunggal, unduhan batch, halaman koleksi dan daftar putar, lalu beralih ke mode audio saja atau senyap sebelum menyimpan."
     },
     "notification": {
+        "youtube_outage": "Unduhan YouTube sementara tidak tersedia karena gangguan jaringan. Layanan diperkirakan pulih 18 jam setelah pengumuman ini diterbitkan ({{date}} UTC). Terima kasih atas kesabaran Anda.",
         "title": "Pemberitahuan:",
         "close": "Tutup notifikasi",
         "youtube_restriction": "Pengunduhan langsung YouTube kini didukung. Jika tautan tertentu gagal diurai, coba lagi nanti atau kirim masukan."

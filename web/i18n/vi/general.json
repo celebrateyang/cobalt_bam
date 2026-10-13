@@ -10,6 +10,7 @@
         "description2": "Ban co the xu ly tung lien ket, tai hang loat, trang bo suu tap hoac playlist, sau do chuyen sang che do chi audio hoac tat tieng truoc khi luu."
     },
     "notification": {
+        "youtube_outage": "Tính năng tải YouTube tạm thời không khả dụng do sự cố mạng. Dự kiến dịch vụ sẽ được khôi phục sau 18 giờ kể từ khi thông báo này được đăng ({{date}} UTC). Cảm ơn bạn đã kiên nhẫn chờ đợi.",
         "title": "Thông báo:",
         "close": "Đóng thông báo",
         "youtube_restriction": "Không hỗ trợ tải YouTube, nhưng bạn có thể tham khảo video này để biết hướng dẫn tải: https://www.bilibili.com/video/BV1Bp4EzeEJo"

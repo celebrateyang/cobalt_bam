@@ -56,7 +56,14 @@
         donateLinks[currentLocale as keyof typeof donateLinks] ??
         donateLinks.en;
 
-    let showNotification = false; // notification is hidden by default
+    let showNotification = true;
+    const notificationStorageKey = "notification-youtube-outage-2026-10-13-closed";
+    const youtubeRecoveryAt = new Date("2026-10-14T09:15:00Z");
+    $: youtubeRecoveryDate = new Intl.DateTimeFormat(currentLocale, {
+        dateStyle: "medium",
+        timeStyle: "short",
+        timeZone: "UTC",
+    }).format(youtubeRecoveryAt);
     const fallbackHost = env.HOST || "freesavevideo.online";
     const clerkRuntimeEnabled = Boolean(env.CLERK_PUBLISHABLE_KEY);
     let clerkRuntimePromise: Promise<ClerkRuntimeModule> | null = null;
@@ -734,7 +741,7 @@
 
         cancelNotificationInit = runOnIdle(() => {
             const notificationClosed = localStorage.getItem(
-                "notification-finditbuddy-launch-closed",
+                notificationStorageKey,
             );
             if (notificationClosed === "true") {
                 showNotification = false;
@@ -789,7 +796,7 @@
     // 关闭通知并保存状态到本地存储
     const closeNotification = () => {
         showNotification = false;
-        localStorage.setItem("notification-finditbuddy-launch-closed", "true");
+        localStorage.setItem(notificationStorageKey, "true");
     };
 </script>
 
@@ -846,7 +853,7 @@
                     <span class="notification-text">
                         {$t("general.notification.title")}
                         <br />
-                        {$t("general.notification.youtube_restriction")}
+                        {$t("general.notification.youtube_outage", { date: youtubeRecoveryDate })}
                     </span>
                 </div>
             </div>

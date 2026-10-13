@@ -10,6 +10,7 @@
         "description2": "Puedes procesar enlaces individuales, descargas por lotes y paginas de colecciones o playlists, y cambiar a solo audio o modo sin sonido antes de guardar."
     },
     "notification": {
+        "youtube_outage": "Las descargas de YouTube no están disponibles temporalmente debido a un fallo de red. Se prevé restablecer el servicio 18 horas después de publicar este aviso ({{date}} UTC). Gracias por tu paciencia.",
         "title": "Aviso:",
         "close": "Cerrar notificación",
         "youtube_restriction": "Las descargas de YouTube no están soportadas, pero puedes consultar este video para instrucciones de descarga: https://www.bilibili.com/video/BV1Bp4EzeEJo"

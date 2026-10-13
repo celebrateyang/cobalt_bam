@@ -10,6 +10,7 @@
         "description2": "Vous pouvez traiter un lien unique, des telechargements par lots et des pages de collection ou de playlist, puis passer en mode audio seul ou muet avant l'enregistrement."
     },
     "notification": {
+        "youtube_outage": "Les téléchargements YouTube sont temporairement indisponibles en raison d'une panne réseau. Le service devrait reprendre 18 heures après la publication de cet avis ({{date}} UTC). Merci de votre patience.",
         "title": "Avis :",
         "close": "Fermer la notification",
         "youtube_restriction": "Les téléchargements YouTube ne sont pas pris en charge, mais vous pouvez vous référer à cette vidéo pour les instructions de téléchargement : https://www.bilibili.com/video/BV1Bp4EzeEJo"

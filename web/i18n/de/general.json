@@ -10,6 +10,7 @@
         "description2": "Sie koennen einzelne Links, Batch-Downloads sowie Sammlungs- und Playlist-Seiten verarbeiten und vor dem Speichern zu Nur-Audio oder Stumm-Modus wechseln."
     },
     "notification": {
+        "youtube_outage": "Aufgrund einer Netzwerkstörung sind YouTube-Downloads vorübergehend nicht verfügbar. Der Dienst wird voraussichtlich 18 Stunden nach Veröffentlichung dieser Mitteilung wiederhergestellt ({{date}} UTC). Vielen Dank für Ihre Geduld.",
         "title": "Hinweis:",
         "close": "Benachrichtigung schließen",
         "youtube_restriction": "YouTube-Downloads werden nicht unterstützt, aber Sie können sich für Download-Anweisungen dieses Video ansehen: https://www.bilibili.com/video/BV1Bp4EzeEJo"

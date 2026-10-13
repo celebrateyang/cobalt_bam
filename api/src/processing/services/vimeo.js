@@ -149,11 +149,20 @@ const getSubtitlesFromTracks = (textTracks, subtitleLang) => {
     return new URL(subtitles.url, "https://player.vimeo.com/").toString();
 }
 
-const getDirectLink = async (data, quality, subtitleLang) => {
-    if (!data.files) return;
+export const getDirectLink = async (data, quality, subtitleLang) => {
+    if (!Array.isArray(data.files)) return;
 
-    const match = data.files
-        .filter(f => f.rendition?.endsWith('p'))
+    // The API uses link/rendition; player configs use url/quality.
+    const files = data.files
+        .map(f => ({
+            ...f,
+            link: f.link || f.url,
+            rendition: f.rendition || f.quality,
+        }))
+        .filter(f => typeof f.link === "string" && f.rendition?.endsWith('p'));
+    if (!files.length) return;
+
+    const match = files
         .reduce((prev, next) => {
             const delta = {
                 prev: compareQuality(prev.rendition, quality),
@@ -316,7 +325,13 @@ const getPlayerConfig = async (videoId, password, browserCookie) => {
             ...(browserCookie ? { Cookie: browserCookie } : {}),
         },
     })
-    .then(r => r.text())
+    .then(r => {
+        if (!r.ok) {
+            console.warn(`[vimeo] player request failed http=${r.status}`);
+            return;
+        }
+        return r.text();
+    })
     .catch(() => {});
 
     if (!page) {
@@ -331,9 +346,13 @@ const getPlayerConfig = async (videoId, password, browserCookie) => {
     return JSON.parse(serializedConfig);
 }
 
-const getResponseFromPlayerConfig = async (config, obj, quality) => {
+export const getResponseFromPlayerConfig = async (config, obj, quality) => {
     if (!config?.request?.files) {
         return;
+    }
+
+    if (config.video?.duration > env.durationLimit) {
+        return { error: "content.too_long" };
     }
 
     const progressiveFiles = Array.isArray(config.request.files.progressive)
@@ -362,10 +381,6 @@ const getResponseFromPlayerConfig = async (config, obj, quality) => {
 
     if (!masterHLS) {
         return { error: "fetch.fail" };
-    }
-
-    if (config.video?.duration > env.durationLimit) {
-        return { error: "content.too_long" };
     }
 
     const variants = HLS.parse(masterHLS)?.variants?.sort(
@@ -461,6 +476,13 @@ const getResponseFromYtDlp = async (obj) => {
     });
 
     if (ytDlp?.error) {
+        // Log categories only: yt-dlp stderr can contain signed media URLs.
+        const message = String(ytDlp.message || "");
+        const reason = /No video formats found/i.test(message) ? "no_formats"
+            : /only works when logged-in|login required/i.test(message) ? "login_required"
+                : /HTTP Error (401|403)/i.test(message) ? "access_denied"
+                    : "extraction_failed";
+        console.warn(`[vimeo] yt-dlp failed reason=${reason}`);
         return;
     }
 

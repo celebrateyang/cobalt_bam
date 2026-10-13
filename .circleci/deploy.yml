@@ -137,6 +137,7 @@ jobs:
       - run:
           name: Deploy
           command: |
+            # Re-run deployment after changing CircleCI upstream variables to apply them to GKE.
             UPSTREAM_URLS_VALUE="${UPSTREAM_URLS:-https://api3.freesavevideo.online}"
             UPSTREAM_URLS_HELM="${UPSTREAM_URLS_VALUE//,/\\,}"
             UPSTREAM_GLOBAL_URLS_HELM="${UPSTREAM_GLOBAL_URLS//,/\\,}"

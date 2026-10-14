@@ -5,6 +5,7 @@
 
     import { currentApiURL } from "$lib/api/api-url";
     import { auth } from "$lib/api/social";
+    import CompactDetail from "$lib/components/admin/CompactDetail.svelte";
 
     type AttemptUser = {
         primary_email: string | null;
@@ -137,6 +138,14 @@
 
     function rangeStart() {
         return Date.now() - rangeHours * 60 * 60 * 1000;
+    }
+
+    function sourceDomain(value: string) {
+        try {
+            return new URL(displaySourceUrl(value)).hostname.replace(/^www\./, "");
+        } catch {
+            return displaySourceUrl(value);
+        }
     }
 
     async function loadAttempts() {
@@ -303,19 +312,25 @@
 
     <div class="toolbar">
         <div class="filters">
-            <input
+            <label class="input-filter search-filter">
+                <span>Search</span>
+                <input
                 type="text"
                 placeholder="Search email, URL, service, error"
                 bind:value={search}
                 on:keydown={(e) => e.key === "Enter" && handleSearch()}
-            />
-            <input
+                />
+            </label>
+            <label class="input-filter host-filter">
+                <span>Host</span>
+                <input
                 type="text"
-                placeholder="Host"
+                placeholder="e.g. youtube.com"
                 bind:value={host}
                 on:keydown={(e) => e.key === "Enter" && handleSearch()}
-            />
-            <button class="btn-primary" type="button" on:click={handleSearch}>
+                />
+            </label>
+            <button class="btn-primary" type="button" disabled={loading} on:click={handleSearch}>
                 Search
             </button>
 
@@ -349,10 +364,6 @@
             </label>
         </div>
 
-        <p class="meta">
-            Status records the API response, not whether the file was saved on the device.
-            Points are recorded at request time; held means reserved, not a final charge.
-        </p>
         <div class="pager">
             <span class="meta">{total} rows</span>
             <label class="filter">
@@ -397,8 +408,19 @@
     {:else if attempts.length === 0}
         <div class="empty">No download attempts in this window.</div>
     {:else}
-        <div class="table-wrap">
+        <!-- Focusable so keyboard users can scroll the table with arrow keys. -->
+        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+        <div class="table-wrap" tabindex="0" role="region" aria-label="Download attempts, scroll to view more">
             <table class="downloads-table">
+                <colgroup>
+                    <col style="width: 145px" />
+                    <col style="width: 200px" />
+                    <col style="width: 190px" />
+                    <col style="width: 160px" />
+                    <col style="width: 230px" />
+                    <col style="width: 90px" />
+                    <col style="width: 150px" />
+                </colgroup>
                 <thead>
                     <tr>
                         <th aria-sort={getAriaSort("submitted_at")} class="sortable">
@@ -455,16 +477,13 @@
                                 </div>
                             </td>
                             <td>
-                                <a
-                                    class="url-cell selectable"
+                                <CompactDetail
+                                    text={displaySourceUrl(item.source_url)}
+                                    summary={sourceDomain(item.source_url)}
+                                    label="URL"
                                     href={displaySourceUrl(item.source_url)}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    title={displaySourceUrl(item.source_url)}
-                                >
-                                    {displaySourceUrl(item.source_url)}
-                                </a>
-                                <div class="sub mono">
+                                />
+                                <div class="sub mono truncate" title={`${item.service || item.source_host || "-"} / ${item.request_id}`}>
                                     {item.service || item.source_host || "-"} / {item.request_id}
                                 </div>
                                 {#if canOpenVideo(item)}
@@ -515,9 +534,11 @@
                                 {/if}
                             </td>
                             <td>
-                                <div class="reason" title={displayReason(item)}>
-                                    {displayReason(item)}
-                                </div>
+                                {#if displayReason(item) === "-"}
+                                    <span>-</span>
+                                {:else}
+                                    <CompactDetail text={displayReason(item)} label="Reason" />
+                                {/if}
                                 {#if item.error_code}
                                     <div class="sub mono">{item.error_code}</div>
                                 {/if}
@@ -582,6 +603,8 @@
 <style>
     .admin-container {
         width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
         max-width: 1500px;
         margin: 0;
         padding: calc(var(--padding) * 2);
@@ -620,6 +643,20 @@
         flex-wrap: wrap;
     }
 
+    .filters {
+        width: 100%;
+        padding: 14px;
+        border: 1px solid var(--popup-stroke);
+        border-radius: 10px;
+        background: var(--popup-bg);
+        align-items: flex-end;
+    }
+
+    .input-filter { display: grid; gap: 6px; min-width: 0; }
+    .input-filter > span { color: var(--text); font-size: 0.85rem; font-weight: 700; }
+    .search-filter { flex: 1 1 320px; }
+    .host-filter { flex: 0 1 220px; }
+
     .pager-bottom {
         justify-content: flex-end;
         margin-top: var(--padding);
@@ -628,7 +665,7 @@
     input,
     select {
         min-height: 38px;
-        border: 1px solid var(--border);
+        border: 1px solid var(--input-border);
         border-radius: 6px;
         background: var(--background);
         color: var(--text);
@@ -637,8 +674,17 @@
     }
 
     input {
-        width: min(320px, 70vw);
+        width: 100%;
+        box-sizing: border-box;
     }
+
+    input::placeholder { color: var(--subtext); opacity: 1; }
+    input:hover, select:hover { border-color: var(--accent); }
+    input:focus, select:focus, .table-wrap:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+    }
+    select { cursor: pointer; }
 
     .filter {
         display: inline-flex;
@@ -659,8 +705,8 @@
     }
 
     .btn-primary {
-        background: var(--primary);
-        color: var(--button-text);
+        background: var(--accent-strong);
+        color: var(--white);
     }
 
     .btn-secondary {
@@ -676,32 +722,52 @@
 
     .table-wrap {
         width: 100%;
-        overflow-x: auto;
-        border: 1px solid var(--border);
+        max-height: clamp(260px, calc(100dvh - 280px), 780px);
+        overflow: scroll;
+        scrollbar-gutter: stable;
+        scrollbar-width: auto;
+        scrollbar-color: var(--input-border) var(--popup-bg);
+        border: 1px solid var(--input-border);
+        border-radius: 8px;
+    }
+
+    .table-wrap::-webkit-scrollbar { width: 12px; height: 12px; }
+    .table-wrap::-webkit-scrollbar-track { background: var(--popup-bg); }
+    .table-wrap::-webkit-scrollbar-thumb {
+        background: var(--input-border);
+        border: 3px solid var(--popup-bg);
         border-radius: 8px;
     }
 
     .downloads-table {
         width: 100%;
-        border-collapse: collapse;
-        min-width: 1220px;
+        border-collapse: separate;
+        border-spacing: 0;
+        table-layout: fixed;
+        min-width: 1165px;
         font-size: 0.9rem;
     }
 
     th,
     td {
         padding: 11px 12px;
-        border-bottom: 1px solid var(--border);
+        border-bottom: 1px solid var(--popup-stroke);
         text-align: left;
         vertical-align: top;
     }
 
     th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
         color: var(--text);
         font-size: 0.82rem;
         text-transform: uppercase;
-        background: var(--background-secondary);
+        background: var(--popup-bg);
     }
+
+    tbody tr:hover { background: var(--button-hover-transparent); }
+    td { overflow-wrap: anywhere; }
 
     tr:last-child td {
         border-bottom: none;
@@ -765,23 +831,17 @@
         line-height: 1.35;
     }
 
-    .url-cell,
-    .reason {
+    .truncate {
         display: block;
-        max-width: 360px;
         color: var(--text);
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
 
-    .url-cell {
-        text-decoration: underline;
-        text-underline-offset: 2px;
-    }
-
     .media-actions {
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
         gap: 8px;
         margin-top: 6px;

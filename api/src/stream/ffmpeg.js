@@ -332,7 +332,9 @@ const remux = async (streamInfo, res) => {
         inputCount = 1;
     } else if (streamInfo.service === 'iqiyi' && urls.length === 1) {
         // The Linux ffmpeg-static build can segfault while reading this CDN over
-        // HTTPS. Let Node handle HTTP/TLS and stream the MPEG-TS bytes to stdin.
+        // HTTPS. Let Node handle HTTP/TLS and stream the bytes to stdin.
+        // Single objects can be MPEG-TS or legacy FLV/F4V. Auto-detect the
+        // demuxer rather than forcing FLV bytes through the MPEG-TS reader.
         let sourceResponse;
         try {
             sourceResponse = await fetch(urls[0], {
@@ -356,7 +358,7 @@ const remux = async (streamInfo, res) => {
         }
 
         inputStream = Readable.fromWeb(sourceResponse.body);
-        args = ['-f', 'mpegts', '-i', 'pipe:0'];
+        args = ['-i', 'pipe:0'];
     } else if (streamInfo.service === 'iqiyi' && urls.length > 1) {
         // Older UGC entries expose multiple standalone F4V fragments instead
         // of the progressive MPEG-TS object used by current videos.

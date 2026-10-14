@@ -1,6 +1,7 @@
 import { resolveRedirectingURL } from "../url.js";
 import { genericUserAgent, env } from "../../config.js";
 import { getCookie, updateCookieValues } from "../cookie/manager.js";
+import { createStream } from "../../stream/manage.js";
 
 const redditVideoUrlPattern = /https:\/\/v\.redd\.it\/[a-z0-9]+/i;
 
@@ -17,7 +18,7 @@ const parseIsoDuration = (value) => {
     return Math.round(seconds);
 };
 
-export const extractRedditVideoUrlFromRss = (rss, postId) => {
+const getRedditRssEntry = (rss, postId) => {
     if (typeof rss !== "string" || typeof postId !== "string") return;
 
     const postMarker = `<id>t3_${postId}</id>`;
@@ -28,7 +29,58 @@ export const extractRedditVideoUrlFromRss = (rss, postId) => {
     const entryEnd = rss.indexOf("</entry>", markerIndex);
     if (entryStart < 0 || entryEnd < 0) return;
 
-    return rss.slice(entryStart, entryEnd).match(redditVideoUrlPattern)?.[0];
+    return rss.slice(entryStart, entryEnd);
+};
+
+export const extractRedditVideoUrlFromRss = (rss, postId) =>
+    getRedditRssEntry(rss, postId)?.match(redditVideoUrlPattern)?.[0];
+
+const decodeMediaEntities = value => String(value || "")
+    .replace(/&amp;/g, "&").replace(/&quot;/g, '"')
+    .replace(/&#(?:39|x27);/gi, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+
+const safeImageUrl = value => {
+    try {
+        const url = new URL(decodeMediaEntities(value));
+        if (url.protocol !== 'https:' || url.username || url.password || url.port
+            || !['i.redd.it', 'preview.redd.it'].includes(url.hostname)
+            || !/\.(?:jpe?g|png|webp)$/i.test(url.pathname)) return;
+        return url.toString();
+    } catch {}
+};
+
+export const extractRedditImages = data => {
+    if (Array.isArray(data?.gallery_data?.items) && data?.media_metadata) {
+        return data.gallery_data.items.flatMap((item, index) => {
+            const media = data.media_metadata[item.media_id];
+            const url = media?.status === 'valid' && media.e === 'Image' && safeImageUrl(media.s?.u);
+            return url ? [{ url, index: index + 1 }] : [];
+        });
+    }
+    const url = safeImageUrl(data?.url_overridden_by_dest || data?.url);
+    return url ? [{ url, index: 1 }] : [];
+};
+
+export const extractRedditImagesFromRss = (rss, postId) => {
+    const entry = decodeMediaEntities(getRedditRssEntry(rss, postId));
+    const urls = new Set();
+    // Only original i.redd.it links qualify. Do not substitute RSS thumbnails.
+    for (const match of entry.matchAll(/https:\/\/i\.redd\.it\/[^\s"'<>]+/g)) {
+        const url = safeImageUrl(match[0]);
+        if (url) urls.add(url);
+    }
+    return [...urls].map((url, index) => ({ url, index: index + 1 }));
+};
+
+const imageResult = (images, sourceId) => {
+    if (!images.length) return;
+    const filename = image => `reddit_${sourceId}_${image.index}.${new URL(image.url).pathname.split('.').pop().toLowerCase()}`;
+    if (images.length === 1) return { isPhoto: true, urls: images[0].url, filename: filename(images[0]) };
+    return { picker: images.map(image => {
+        const name = filename(image);
+        const url = createStream({ service: 'reddit', type: 'proxy', url: image.url, filename: name });
+        return { type: 'photo', url, thumb: url, filename: name };
+    }) };
 };
 
 const getAdaptationSet = (manifest, contentType) => {
@@ -73,9 +125,9 @@ export const parseRedditDashManifest = (manifest, manifestUrl) => {
     };
 };
 
-export const fetchRedditVideoFromRss = async ({ postId, dispatcher, headers }) => {
+const fetchRedditRss = async ({ postId, dispatcher, headers }) => {
     const rssUrl = `https://www.reddit.com/comments/${postId}/.rss`;
-    const rss = await fetch(rssUrl, {
+    return fetch(rssUrl, {
         dispatcher,
         headers: {
             "user-agent": headers["user-agent"],
@@ -83,6 +135,10 @@ export const fetchRedditVideoFromRss = async ({ postId, dispatcher, headers }) =
         },
     }).then(async (response) => response.ok ? response.text() : undefined).catch(() => {});
 
+};
+
+export const fetchRedditVideoFromRss = async ({ postId, dispatcher, headers, rss }) => {
+    rss ??= await fetchRedditRss({ postId, dispatcher, headers });
     const videoBaseUrl = extractRedditVideoUrlFromRss(rss, postId);
     if (!videoBaseUrl) return;
 
@@ -193,11 +249,21 @@ export default async function(obj) {
         filename: `reddit_${sourceId}.gif`,
     }
 
+    const photos = imageResult(extractRedditImages(data), sourceId);
+    if (photos) return photos;
+    let rss;
+    if (!data?.secure_media?.reddit_video) {
+        rss = await fetchRedditRss({ postId: params.id, dispatcher: obj.dispatcher, headers });
+        const publicPhotos = imageResult(extractRedditImagesFromRss(rss, params.id), sourceId);
+        if (publicPhotos) return publicPhotos;
+    }
+
     const redditVideo = data?.secure_media?.reddit_video
         || await fetchRedditVideoFromRss({
             postId: params.id,
             dispatcher: obj.dispatcher,
             headers,
+            rss,
         });
 
     if (!redditVideo) {

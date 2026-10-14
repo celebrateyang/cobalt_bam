@@ -216,6 +216,7 @@ export const services = {
     reddit: {
         patterns: [
             "comments/:id",
+            "gallery/:id",
 
             "r/:sub/comments/:id",
             "r/:sub/comments/:id/:title",

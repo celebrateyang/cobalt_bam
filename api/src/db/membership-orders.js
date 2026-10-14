@@ -9,6 +9,10 @@ export const MEMBERSHIP_ORDER_STATUS = Object.freeze({
 });
 
 const CHECKOUT_PLAN_METADATA = Object.freeze({
+  member_1day: Object.freeze({
+    name: "1-Day Member",
+    description: "1-day membership for downloads without points",
+  }),
   member_3day: Object.freeze({
     name: "3-Day Member",
     description: "3-day membership for downloads without points",

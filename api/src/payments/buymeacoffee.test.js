@@ -44,7 +44,7 @@ test("all approved packages validate exact prices and correct code kinds", () =>
 test("membership prices follow the revised BMC catalog", () => {
   assert.deepEqual(
     BUYMEACOFFEE_MEMBERSHIP_PRODUCTS.map(({ durationDays, amountFen }) => [durationDays, amountFen]),
-    [[30, 799], [3, 199], [365, 5000]],
+    [[1, 100], [30, 799], [3, 199], [365, 5000]],
   );
 });
 
@@ -60,7 +60,8 @@ test("new draft products require the release gate; existing credits remain avail
   const previous = process.env.BUYMEACOFFEE_EXPANDED_PRODUCTS_ENABLED;
   try {
     delete process.env.BUYMEACOFFEE_EXPANDED_PRODUCTS_ENABLED;
-    assert.equal(isBuyMeACoffeeProductAvailable(BUYMEACOFFEE_CREDIT_PRODUCTS[0]), true);
+    assert.equal(isBuyMeACoffeeProductAvailable(BUYMEACOFFEE_CREDIT_PRODUCTS.find(product => product.amountFen === 199)), true);
+    assert.equal(isBuyMeACoffeeProductAvailable(BUYMEACOFFEE_CREDIT_PRODUCTS.find(product => product.amountFen === 100)), false);
     assert.equal(isBuyMeACoffeeProductAvailable(BUYMEACOFFEE_MEMBERSHIP_PRODUCTS[0]), false);
     process.env.BUYMEACOFFEE_EXPANDED_PRODUCTS_ENABLED = "true";
     assert.equal(isBuyMeACoffeeProductAvailable(BUYMEACOFFEE_MEMBERSHIP_PRODUCTS[0]), true);

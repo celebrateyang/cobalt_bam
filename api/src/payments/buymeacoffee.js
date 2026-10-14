@@ -2,6 +2,16 @@ import crypto from "node:crypto";
 
 const DEFAULT_PRODUCTS = Object.freeze([
   {
+    key: "buymeacoffee_usd_100",
+    productId: "587019",
+    checkoutUrl: "https://buymeacoffee.com/bambooyang/e/587019",
+    requiresExpansion: true,
+    points: 500,
+    amountFen: 100,
+    currency: "USD",
+    unitPriceFen: 100 / 500,
+  },
+  {
     key: "buymeacoffee_usd_199",
     productId: "581332",
     checkoutUrl: "https://buymeacoffee.com/bambooyang/e/581332",
@@ -42,6 +52,7 @@ export const BUYMEACOFFEE_CREDIT_PRODUCTS = DEFAULT_PRODUCTS.map((product) => ({
 }));
 
 export const BUYMEACOFFEE_MEMBERSHIP_PRODUCTS = [
+  ["1day", 1, 100, "587018"],
   ["monthly", 30, 799, "583009"], ["3day", 3, 199, "583007"], ["yearly", 365, 5000, "583011"],
 ].map(([period, durationDays, amountFen, productId]) => ({
   key: `member_${period}_buymeacoffee`, kind: "membership",

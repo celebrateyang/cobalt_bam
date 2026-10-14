@@ -612,6 +612,7 @@
     };
 
     const membershipPlanLabel = (planKey: string | undefined | null) => {
+        if (planKey === "member_1day") return $t("auth.membership_1day");
         if (planKey === "member_3day" || planKey === "member_3day_crypto") {
             return $t("auth.membership_3day");
         }
@@ -628,6 +629,9 @@
     };
 
     const formatMembershipProductSubtitle = (product: MembershipProduct) => {
+        if (product.key === "member_1day_buymeacoffee") {
+            return $t("auth.membership_1day_subtitle");
+        }
         if (
             product.key === "member_3day" ||
             product.key === "member_3day_nowpayments" || product.key === "member_3day_buymeacoffee"

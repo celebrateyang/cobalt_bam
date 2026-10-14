@@ -5,7 +5,7 @@ import { recordBuyMeACoffeeReceipt, listUnmatchedBuyMeACoffeeReceipts } from "./
 import { bindBuyMeACoffeeOrder } from "./buymeacoffee-matching.js";
 import { markCreditOrderPaid } from "./credit-orders.js";
 import { markMembershipOrderPaid } from "./membership-orders.js";
-import { parseBuyMeACoffeePurchaseEvent } from "../payments/buymeacoffee.js";
+import { parseBuyMeACoffeePurchaseEvent, getBuyMeACoffeeProductById } from "../payments/buymeacoffee.js";
 import { recordManualBuyMeACoffeeFulfillment } from "../util/record-bmc-manual-fulfillment.js";
 
 test("email payments bind pending orders, create missing orders, and never grant a transaction twice", async () => {
@@ -30,11 +30,11 @@ test("email payments bind pending orders, create missing orders, and never grant
             CREATE TABLE subscriptions(id serial PRIMARY KEY,user_id int,plan_id int,provider text,
                 provider_customer_id text,provider_subscription_id text,status text,current_period_start bigint,
                 current_period_end bigint,cancel_at_period_end boolean,created_at bigint,updated_at bigint);`);
-        const purchase = async (txn, membership = false) => {
+        const purchase = async (txn, membership = false, product = null) => {
             const event = { type: "extra_purchase.created", live_mode: true, data: {
                 transaction_id: txn, supporter_email: "buyer@example.com", status: "succeeded", refunded: false,
-                amount: membership ? 7.99 : 1.99, currency: "USD", created_at: now / 1000,
-                extras: [{ id: membership ? 583009 : 581332, quantity: 1, question_answers: [] }],
+                amount: product ? product.amountFen / 100 : membership ? 7.99 : 1.99, currency: "USD", created_at: now / 1000,
+                extras: [{ id: product ? product.productId : membership ? 583009 : 581332, quantity: 1, question_answers: [] }],
             } };
             const parsed = parseBuyMeACoffeePurchaseEvent(event);
             assert.equal(parsed.ok, true);
@@ -94,5 +94,21 @@ test("email payments bind pending orders, create missing orders, and never grant
         assert.equal((await reconcile(true)).status, "MANUAL_RECORDED");
         assert.equal((await reconcile(true)).status, "ALREADY_RECORDED");
         assert.equal((await query("SELECT points FROM users WHERE id=1")).rows[0].points, 2400);
+        const smallCredit = await purchase("pi_099_credit", false, getBuyMeACoffeeProductById("587019"));
+        const smallCreditOrder = await bind(smallCredit);
+        assert.equal((await payCredit(smallCredit, smallCreditOrder.outTradeNo)).code, "PAID");
+        assert.equal((await payCredit(smallCredit, smallCreditOrder.outTradeNo)).code, "ALREADY_PAID");
+        assert.equal((await query("SELECT points FROM users WHERE id=1")).rows[0].points, 2900);
+        await query("INSERT INTO plans VALUES (2,'member_1day',TRUE)");
+        await query("INSERT INTO plan_entitlements VALUES (2,'member_download')");
+        const oneDay = await purchase("pi_099_member", true, getBuyMeACoffeeProductById("587018"));
+        const oneDayOrder = await bind(oneDay);
+        const payOneDay = () => markMembershipOrderPaid({ outTradeNo: oneDayOrder.outTradeNo,
+            providerTransactionId: oneDay.transactionId, totalFen: oneDay.amountFen, clientFactory });
+        const oneDayPaid = await payOneDay();
+        assert.equal(oneDayPaid.code, "PAID");
+        assert.equal(oneDayPaid.order.duration_days, 1);
+        assert.equal(Number(oneDayPaid.subscription.current_period_end), Number(renewed.subscription.current_period_end) + 86400000);
+        assert.equal((await payOneDay()).code, "ALREADY_PAID");
     } finally { await db.close(); }
 });

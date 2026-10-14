@@ -335,9 +335,14 @@ export const createSavePipeline = (
         }
     } else {
         // reverse is needed for audio (second item) to be downloaded first
-        const tunnels = info.tunnel.reverse();
+        const tunnels = [...info.tunnel].reverse();
+        // The API appends subtitles and cover after the media tunnels.
+        // Reversing puts these auxiliary inputs first; media validation must
+        // not reject a JPEG cover or a JSON subtitle as an invalid video.
+        const auxiliaryTunnelCount = Number(!!info.output.subtitles)
+            + Number(!!info.audio?.cover);
 
-        for (const tunnel of tunnels) {
+        for (const [index, tunnel] of tunnels.entries()) {
             const fetchSlot = pipeline.length;
             pipeline.push({
                 worker: "fetch",
@@ -352,7 +357,7 @@ export const createSavePipeline = (
                             slot: fetchSlot,
                         }
                         : undefined,
-                    validation: fetchValidation,
+                    validation: index >= auxiliaryTunnelCount ? fetchValidation : undefined,
                 },
             });
         }

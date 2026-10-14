@@ -114,6 +114,13 @@ type XinpianchangDownloadDialog = Dialog & {
     platform?: 'xinpianchang' | 'magnific',
 };
 
+type RedditPhotosDialog = Dialog & {
+    type: 'reddit-photos',
+    sourceUrl: string,
+    confirmedPhotos: boolean,
+    errorText?: string,
+};
+
 type MembershipUpgradeDialog = Dialog & {
     type: "membership-upgrade",
     feature: MembershipFeature,
@@ -121,4 +128,4 @@ type MembershipUpgradeDialog = Dialog & {
     returnPath?: string | null,
 };
 
-export type DialogInfo = SmallDialog | PickerDialog | SavingDialog | TikTokDownloadDialog | PreviewDownloadDialog | BatchDialog | FeedbackDialog | MembershipUpgradeDialog | XinpianchangDownloadDialog;
+export type DialogInfo = SmallDialog | PickerDialog | SavingDialog | TikTokDownloadDialog | PreviewDownloadDialog | BatchDialog | FeedbackDialog | MembershipUpgradeDialog | XinpianchangDownloadDialog | RedditPhotosDialog;

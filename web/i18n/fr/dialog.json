@@ -146,5 +146,13 @@
     "xinpianchang.install_body": "Après l’installation, ouvrez la vidéo, lancez la lecture et cliquez sur l’extension. Chrome et Edge sont compatibles.",
     "xinpianchang.installed": "L’extension est installée. Ouvrez la vidéo, lancez la lecture et cliquez sur FreeSaveVideo Downloader.",
     "xinpianchang.open": "Ouvrir la vidéo",
-    "xinpianchang.close": "Fermer"
+    "xinpianchang.close": "Fermer",
+    "reddit_photos.title": "Téléchargez les photos Reddit avec notre extension",
+    "reddit_photos.body": "Pour enregistrer les photos et galeries Reddit, ouvrez la publication et utilisez FreeSaveVideo Downloader.",
+    "reddit_photos.fallback_title": "Le téléchargement Reddit n’a pas pu être terminé",
+    "reddit_photos.fallback_body": "Si cette publication contient des photos ou une galerie, vous pouvez les télécharger avec notre extension. Installez-la, ouvrez la publication Reddit et utilisez FreeSaveVideo Downloader.",
+    "reddit_photos.installed": "L’extension est installée. Ouvrez la publication Reddit et utilisez FreeSaveVideo Downloader pour télécharger ses images.",
+    "reddit_photos.install_title": "Installer FreeSaveVideo Downloader",
+    "reddit_photos.install_body": "Utilisez notre extension dans Chrome ou Edge pour télécharger les photos et galeries depuis la publication Reddit.",
+    "reddit_photos.open": "Ouvrir la publication Reddit"
 }

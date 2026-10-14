@@ -146,5 +146,13 @@
     "xinpianchang.install_body": "Setelah memasang, buka video, putar video, lalu klik ekstensi untuk mengunduh. Mendukung Chrome dan Edge.",
     "xinpianchang.installed": "Ekstensi sudah terpasang. Buka video, putar video, lalu klik FreeSaveVideo Downloader.",
     "xinpianchang.open": "Buka video",
-    "xinpianchang.close": "Tutup"
+    "xinpianchang.close": "Tutup",
+    "reddit_photos.title": "Unduh foto Reddit dengan ekstensi kami",
+    "reddit_photos.body": "Buka postingan Reddit dan gunakan FreeSaveVideo Downloader untuk menyimpan foto dan galeri.",
+    "reddit_photos.fallback_title": "Unduhan Reddit tidak dapat diselesaikan",
+    "reddit_photos.fallback_body": "Jika postingan berisi foto atau galeri, Anda dapat mengunduhnya dengan ekstensi kami. Instal ekstensi, buka postingan Reddit, lalu gunakan FreeSaveVideo Downloader.",
+    "reddit_photos.installed": "Ekstensi sudah terpasang. Buka postingan Reddit dan gunakan FreeSaveVideo Downloader untuk mengunduh gambarnya.",
+    "reddit_photos.install_title": "Instal FreeSaveVideo Downloader",
+    "reddit_photos.install_body": "Gunakan ekstensi kami di Chrome atau Edge untuk mengunduh foto dan galeri dari postingan Reddit.",
+    "reddit_photos.open": "Buka postingan Reddit"
 }

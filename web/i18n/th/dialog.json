@@ -152,5 +152,13 @@
     "xinpianchang.install_body": "หลังติดตั้ง ให้เปิดหน้าวิดีโอ เล่นวิดีโอ แล้วคลิกส่วนขยายเพื่อดาวน์โหลด รองรับ Chrome และ Edge",
     "xinpianchang.installed": "ติดตั้งส่วนขยายแล้ว โปรดเปิดหน้าวิดีโอ เล่นวิดีโอ แล้วคลิก FreeSaveVideo Downloader",
     "xinpianchang.open": "เปิดหน้าวิดีโอ",
-    "xinpianchang.close": "ปิด"
+    "xinpianchang.close": "ปิด",
+    "reddit_photos.title": "ดาวน์โหลดรูปจาก Reddit ด้วยส่วนขยายของเรา",
+    "reddit_photos.body": "เปิดโพสต์ Reddit แล้วใช้ FreeSaveVideo Downloader เพื่อบันทึกรูปภาพและอัลบั้ม",
+    "reddit_photos.fallback_title": "ดาวน์โหลดจาก Reddit ไม่สำเร็จ",
+    "reddit_photos.fallback_body": "หากโพสต์มีรูปภาพหรืออัลบั้ม คุณสามารถดาวน์โหลดด้วยส่วนขยายของเราได้ ติดตั้งส่วนขยาย เปิดโพสต์ Reddit แล้วใช้ FreeSaveVideo Downloader",
+    "reddit_photos.installed": "ติดตั้งส่วนขยายแล้ว เปิดโพสต์ Reddit แล้วใช้ FreeSaveVideo Downloader เพื่อดาวน์โหลดรูปภาพ",
+    "reddit_photos.install_title": "ติดตั้ง FreeSaveVideo Downloader",
+    "reddit_photos.install_body": "ใช้ส่วนขยายของเราใน Chrome หรือ Edge เพื่อดาวน์โหลดรูปภาพและอัลบั้มจากโพสต์ Reddit",
+    "reddit_photos.open": "เปิดโพสต์ Reddit"
 }

@@ -19,6 +19,7 @@ import { finalizePointsHold } from "$lib/api/points";
 import { markCollectionDownloadedItems } from "$lib/api/collection-memory";
 import { savePendingLaunchIntent } from "$lib/pwa/launch-intent";
 import { uuid } from "$lib/util";
+import { redditPhotoHandoff } from "$lib/api/reddit-photo-handoff";
 import {
     fetchCurrentUserPointsProfile,
     isFirstDownloadGraceEligible,
@@ -553,6 +554,20 @@ export const savingHandler = async ({
     // this value so the API can reuse the same points hold.
     selectedRequest.queueId ||= effectiveTaskId;
 
+    const showRedditPhotoHandoff = async (confirmedPhotos: boolean, errorText = '') => {
+        if (shouldSuppressError('error.api.reddit.browser_required')) return;
+        const lang = get(page)?.params?.lang || 'en';
+        await loadTranslations(lang, 'dialog');
+        createDialog({ id: 'reddit-photos', type: 'reddit-photos',
+            sourceUrl: selectedRequest.url, confirmedPhotos, errorText });
+    };
+
+    if (!preFetchedResponse && redditPhotoHandoff(selectedRequest.url) === 'confirmed') {
+        downloadButtonState.set('idle');
+        await showRedditPhotoHandoff(true);
+        return null;
+    }
+
     if (clerkEnabled) {
         onStage?.('authenticating');
         const signedIn = await requireDownloadAuth();
@@ -593,6 +608,14 @@ export const savingHandler = async ({
     }
 
     if (response.status === "error") {
+        const redditHandoff = redditPhotoHandoff(selectedRequest.url, response);
+        if (redditHandoff && !shouldSuppressError(response.error.code)) {
+            downloadButtonState.set('idle');
+            await showRedditPhotoHandoff(redditHandoff === 'confirmed',
+                redditHandoff === 'possible'
+                    ? await translateApiError(response.error.code, response.error.context) : '');
+            return response;
+        }
         if (
             response.error.code === 'error.api.xinpianchang.browser_required' ||
             response.error.code === 'error.api.magnific.browser_required'

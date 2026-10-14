@@ -2,20 +2,14 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import reddit, { extractRedditImages, extractRedditImagesFromRss } from './reddit.js';
 import { extract, normalizeURL } from '../url.js';
-import matchAction from '../match-action.js';
 
-test('single Reddit image becomes a photo download instead of fetch.empty', async t => {
+test('single Reddit image requests browser extension instead of an API tunnel', async t => {
     t.mock.method(globalThis,'fetch',async input => {
         assert.ok(String(input).endsWith('/comments/abc123.json'));
         return Response.json([{data:{children:[{data:{post_hint:'image',url:'https://i.redd.it/photo.png'}}]}}]);
     });
     const result=await reddit({id:'abc123',sub:'pics'});
-    assert.equal(result.isPhoto,true);
-    assert.equal(result.urls,'https://i.redd.it/photo.png');
-    assert.equal(result.filename,'reddit_pics_abc123_1.png');
-    const response=matchAction({host:'reddit',r:result,filenameStyle:'classic',audioFormat:'best'});
-    assert.equal(response.body.status,'tunnel');
-    assert.equal(response.body.filename,result.filename);
+    assert.deepEqual(result,{error:'reddit.browser_required'});
 });
 
 test('gallery preserves post order and signed original image URLs', async t => {
@@ -29,11 +23,7 @@ test('gallery preserves post order and signed original image URLs', async t => {
     ]);
     t.mock.method(globalThis,'fetch',async()=>Response.json([{data:{children:[{data:post}]}}]));
     const result=await reddit({id:'abc123'});
-    assert.deepEqual(result.picker.map(p=>p.filename),['reddit_abc123_1.png','reddit_abc123_2.jpg']);
-    assert.ok(result.picker.every(p=>p.type==='photo'&&new URL(p.url).pathname==='/tunnel'));
-    const response=matchAction({host:'reddit',r:result,filenameStyle:'classic',audioFormat:'best'});
-    assert.equal(response.body.status,'picker');
-    assert.equal(response.body.picker.length,2);
+    assert.deepEqual(result,{error:'reddit.browser_required'});
 });
 
 test('blocked JSON can recover original photo from the matching public RSS entry',async t=>{
@@ -44,8 +34,7 @@ test('blocked JSON can recover original photo from the matching public RSS entry
     t.mock.method(globalThis,'fetch',async input=>String(input).endsWith('.json')
         ? new Response('blocked',{status:403}) : new Response(rss));
     const result=await reddit({id:'abc123'});
-    assert.equal(result.isPhoto,true);
-    assert.equal(result.urls,'https://i.redd.it/right.jpg');
+    assert.deepEqual(result,{error:'reddit.browser_required'});
 });
 
 test('invalid or off-domain gallery URLs are not turned into download proxies',()=>{

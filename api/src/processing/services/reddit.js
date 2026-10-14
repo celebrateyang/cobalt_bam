@@ -1,7 +1,6 @@
 import { resolveRedirectingURL } from "../url.js";
 import { genericUserAgent, env } from "../../config.js";
 import { getCookie, updateCookieValues } from "../cookie/manager.js";
-import { createStream } from "../../stream/manage.js";
 
 const redditVideoUrlPattern = /https:\/\/v\.redd\.it\/[a-z0-9]+/i;
 
@@ -72,15 +71,9 @@ export const extractRedditImagesFromRss = (rss, postId) => {
     return [...urls].map((url, index) => ({ url, index: index + 1 }));
 };
 
-const imageResult = (images, sourceId) => {
+const imageResult = images => {
     if (!images.length) return;
-    const filename = image => `reddit_${sourceId}_${image.index}.${new URL(image.url).pathname.split('.').pop().toLowerCase()}`;
-    if (images.length === 1) return { isPhoto: true, urls: images[0].url, filename: filename(images[0]) };
-    return { picker: images.map(image => {
-        const name = filename(image);
-        const url = createStream({ service: 'reddit', type: 'proxy', url: image.url, filename: name });
-        return { type: 'photo', url, thumb: url, filename: name };
-    }) };
+    return { error: 'reddit.browser_required' };
 };
 
 const getAdaptationSet = (manifest, contentType) => {
@@ -249,12 +242,12 @@ export default async function(obj) {
         filename: `reddit_${sourceId}.gif`,
     }
 
-    const photos = imageResult(extractRedditImages(data), sourceId);
+    const photos = imageResult(extractRedditImages(data));
     if (photos) return photos;
     let rss;
     if (!data?.secure_media?.reddit_video) {
         rss = await fetchRedditRss({ postId: params.id, dispatcher: obj.dispatcher, headers });
-        const publicPhotos = imageResult(extractRedditImagesFromRss(rss, params.id), sourceId);
+        const publicPhotos = imageResult(extractRedditImagesFromRss(rss, params.id));
         if (publicPhotos) return publicPhotos;
     }
 

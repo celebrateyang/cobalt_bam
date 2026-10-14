@@ -146,5 +146,13 @@
     "xinpianchang.install_body": "インストール後、作品ページで動画を再生し、拡張機能をクリックしてください。Chrome と Edge に対応しています。",
     "xinpianchang.installed": "拡張機能が見つかりました。作品ページで動画を再生し、FreeSaveVideo Downloader をクリックしてください。",
     "xinpianchang.open": "作品ページを開く",
-    "xinpianchang.close": "閉じる"
+    "xinpianchang.close": "閉じる",
+    "reddit_photos.title": "拡張機能で Reddit の画像をダウンロード",
+    "reddit_photos.body": "Reddit の画像やギャラリーは、投稿を開いて FreeSaveVideo Downloader 拡張機能で保存できます。",
+    "reddit_photos.fallback_title": "Reddit のダウンロードを完了できませんでした",
+    "reddit_photos.fallback_body": "投稿に画像やギャラリーが含まれる場合は、拡張機能でダウンロードできます。インストール後に Reddit の投稿を開き、FreeSaveVideo Downloader を使用してください。",
+    "reddit_photos.installed": "拡張機能はインストール済みです。Reddit の投稿を開き、FreeSaveVideo Downloader で画像をダウンロードしてください。",
+    "reddit_photos.install_title": "FreeSaveVideo Downloader をインストール",
+    "reddit_photos.install_body": "Chrome または Edge の拡張機能で、Reddit の投稿から画像やギャラリーをダウンロードできます。",
+    "reddit_photos.open": "Reddit の投稿を開く"
 }

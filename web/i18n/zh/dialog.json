@@ -146,5 +146,13 @@
     "xinpianchang.install_body": "安装后打开作品页，播放视频，点击插件即可下载。支持 Chrome 和 Edge。",
     "xinpianchang.installed": "已检测到插件。请打开作品页，播放视频，再点击 FreeSaveVideo Downloader 下载。",
     "xinpianchang.open": "打开作品页",
-    "xinpianchang.close": "关闭"
+    "xinpianchang.close": "关闭",
+    "reddit_photos.title": "使用我们的插件下载 Reddit 图片",
+    "reddit_photos.body": "Reddit 图片和相册可以通过 FreeSaveVideo Downloader 插件下载。打开原帖后，使用插件保存图片。",
+    "reddit_photos.fallback_title": "Reddit 下载未能完成",
+    "reddit_photos.fallback_body": "如果这个帖子包含图片或相册，可以通过我们的插件下载。安装插件后打开 Reddit 原帖，再使用 FreeSaveVideo Downloader 保存图片。",
+    "reddit_photos.installed": "已安装插件。请打开 Reddit 原帖，使用 FreeSaveVideo Downloader 下载图片。",
+    "reddit_photos.install_title": "安装 FreeSaveVideo Downloader 插件",
+    "reddit_photos.install_body": "在 Chrome 或 Edge 中使用我们的插件，从 Reddit 原帖下载图片和相册。",
+    "reddit_photos.open": "打开 Reddit 原帖"
 }

@@ -152,5 +152,13 @@
     "xinpianchang.install_body": "설치 후 작품 페이지에서 동영상을 재생하고 확장 프로그램을 클릭하세요. Chrome과 Edge를 지원합니다.",
     "xinpianchang.installed": "확장 프로그램이 설치되어 있습니다. 작품 페이지에서 동영상을 재생하고 FreeSaveVideo Downloader를 클릭하세요.",
     "xinpianchang.open": "작품 페이지 열기",
-    "xinpianchang.close": "닫기"
+    "xinpianchang.close": "닫기",
+    "reddit_photos.title": "확장 프로그램으로 Reddit 이미지 다운로드",
+    "reddit_photos.body": "Reddit 게시물을 열고 FreeSaveVideo Downloader 확장 프로그램으로 이미지와 갤러리를 저장하세요.",
+    "reddit_photos.fallback_title": "Reddit 다운로드를 완료하지 못했습니다",
+    "reddit_photos.fallback_body": "게시물에 이미지나 갤러리가 있으면 확장 프로그램으로 다운로드할 수 있습니다. 설치 후 Reddit 게시물을 열고 FreeSaveVideo Downloader를 사용하세요.",
+    "reddit_photos.installed": "확장 프로그램이 설치되어 있습니다. Reddit 게시물을 열고 FreeSaveVideo Downloader로 이미지를 다운로드하세요.",
+    "reddit_photos.install_title": "FreeSaveVideo Downloader 설치",
+    "reddit_photos.install_body": "Chrome 또는 Edge 확장 프로그램으로 Reddit 게시물의 이미지와 갤러리를 다운로드하세요.",
+    "reddit_photos.open": "Reddit 게시물 열기"
 }

@@ -146,5 +146,13 @@
     "xinpianchang.install_body": "Sau khi cài, mở trang video, phát video rồi nhấp vào tiện ích để tải. Hỗ trợ Chrome và Edge.",
     "xinpianchang.installed": "Đã cài tiện ích. Mở trang video, phát video rồi nhấp FreeSaveVideo Downloader để tải.",
     "xinpianchang.open": "Mở trang video",
-    "xinpianchang.close": "Đóng"
+    "xinpianchang.close": "Đóng",
+    "reddit_photos.title": "Tải ảnh Reddit bằng tiện ích của chúng tôi",
+    "reddit_photos.body": "Mở bài đăng Reddit và dùng FreeSaveVideo Downloader để lưu ảnh và bộ sưu tập ảnh.",
+    "reddit_photos.fallback_title": "Không thể hoàn tất tải xuống từ Reddit",
+    "reddit_photos.fallback_body": "Nếu bài đăng có ảnh hoặc bộ sưu tập ảnh, bạn có thể tải bằng tiện ích của chúng tôi. Cài đặt tiện ích, mở bài đăng Reddit rồi dùng FreeSaveVideo Downloader.",
+    "reddit_photos.installed": "Tiện ích đã được cài đặt. Mở bài đăng Reddit và dùng FreeSaveVideo Downloader để tải ảnh.",
+    "reddit_photos.install_title": "Cài đặt FreeSaveVideo Downloader",
+    "reddit_photos.install_body": "Dùng tiện ích trên Chrome hoặc Edge để tải ảnh và bộ sưu tập ảnh từ bài đăng Reddit.",
+    "reddit_photos.open": "Mở bài đăng Reddit"
 }

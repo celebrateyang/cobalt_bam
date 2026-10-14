@@ -146,5 +146,13 @@
     "xinpianchang.install_body": "Öffne nach der Installation das Video, starte die Wiedergabe und klicke auf die Erweiterung. Chrome und Edge werden unterstützt.",
     "xinpianchang.installed": "Die Erweiterung ist installiert. Öffne das Video, starte die Wiedergabe und klicke auf FreeSaveVideo Downloader.",
     "xinpianchang.open": "Video öffnen",
-    "xinpianchang.close": "Schließen"
+    "xinpianchang.close": "Schließen",
+    "reddit_photos.title": "Reddit-Bilder mit unserer Erweiterung herunterladen",
+    "reddit_photos.body": "Öffne den Reddit-Beitrag und speichere Bilder und Galerien mit FreeSaveVideo Downloader.",
+    "reddit_photos.fallback_title": "Reddit-Download konnte nicht abgeschlossen werden",
+    "reddit_photos.fallback_body": "Falls der Beitrag Bilder oder eine Galerie enthält, kannst du sie mit unserer Erweiterung herunterladen. Installiere sie, öffne den Reddit-Beitrag und verwende FreeSaveVideo Downloader.",
+    "reddit_photos.installed": "Die Erweiterung ist installiert. Öffne den Reddit-Beitrag und lade seine Bilder mit FreeSaveVideo Downloader herunter.",
+    "reddit_photos.install_title": "FreeSaveVideo Downloader installieren",
+    "reddit_photos.install_body": "Lade Reddit-Bilder und Galerien mit unserer Erweiterung in Chrome oder Edge direkt aus dem Beitrag herunter.",
+    "reddit_photos.open": "Reddit-Beitrag öffnen"
 }

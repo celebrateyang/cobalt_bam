@@ -76,7 +76,7 @@
     .input-row { display:flex; gap:10px; }
     input { flex:1; width:100%; min-width:0; box-sizing:border-box; border:1px solid var(--button-stroke); border-radius:12px; padding:16px; background:var(--background); color:var(--text); font:inherit; }
     input:focus-visible,button:focus-visible { outline:2px solid var(--social-accent,var(--text)); outline-offset:3px; }
-    button { min-height:52px; border:0; border-radius:12px; padding:14px 22px; background:var(--social-accent); color:white; font:inherit; font-weight:650; cursor:pointer; }
+    button { min-height:52px; border:0; border-radius:12px; padding:14px 22px; background:var(--button-active-bg); color:var(--button-active-text); font:inherit; font-weight:650; cursor:pointer; }
     button:disabled { opacity:.6; cursor:default; }
     .hint { margin:12px 0 0; font-size:13px; line-height:1.65; color:var(--subtext); }
     .status { min-height:1.5em; margin:8px 0 0; font-size:14px; line-height:1.6; overflow-wrap:anywhere; }

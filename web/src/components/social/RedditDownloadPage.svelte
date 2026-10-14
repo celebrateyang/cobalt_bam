@@ -41,7 +41,7 @@
 </main>
 
 <style>
-    .reddit-page { --social-accent:#b83713; width:100%; max-width:1100px; box-sizing:border-box; padding:36px 22px 64px; color:var(--text); font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
+    .reddit-page { --social-accent:var(--accent-strong); width:100%; max-width:1100px; box-sizing:border-box; padding:36px 22px 64px; color:var(--text); font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
     .reddit-page :global(*) { font-family:inherit; }
     header { max-width:820px; padding:12px 0 30px; }
     .eyebrow { font-size:13px; font-weight:650; letter-spacing:.06em; color:var(--subtext); }

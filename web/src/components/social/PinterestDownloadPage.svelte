@@ -42,7 +42,7 @@
 </main>
 
 <style>
-    .pinterest-page { --social-accent:#ac1232; width:100%; max-width:1100px; box-sizing:border-box; padding:36px 22px 64px; color:var(--text); font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
+    .pinterest-page { --social-accent:var(--accent-strong); width:100%; max-width:1100px; box-sizing:border-box; padding:36px 22px 64px; color:var(--text); font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
     .pinterest-page :global(*) { font-family:inherit; }
     .pin-workspace { display:grid; grid-template-columns:minmax(0,1.7fr) minmax(0,1fr); gap:32px; align-items:start; padding:12px 0 38px; }
     .eyebrow { font-size:13px; font-weight:650; letter-spacing:.06em; color:var(--subtext); }
@@ -52,7 +52,7 @@
     .url-shapes { display:flex; gap:12px 22px; flex-wrap:wrap; color:var(--subtext); font-size:12px; }
     code { overflow-wrap:anywhere; }
     aside { border-radius:26px; border:1px solid var(--button-stroke); background:var(--popup-bg); padding:28px; margin-top:8px; }
-    .pin-symbol { display:inline-grid; place-items:center; width:44px; height:44px; border-radius:50%; background:var(--social-accent); color:white; font-size:24px; margin-bottom:18px; }
+    .pin-symbol { display:inline-grid; place-items:center; width:44px; height:44px; border-radius:50%; background:var(--accent-background); color:var(--social-accent); font-size:24px; margin-bottom:18px; }
     h2 { font-size:clamp(21px,2.4vw,27px); line-height:1.4; margin:0 0 22px; }
     ol { padding-left:22px; margin-bottom:0; } li { padding-left:6px; margin-bottom:16px; line-height:1.7; } li:last-child { margin:0; }
     .media-board { border-top:1px solid var(--button-stroke); padding-top:32px; }

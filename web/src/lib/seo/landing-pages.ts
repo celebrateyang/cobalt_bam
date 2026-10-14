@@ -5,6 +5,7 @@ import { xinpianchangLanding } from '$lib/seo/xinpianchang-landing';
 import { soopliveLanding } from '$lib/seo/sooplive-landing';
 import { magnificLanding } from '$lib/seo/magnific-landing';
 import { dailymotionLanding } from '$lib/seo/dailymotion-landing';
+import { getSocialDownloadContent, socialPlatformForSlug } from '$lib/seo/social-download-content';
 
 export type SeoLandingFaqItem = {
     q: string;
@@ -856,7 +857,7 @@ const buildGenericWorkflowLocales = (
     id: buildGenericLocale('id', { platform: labels.id, kind: 'video', contentKey: 'video', keywords }),
 });
 
-export const seoLandingPages: SeoLandingPage[] = [
+const landingPages: SeoLandingPage[] = [
     dailymotionLanding,
     magnificLanding,
     soopliveLanding,
@@ -4747,6 +4748,16 @@ export const seoLandingPages: SeoLandingPage[] = [
     },
 ];
 
+export const seoLandingPages: SeoLandingPage[] = landingPages.map((page) => {
+    const platform = socialPlatformForSlug(page.slug);
+    return platform ? {
+        ...page,
+        locales: Object.fromEntries(Object.entries(page.locales).map(([lang, content]) =>
+            [lang, getSocialDownloadContent(platform, lang, content)],
+        )),
+    } : page;
+});
+
 export const seoLandingSlugs = seoLandingPages.map((page) => page.slug);
 
 export const getSeoLandingPage = (slug: string): SeoLandingPage | undefined =>
@@ -4756,6 +4767,9 @@ export const getSeoLandingLocale = (
     page: SeoLandingPage,
     lang: string,
 ): SeoLandingLocaleContent => {
+    // These pages own their content in every locale. Do not reinsert generic
+    // capability paragraphs or language-specific template overrides.
+    if (socialPlatformForSlug(page.slug)) return page.locales[lang] ?? page.locales.en;
     const priorityLocale = lang === 'de'
         ? dePriorityLandingLocales[page.slug]
         : lang === 'th'

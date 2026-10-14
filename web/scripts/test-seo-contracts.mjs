@@ -73,6 +73,9 @@ async function component(file) {
 // Preload real nested components for this synchronous SSR module loader.
 framework['$components/save/SupportLink.svelte'] = { __esModule: true, default: await component('src/components/save/SupportLink.svelte') };
 framework['$components/youtube/YouTubeDownloadPage.svelte'] = { __esModule: true, default: await component('src/components/youtube/YouTubeDownloadPage.svelte') };
+for (const name of ['SourceDownloadForm', 'RedditDownloadPage', 'PinterestDownloadPage']) {
+    framework[`$components/social/${name}.svelte`] = { __esModule: true, default: await component(`src/components/social/${name}.svelte`) };
+}
 
 function setTestLocale(lang, path = 'faq') {
     testPage.set({ params: { lang }, url: new URL(`https://freesavevideo.online/${lang}/${path}`) });
@@ -95,6 +98,56 @@ const routes = load('src/lib/seo/route-locales.ts');
 const links = load('src/lib/seo/internal-links.ts');
 const { supportedLanguages } = load('src/lib/seo/language-routing.ts');
 const { seoLandingSlugs, getSeoLandingPage, getSeoLandingLocale } = load('src/lib/seo/landing-pages.ts');
+
+test('social source inputs reject unrelated sites, feeds, resource URLs and batches', () => {
+    const { parseSocialDownloadInput: parse } = load('src/lib/seo/social-download-input.ts');
+    assert.equal(parse('reddit', 'https://www.reddit.com/r/videos/comments/abc123/a_title/'), 'https://www.reddit.com/r/videos/comments/abc123/a_title/');
+    assert.equal(parse('reddit', 'https://old.reddit.com/comments/abc123'), 'https://old.reddit.com/comments/abc123');
+    assert.equal(parse('reddit', 'https://www.reddit.com/r/videos/s/AbC123'), 'https://www.reddit.com/r/videos/s/AbC123');
+    assert.equal(parse('reddit', 'https://redd.it/abc123'), 'https://redd.it/abc123');
+    assert.equal(parse('pinterest', 'https://www.pinterest.com/pin/1129136937861945132/'), 'https://www.pinterest.com/pin/1129136937861945132/');
+    assert.equal(parse('pinterest', 'https://pin.it/AbC123'), 'https://pin.it/AbC123');
+    assert.equal(parse('pinterest', 'https://www.pinterest.ca/pin/70437485604616/'), 'https://www.pinterest.ca/pin/70437485604616/');
+    assert.equal(parse('pinterest', 'https://www.pinterest.com/pin/a-video--1129136937861945132/'), 'https://www.pinterest.com/pin/a-video--1129136937861945132/');
+    for (const platform of ['reddit', 'pinterest']) {
+        for (const value of ['https://reddit.com.evil.test/comments/abc123', 'https://pinterest.com.evil.test/pin/123/', 'https://user:pass@reddit.com/comments/abc123', 'https://www.reddit.com/r/videos/', 'https://www.pinterest.com/person/board/', 'https://v.redd.it/abc123/DASH_720.mp4', 'https://i.pinimg.com/image.jpg', 'javascript:alert(1)', 'https://redd.it/abc123 https://pin.it/AbC123']) {
+            assert.equal(parse(platform, value), null, `${platform}: ${value}`);
+        }
+    }
+});
+
+test('Reddit and Pinterest SSR expose distinct usable pages and only their visible claims in every locale', async () => {
+    const detail = await component('src/routes/[lang]/download/[slug]/+page.svelte');
+    for (const [slug, platform] of [['reddit-video-download', 'reddit'], ['pinterest-video-download', 'pinterest']]) {
+        const landing = getSeoLandingPage(slug);
+        for (const lang of routes.getDownloadSeoLanguages(slug)) {
+            const content = getSeoLandingLocale(landing, lang);
+            assert.equal(content.faqs.length, 3, `${slug}/${lang}`);
+            assert.equal(content.facts.length, 3);
+            if (lang !== 'en') {
+                assert.notEqual(content.lede, landing.locales.en.lede, lang);
+                assert.notEqual(content.facts[0], landing.locales.en.facts[0], lang);
+            }
+            setTestLocale(lang, `download/${slug}`);
+            const result = detail.render({ data: { lang, slug, landing, guideSlug: null, relatedPages: [], relatedLearnPages: [] } });
+            assert(result.html.includes(`class="${platform}-page `));
+            assert(result.html.includes(`id="${platform}-source-url"`));
+            assert(!result.html.includes('class="services"'));
+            assert(!result.html.includes('hero-omnibox'));
+            for (const text of [content.h1, content.lede, ...content.facts, ...content.faqs.map(faq => faq.a)]) {
+                assert(result.html.includes(escapeText(text)), `${slug}/${lang}: ${text}`);
+            }
+            const schema = [...result.head.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(m => JSON.parse(m[1]));
+            const application = schema.find(item => item['@type'] === 'WebPage').mainEntity;
+            assert.deepEqual(application.featureList, content.features);
+            assert(!application.knowsAbout.includes('playlist download'));
+            assert(!application.knowsAbout.includes('batch download'));
+            assert.equal(application.offers, undefined);
+            assert.equal(schema.find(item => item['@type'] === 'HowTo').totalTime, undefined);
+            assert.deepEqual(schema.find(item => item['@type'] === 'FAQPage').mainEntity.map(item => item.acceptedAnswer.text), content.faqs.map(faq => faq.a));
+        }
+    }
+});
 
 test('Dailymotion landing is fully localized in every supported language with accurate download limits', async () => {
     const slug = 'dailymotion-video-downloader';
@@ -344,6 +397,10 @@ test('every advertised download and guide detail renders localized shared labels
                 assert(html.includes(escapeText(copy.input)), context);
                 assert(html.includes(escapeText(copy.placeholder)), context);
                 assert(html.includes('id="youtube-query"'), context);
+                assert(!html.includes('class="omnibox'), context);
+            } else if (kind === 'download' && ['reddit-video-download', 'pinterest-video-download'].includes(params.slug)) {
+                const platform = params.slug.startsWith('reddit') ? 'reddit' : 'pinterest';
+                assert(html.includes(`id="${platform}-source-url"`), context);
                 assert(!html.includes('class="omnibox'), context);
             } else if (kind === 'download') {
                 const focused = params.slug === 'dailymotion-video-downloader'

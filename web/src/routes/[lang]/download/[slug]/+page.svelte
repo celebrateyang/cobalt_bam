@@ -9,9 +9,12 @@
     import { isThPriorityLanding } from '$lib/seo/th-priority-landings';
     import { getPlatformKey, getSeoRuntimeContent } from '$lib/seo/runtime-content';
     import { FREESAVEVIDEO_EXTENSION_STORE_URL } from '$lib/extension/freesavevideo';
+    import { socialPlatformForSlug } from '$lib/seo/social-download-content';
 
     import SupportedServices from '$components/save/SupportedServices.svelte';
     import YouTubeDownloadPage from '$components/youtube/YouTubeDownloadPage.svelte';
+    import RedditDownloadPage from '$components/social/RedditDownloadPage.svelte';
+    import PinterestDownloadPage from '$components/social/PinterestDownloadPage.svelte';
 
     export let data: {
         lang: string;
@@ -67,7 +70,9 @@
     $: pageKeywords = localeContent.metaKeywords.join(',');
     $: runtimeContent = getSeoRuntimeContent(data.lang);
     $: platformKey = getPlatformKey(data.slug);
+    $: socialPlatform = socialPlatformForSlug(data.slug);
     $: usesFocusedPriorityContent =
+        Boolean(socialPlatform) ||
         data.slug === 'dailymotion-video-downloader' ||
         (data.lang === 'de' && isDePriorityLanding(data.slug)) ||
         (data.lang === 'th' && isThPriorityLanding(data.slug));
@@ -150,7 +155,7 @@
               '@type': 'HowTo',
               name: localeContent.stepsTitle,
               description: localeContent.lede,
-              ...(['xinpianchang-video-download', 'dailymotion-video-downloader'].includes(data.slug) ? {} : { totalTime: 'PT1M' }),
+               ...(socialPlatform || ['xinpianchang-video-download', 'dailymotion-video-downloader'].includes(data.slug) ? {} : { totalTime: 'PT1M' }),
               tool: [
                   {
                       '@type': 'HowToTool',
@@ -193,9 +198,9 @@
                       localeContent.h1,
                       ...localeContent.metaKeywords,
                       'public video download',
-                      ...(data.slug === 'dailymotion-video-downloader' ? [] : ['batch download', 'playlist download', 'audio extraction']),
+                       ...(socialPlatform || data.slug === 'dailymotion-video-downloader' ? [] : ['batch download', 'playlist download', 'audio extraction']),
                   ],
-                  ...(data.slug === 'dailymotion-video-downloader' ? {} : { offers: {
+                   ...(socialPlatform || data.slug === 'dailymotion-video-downloader' ? {} : { offers: {
                       '@type': 'Offer',
                       price: '0',
                       priceCurrency: 'USD',
@@ -215,7 +220,7 @@
     let loadingOmnibox = false;
 
     onMount(() => { mounted = true; });
-    $: if (mounted && data.slug !== 'youtube-download' && !OmniboxComponent && !loadingOmnibox) {
+    $: if (mounted && data.slug !== 'youtube-download' && !socialPlatform && !OmniboxComponent && !loadingOmnibox) {
         loadingOmnibox = true;
         void import('$components/save/Omnibox.svelte')
             .then((module) => {
@@ -248,7 +253,7 @@
     <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={pageDesc} />
     <meta name="twitter:image" content={`https://${fallbackHost}/og.png`} />
-    <meta name="twitter:image:alt" content={data.slug === 'dailymotion-video-downloader' ? localeContent.h1 : 'FreeSaveVideo video downloader preview'} />
+    <meta name="twitter:image:alt" content={socialPlatform || data.slug === 'dailymotion-video-downloader' ? localeContent.h1 : 'FreeSaveVideo video downloader preview'} />
     {#if structuredData.length}
         {#each structuredData as ld}
             {@html `<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>`}
@@ -258,6 +263,10 @@
 
 {#if data.slug === 'youtube-download'}
     <YouTubeDownloadPage lang={data.lang} content={{ ...localeContent, faqs: mergedFaqs }} guideSlug={data.guideSlug} />
+{:else if socialPlatform === 'reddit'}
+    <RedditDownloadPage lang={data.lang} content={localeContent} guideSlug={data.guideSlug} />
+{:else if socialPlatform === 'pinterest'}
+    <PinterestDownloadPage lang={data.lang} content={localeContent} guideSlug={data.guideSlug} />
 {:else}
 <div class="page" class:dailymotion-page={data.slug === 'dailymotion-video-downloader'}>
     <div class="services">

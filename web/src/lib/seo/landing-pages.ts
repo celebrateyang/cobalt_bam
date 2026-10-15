@@ -6,6 +6,7 @@ import { soopliveLanding } from '$lib/seo/sooplive-landing';
 import { magnificLanding } from '$lib/seo/magnific-landing';
 import { dailymotionLanding } from '$lib/seo/dailymotion-landing';
 import { getSocialDownloadContent, socialPlatformForSlug } from '$lib/seo/social-download-content';
+import { getTiktokLandingContent, isTiktokLanding } from '$lib/seo/tiktok-content';
 
 export type SeoLandingFaqItem = {
     q: string;
@@ -4750,12 +4751,15 @@ const landingPages: SeoLandingPage[] = [
 
 export const seoLandingPages: SeoLandingPage[] = landingPages.map((page) => {
     const platform = socialPlatformForSlug(page.slug);
-    return platform ? {
+    if (!platform && !isTiktokLanding(page.slug)) return page;
+    return {
         ...page,
         locales: Object.fromEntries(Object.entries(page.locales).map(([lang, content]) =>
-            [lang, getSocialDownloadContent(platform, lang, content)],
+            [lang, platform
+                ? getSocialDownloadContent(platform, lang, content)
+                : { ...content, ...getTiktokLandingContent(page.slug, lang) }],
         )),
-    } : page;
+    };
 });
 
 export const seoLandingSlugs = seoLandingPages.map((page) => page.slug);
@@ -4767,6 +4771,8 @@ export const getSeoLandingLocale = (
     page: SeoLandingPage,
     lang: string,
 ): SeoLandingLocaleContent => {
+    const tiktokContent = getTiktokLandingContent(page.slug, lang);
+    if (tiktokContent) return { ...(page.locales[lang] ?? page.locales.en), ...tiktokContent };
     // These pages own their content in every locale. Do not reinsert generic
     // capability paragraphs or language-specific template overrides.
     if (socialPlatformForSlug(page.slug)) return page.locales[lang] ?? page.locales.en;

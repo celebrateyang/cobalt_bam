@@ -404,13 +404,14 @@ test('every advertised download and guide detail renders localized shared labels
                 assert(!html.includes('class="omnibox'), context);
             } else if (kind === 'download') {
                 const focused = params.slug === 'dailymotion-video-downloader'
+                    || load('src/lib/seo/tiktok-content.ts').isTiktokLanding(params.slug)
                     || (params.lang === 'de' && load('src/lib/seo/de-priority-landings.ts').isDePriorityLanding(params.slug))
                     || (params.lang === 'th' && load('src/lib/seo/th-priority-landings.ts').isThPriorityLanding(params.slug));
                 if (!focused) assert(hasLabel('h2', labels.toolsWithoutPoints), context);
                 assert(hasLabel('h3', labels.corePages), context);
                 assert(hasLabel('h3', labels.similarDownloads), context);
             } else {
-                assert(hasLabel('h2', labels.toolsWithoutPoints), context);
+                if (!params.slug.startsWith('tiktok-')) assert(hasLabel('h2', labels.toolsWithoutPoints), context);
                 const eyebrow = html.match(/<p class="eyebrow[^\"]*">([^<]*)<\/p>/);
                 assert.equal(eyebrow?.[1], escapeText(labels.downloadGuide), context);
             }
@@ -459,6 +460,61 @@ test('YouTube guides render distinct instructional content and matching FAQ sche
         const faq = [...rendered.head.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(m => JSON.parse(m[1])).find(s => s['@type'] === 'FAQPage');
         assert.equal(faq.mainEntity.length, 4);
         for (const question of faq.mainEntity) assert(rendered.html.includes(question.name));
+    }
+});
+
+test('TikTok pilot SSR separates download tasks from saving guides without duplicate FAQ or unrelated promotions', async () => {
+    const download = await component('src/routes/[lang]/download/[slug]/+page.svelte');
+    const guidePage = await component('src/routes/[lang]/guide/[slug]/+page.svelte');
+    const { getGuidePage } = load('src/lib/seo/guide-pages.ts');
+    const { tiktokLandingSlugs, getTiktokLandingContent, getTiktokGuideContent } = load('src/lib/seo/tiktok-content.ts');
+    const loader = load('src/routes/[lang]/download/[slug]/+page.ts');
+    const guideSlugs = ['tiktok-download-guide', 'tiktok-collection-download-guide', 'tiktok-mp3-download-guide'];
+    for (const lang of ['en', 'zh']) for (const [index, slug] of tiktokLandingSlugs.entries()) {
+        const content = getTiktokLandingContent(slug, lang);
+        const guideContent = getTiktokGuideContent(guideSlugs[index], lang);
+        assert.notEqual(content.lede, guideContent.lede);
+        assert(!guideContent.faqs.some(faq => content.faqs.some(item => item.q === faq.q)), slug);
+        setTestLocale(lang, `download/${slug}`);
+        const renderedDownload = download.render({ data: await loader.load({ params: { lang, slug } }) });
+        assert(renderedDownload.html.includes('id="tiktok-source-url"'));
+        assert(renderedDownload.html.includes('name="u"'));
+        assert(renderedDownload.html.includes(`action="/${lang}"`));
+        assert(renderedDownload.html.includes(slug === 'tiktok-collection-download' ? '<textarea' : 'type="url"'));
+        const webPage = [...renderedDownload.head.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)]
+            .map(match => JSON.parse(match[1])).find(value => value['@type'] === 'WebPage');
+        assert.equal(webPage.mainEntity.offers, undefined, 'do not advertise every TikTok task as a zero-price offer');
+        const guide = getGuidePage(guideSlugs[index]);
+        setTestLocale(lang, `guide/${guide.slug}`);
+        const renderedGuide = guidePage.render({ data: { lang, slug: guide.slug, guide, landing: getSeoLandingPage(slug) } });
+        for (const [result, expected] of [[renderedDownload, content], [renderedGuide, guideContent]]) {
+            assert(result.html.includes(load('src/lib/extension/freesavevideo.ts').FREESAVEVIDEO_EXTENSION_STORE_URL));
+            const summaries = [...result.html.matchAll(/<summary[^>]*>(.*?)<\/summary>/gs)].map(match => match[1]);
+            assert.equal(summaries.length, expected.faqs.length, `${lang}/${slug}`);
+            assert.equal(new Set(summaries).size, summaries.length);
+            const schema = [...result.head.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)]
+                .map(match => JSON.parse(match[1])).find(value => value['@type'] === 'FAQPage');
+            assert.deepEqual(schema.mainEntity.map(value => value.name), expected.faqs.map(value => value.q));
+            assert(!result.html.includes(`href="/${lang}/random-chat"`));
+            assert(!result.html.includes(`href="/${lang}/discover"`));
+            assert(!result.html.includes('Platform advantages'));
+            for (const item of expected.faqs) assert(result.html.includes(escapeText(item.a)));
+        }
+        for (const section of guideContent.sections) assert(renderedGuide.html.includes(escapeText(section.title)));
+    }
+    assert.equal(getTiktokLandingContent('tiktok-no-watermark', 'fr'), null);
+    assert.equal(getTiktokGuideContent('youtube-download-guide', 'en'), null);
+});
+
+test('TikTok sitemap dates track the edited pages without refreshing unrelated content', async () => {
+    const { tiktokContentUpdatedAt } = load('src/lib/seo/tiktok-content.ts');
+    const xml = await load('src/routes/sitemap.xml/+server.ts').GET().text();
+    const entries = [...xml.matchAll(/<url>(.*?)<\/url>/gs)].map(match => match[1]);
+    const tiktokEntries = entries.filter(entry => /\/(download|guide)\/tiktok-/.test(entry));
+    assert.equal(tiktokEntries.length, 66);
+    for (const entry of tiktokEntries) assert(entry.includes(`<lastmod>${tiktokContentUpdatedAt}</lastmod>`));
+    for (const entry of entries.filter(entry => !tiktokEntries.includes(entry))) {
+        assert(!entry.includes(`<lastmod>${tiktokContentUpdatedAt}</lastmod>`));
     }
 });
 

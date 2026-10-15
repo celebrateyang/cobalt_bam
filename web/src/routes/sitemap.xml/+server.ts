@@ -6,6 +6,7 @@ import { getGuidePage, guideSlugs } from '$lib/seo/guide-pages';
 import { getLearnPage, learnSlugs } from '$lib/seo/learn-pages';
 import { supportedSeoLanguages } from '$lib/seo/site';
 import { getDownloadSeoLanguages, getGuideSeoLanguages } from '$lib/seo/route-locales';
+import { isTiktokLanding, tiktokContentUpdatedAt } from '$lib/seo/tiktok-content';
 
 const site = env.HOST ? `https://${env.HOST}` : 'https://freesavevideo.online';
 const languages = [...supportedSeoLanguages];
@@ -133,7 +134,9 @@ function generateSitemap(): string {
             urls.push(
                 urlEntry(
                     `${site}${path}`,
-                    slug === 'dailymotion-video-downloader'
+                    isTiktokLanding(slug)
+                        ? tiktokContentUpdatedAt
+                        : slug === 'dailymotion-video-downloader'
                         ? '2026-10-11'
                         : slug === 'xinpianchang-video-download'
                         ? '2026-09-19'
@@ -159,7 +162,9 @@ function generateSitemap(): string {
             urls.push(
                 urlEntry(
                     `${site}${path}`,
-                    ['youtube-download-guide', 'youtube-shorts-download-guide'].includes(slug) && ['en', 'zh'].includes(lang) ? '2026-09-06' : undefined,
+                    isTiktokLanding(guide.landingSlug)
+                        ? tiktokContentUpdatedAt
+                        : ['youtube-download-guide', 'youtube-shorts-download-guide'].includes(slug) && ['en', 'zh'].includes(lang) ? '2026-09-06' : undefined,
                     'monthly',
                     '0.7',
                     buildAlternateLinks(path, availableLanguages),

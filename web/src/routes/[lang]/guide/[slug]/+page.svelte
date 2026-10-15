@@ -1,6 +1,8 @@
 <script lang="ts">
     import env from '$lib/env';
     import { getYoutubeGuideContent } from '$lib/seo/youtube-guide-content';
+    import { getTiktokGuideContent, isTiktokLanding } from '$lib/seo/tiktok-content';
+    import { FREESAVEVIDEO_EXTENSION_STORE_URL } from '$lib/extension/freesavevideo';
     import { getGuidePage } from '$lib/seo/guide-pages';
     import { getSeoLandingLocale, getSeoLandingPage, EN_BRAND, ZH_BRAND } from '$lib/seo/landing-pages';
     import { getRelatedDownloadLinks, getRelatedGuideLinks } from '$lib/seo/internal-links';
@@ -17,7 +19,8 @@
 
     const fallbackHost = env.HOST || 'freesavevideo.online';
 
-    $: dedicatedGuide = getYoutubeGuideContent(data.slug, data.lang);
+    $: isTiktok = isTiktokLanding(data.guide.landingSlug);
+    $: dedicatedGuide = getTiktokGuideContent(data.slug, data.lang) ?? getYoutubeGuideContent(data.slug, data.lang);
     $: baseLocaleContent = { ...getSeoLandingLocale(data.landing, data.lang), ...dedicatedGuide };
     $: localeContent =
         data.lang === 'en'
@@ -215,20 +218,20 @@
     $: ctaLabel = isJa ? '今すぐダウンロード' : isZh ? '\u53bb\u4e0b\u8f7d' : isTh ? 'ดาวน์โหลดเลย' : uiCopy?.cta ?? 'Download Now';
     $: ctaHint = isJa ? 'ダウンローダーを開く' : isZh ? '\u8df3\u8f6c\u5230\u4e0b\u8f7d\u9875\u9762' : isTh ? 'เปิดเครื่องมือดาวน์โหลด' : uiCopy?.ctaHint ?? 'Open the downloader';
     $: runtimeContent = getSeoRuntimeContent(data.lang);
-    $: hasLocalizedRuntime = true;
+    $: hasLocalizedRuntime = !(isTiktok && dedicatedGuide);
     $: platformKey = getPlatformKey(data.slug);
-    $: productFaqs = dedicatedGuide ? [] : runtimeContent.productFaqs;
-    $: productTips = dedicatedGuide ? [] : runtimeContent.productTips;
-    $: productAdvantages = dedicatedGuide ? [] : runtimeContent.productAdvantages;
-    $: platformFaqs = dedicatedGuide ? [] : runtimeContent.platformFaqs[platformKey] ?? runtimeContent.platformFaqs.generic;
+    $: productFaqs = dedicatedGuide || isTiktok ? [] : runtimeContent.productFaqs;
+    $: productTips = dedicatedGuide || isTiktok ? [] : runtimeContent.productTips;
+    $: productAdvantages = dedicatedGuide || isTiktok ? [] : runtimeContent.productAdvantages;
+    $: platformFaqs = dedicatedGuide || isTiktok ? [] : runtimeContent.platformFaqs[platformKey] ?? runtimeContent.platformFaqs.generic;
     $: platformPlaybook =
-        dedicatedGuide ? { heading: '', notes: [], checklist: [] } : runtimeContent.platformPlaybooks[platformKey] ?? runtimeContent.platformPlaybooks.generic;
+        dedicatedGuide || isTiktok ? { heading: '', notes: [], checklist: [] } : runtimeContent.platformPlaybooks[platformKey] ?? runtimeContent.platformPlaybooks.generic;
     $: platformFailureCases =
-        dedicatedGuide ? [] : runtimeContent.platformFailureCases[platformKey] ?? runtimeContent.platformFailureCases.generic;
+        dedicatedGuide || isTiktok ? [] : runtimeContent.platformFailureCases[platformKey] ?? runtimeContent.platformFailureCases.generic;
     $: landingFaqs = !dedicatedGuide && data.guide.landingSlug === 'youtube-download'
         ? localeContent.faqs.slice(1)
         : localeContent.faqs;
-    $: freeTools = runtimeContent.freeTools.map((tool) => ({
+    $: freeTools = (isTiktok ? [] : runtimeContent.freeTools).map((tool) => ({
         title: tool.title,
         desc: tool.desc,
         href: `/${data.lang}/${tool.path}`,
@@ -369,6 +372,9 @@
                     {#each section.paragraphs as paragraph}<p>{paragraph}</p>{/each}
                 </section>
             {/each}
+            {#if isTiktok}
+                <a class="btn" href={FREESAVEVIDEO_EXTENSION_STORE_URL} target="_blank" rel="noreferrer noopener">FreeSaveVideo - Chrome Web Store</a>
+            {/if}
         {/if}
 
         <section class="grid">
@@ -498,7 +504,6 @@
             </div>
         </section>
 
-        {#if freeTools.length}
         <section class="card related">
             <h2>{isJa ? '関連リンク' : isZh ? '\u5ef6\u4f38\u94fe\u63a5' : isTh ? 'ลิงก์ที่เกี่ยวข้อง' : uiCopy?.related ?? 'Related links'}</h2>
             <div class="related-links">
@@ -511,7 +516,7 @@
                 <a class="related-link related-link--primary" href={guideIndexUrl}>
                     {localizedGuideHubLabel}
                 </a>
-                {#if data.lang === 'en'}
+                {#if data.lang === 'en' && !isTiktok}
                     <a class="related-link related-link--primary" href={learnUrl}>
                         Learning and troubleshooting guides
                     </a>
@@ -519,15 +524,17 @@
                 <a class="related-link related-link--primary" href={faqUrl}>
                     {localizedFaqLabel}
                 </a>
+                {#if !isTiktok}
                 <a class="related-link related-link--primary" href={discoverUrl}>
                     {localizedDiscoverLabel}
                 </a>
-                {#each relatedGuides as guide}
+                {/if}
+                {#each (isTiktok ? relatedGuides.filter((guide) => guide.slug.startsWith('tiktok-')).slice(0, 2) : relatedGuides) as guide}
                     <a class="related-link" href={`/${data.lang}/guide/${guide.slug}`}>
                         {relatedGuideLabel(guide.slug, guide.platform)}
                     </a>
                 {/each}
-                {#each relatedDownloads as item}
+                {#each (isTiktok ? relatedDownloads.filter((item) => isTiktokLanding(item.slug)).slice(0, 2) : relatedDownloads) as item}
                     <a class="related-link" href={`/${data.lang}/download/${item.slug}`}>
                         {relatedDownloadLabel(item.slug, item.platform)}
                     </a>
@@ -535,6 +542,7 @@
             </div>
         </section>
 
+        {#if freeTools.length}
         <section class="card related">
             <h2>{runtimeContent.labels.toolsWithoutPoints}</h2>
             <div class="related-links">

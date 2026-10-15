@@ -10,6 +10,7 @@
     import { getPlatformKey, getSeoRuntimeContent } from '$lib/seo/runtime-content';
     import { FREESAVEVIDEO_EXTENSION_STORE_URL } from '$lib/extension/freesavevideo';
     import { socialPlatformForSlug } from '$lib/seo/social-download-content';
+    import { isTiktokLanding } from '$lib/seo/tiktok-content';
 
     import SupportedServices from '$components/save/SupportedServices.svelte';
     import YouTubeDownloadPage from '$components/youtube/YouTubeDownloadPage.svelte';
@@ -71,7 +72,9 @@
     $: runtimeContent = getSeoRuntimeContent(data.lang);
     $: platformKey = getPlatformKey(data.slug);
     $: socialPlatform = socialPlatformForSlug(data.slug);
+    $: isTiktok = isTiktokLanding(data.slug);
     $: usesFocusedPriorityContent =
+        isTiktok ||
         Boolean(socialPlatform) ||
         data.slug === 'dailymotion-video-downloader' ||
         (data.lang === 'de' && isDePriorityLanding(data.slug)) ||
@@ -198,9 +201,9 @@
                       localeContent.h1,
                       ...localeContent.metaKeywords,
                       'public video download',
-                       ...(socialPlatform || data.slug === 'dailymotion-video-downloader' ? [] : ['batch download', 'playlist download', 'audio extraction']),
+                        ...(socialPlatform || isTiktok || data.slug === 'dailymotion-video-downloader' ? [] : ['batch download', 'playlist download', 'audio extraction']),
                   ],
-                   ...(socialPlatform || data.slug === 'dailymotion-video-downloader' ? {} : { offers: {
+                    ...(socialPlatform || isTiktok || data.slug === 'dailymotion-video-downloader' ? {} : { offers: {
                       '@type': 'Offer',
                       price: '0',
                       priceCurrency: 'USD',
@@ -309,6 +312,16 @@
             <div class="hero-omnibox">
                 {#if OmniboxComponent}
                     <svelte:component this={OmniboxComponent} />
+                {:else if isTiktok && (data.lang === 'en' || isZh)}
+                    <form class="dailymotion-form" action={homeUrl} method="GET">
+                        <label for="tiktok-source-url">{isZh ? '\u7c98\u8d34 TikTok \u5206\u4eab\u94fe\u63a5' : 'Paste a TikTok share link'}</label>
+                        {#if data.slug === 'tiktok-collection-download'}
+                            <textarea id="tiktok-source-url" name="u" rows="3" required placeholder="https://www.tiktok.com/@user/video/..."></textarea>
+                        {:else}
+                            <input id="tiktok-source-url" name="u" type="url" required placeholder="https://www.tiktok.com/@user/video/..." />
+                        {/if}
+                        <button type="submit">{isZh ? '\u7ee7\u7eed\u5230\u4e0b\u8f7d\u5668' : 'Continue to downloader'}</button>
+                    </form>
                 {:else if data.slug === 'dailymotion-video-downloader'}
                     <form class="dailymotion-form" action={homeUrl} method="GET">
                         <label for="dailymotion-url">{dailymotionUi.urlLabel}</label>
@@ -427,6 +440,9 @@
                         <li>{feature}</li>
                     {/each}
                 </ul>
+                {#if isTiktok && (data.lang === 'en' || isZh)}
+                    <a class="related-link" href={FREESAVEVIDEO_EXTENSION_STORE_URL} target="_blank" rel="noreferrer noopener">FreeSaveVideo - Chrome Web Store</a>
+                {/if}
             </section>
         </section>
 
@@ -541,7 +557,7 @@
                         <a class="related-link" href={guideIndexUrl}>
                             {localizedGuideHubLabel}
                         </a>
-                        {#if data.lang === 'en'}
+                        {#if data.lang === 'en' && !isTiktok}
                             <a class="related-link" href={learnUrl}>
                                 Learning and troubleshooting guides
                             </a>
@@ -549,16 +565,18 @@
                         <a class="related-link" href={faqUrl}>
                             {localizedFaqLabel}
                         </a>
+                        {#if !isTiktok}
                         <a class="related-link" href={discoverUrl}>
                             {localizedDiscoverLabel}
                         </a>
+                        {/if}
                     </div>
                 </section>
 
                 <section class="related-column">
                     <h3>{runtimeContent.labels.similarDownloads}</h3>
                     <div class="related-links">
-                        {#each data.relatedPages.slice(0, 6) as related}
+                        {#each (isTiktok ? data.relatedPages.filter((page) => isTiktokLanding(page.slug)).slice(0, 2) : data.relatedPages.slice(0, 6)) as related}
                             {@const relatedLocale = getSeoLandingLocale(related, data.lang)}
                             <a
                                 class="related-link related-link--download"
@@ -572,7 +590,7 @@
                     </div>
                 </section>
 
-                {#if data.relatedLearnPages.length}
+                {#if data.relatedLearnPages.length && !isTiktok}
                     <section class="related-column">
                         <h3>Learn guides</h3>
                         <div class="related-links">
@@ -655,7 +673,7 @@
 <style>
     .dailymotion-form { display: grid; gap: 12px; width: 100%; }
     .dailymotion-form label { font-weight: 600; }
-    .dailymotion-form input { box-sizing: border-box; width: 100%; min-width: 0; padding: 14px; border: 1px solid var(--button); border-radius: 12px; background: var(--background); color: var(--text); font: inherit; }
+    .dailymotion-form input, .dailymotion-form textarea { box-sizing: border-box; width: 100%; min-width: 0; padding: 14px; border: 1px solid var(--button); border-radius: 12px; background: var(--background); color: var(--text); font: inherit; }
     .dailymotion-form button { padding: 14px 20px; border: 0; border-radius: 12px; background: var(--button); color: var(--text); font: inherit; font-weight: 600; cursor: pointer; }
     .xinpianchang-install {
         display: flex;

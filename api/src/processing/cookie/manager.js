@@ -16,6 +16,7 @@ const VALID_SERVICES = new Set([
     'instagram',
     'instagram_bearer',
     'reddit',
+    'sooplive',
     'twitter',
     'vimeo',
     'weibo',
@@ -102,7 +103,7 @@ const setupMain = async (cookiePath) => {
         cookies = await readFile(cookiePath, 'utf8');
         cookies = JSON.parse(cookies);
         for (const serviceName in cookies) {
-            if (!isUpstreamServer && ['youtube', 'youtube_oauth'].includes(serviceName)) {
+            if (!isUpstreamServer && ['youtube', 'youtube_oauth', 'sooplive'].includes(serviceName)) {
                 console.warn(`${Yellow('[!]')} ignoring ${serviceName} on non-upstream node.`);
                 delete cookies[serviceName];
                 continue;

@@ -1,5 +1,6 @@
 import { genericUserAgent } from "../../config.js";
 import { createStream } from "../../stream/manage.js";
+import { getCookie } from "../cookie/manager.js";
 
 const API_URL = "https://api.m.sooplive.com/station/video/a/view";
 const SUPPORTED_MEDIA_HOST_RE = /(?:^|\.)(?:sooplive\.com|sooplive\.co\.kr|afreecatv\.com)$/i;
@@ -59,7 +60,7 @@ const selectFileUrl = (file, quality) => {
     return null;
 };
 
-const requestVideo = async (id, referer) => {
+export const requestSoopVideo = async (id, referer, cookie) => {
     const body = new URLSearchParams({
         nTitleNo: id,
         nApiLevel: "10",
@@ -73,11 +74,14 @@ const requestVideo = async (id, referer) => {
                 referer,
                 origin: "https://vod.sooplive.com",
                 "user-agent": genericUserAgent,
+                ...(cookie ? { cookie: cookie.toString() } : {}),
             },
             body,
+            redirect: "error",
+            signal: AbortSignal.timeout(20000),
         });
         if (!response.ok) return null;
-        return response.json();
+        return await response.json();
     } catch {
         return null;
     }
@@ -87,7 +91,7 @@ export default async function sooplive({ id, quality, url }) {
     const pageUrl = url instanceof URL
         ? url.toString()
         : `https://vod.sooplive.com/player/${encodeURIComponent(id)}`;
-    const response = await requestVideo(id, pageUrl);
+    const response = await requestSoopVideo(id, pageUrl, getCookie("sooplive"));
     if (!response) return { error: "fetch.fail" };
 
     const data = response?.data;
@@ -101,8 +105,12 @@ export default async function sooplive({ id, quality, url }) {
         .filter((entry) => entry.selected);
 
     if (!selectedFiles.length) {
+        // SOOP returns metadata but withholds media until age verification.
+        if (data?.adult_status === "notLogin" || parseNumber(data?.grade) === 19) {
+            return { error: "sooplive.age" };
+        }
         return {
-            error: data?.sub_upload_type || data?.adult_status === "notLogin"
+            error: data?.sub_upload_type
                 ? "content.video.unavailable"
                 : "fetch.empty",
         };

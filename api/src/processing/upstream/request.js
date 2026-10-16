@@ -264,9 +264,11 @@ export const resolveRegionPlan = ({ service, targetHost, path }) => {
     const hostToken = normalizeRouteToken(targetHost);
     const routeToken = `${serviceToken} ${hostToken} ${normalizeRouteToken(path)}`;
 
-    // WeChat Channels extraction depends on the Yuanbao session stored only on
-    // the domestic laptop upstream. Never fail over to a global/GKE node.
+    // SOOP and WeChat sessions live on the domestic home upstream.
+    // Keep extraction and media access on that node; do not use a global node.
     if (
+        serviceToken === "sooplive" ||
+        includesAny(hostToken, ["sooplive.com", "sooplive.co.kr", "afreecatv.com"]) ||
         serviceToken === "wechat_channels" ||
         includesAny(hostToken, ["weixin.qq.com", "channels.weixin.qq.com"]) ||
         routeToken.includes("wechat_channels")
@@ -314,6 +316,7 @@ export const requestUpstream = async ({
     timeoutMs,
     bodyTimeoutMs,
     maxAttempts,
+    allowedUpstreamOrigins,
     buildBody = buildUpstreamDownloadBody,
     headers: extraHeaders = {},
     acceptResponse,
@@ -337,6 +340,12 @@ export const requestUpstream = async ({
 
     const attempts = resolveMaxAttempts(maxAttempts);
     const excluded = new Set();
+    if (Array.isArray(allowedUpstreamOrigins)) {
+        const allowed = new Set(allowedUpstreamOrigins.map(value => new URL(value).origin));
+        for (const node of getUpstreamNodes()) {
+            if (!allowed.has(node.origin)) excluded.add(node.url);
+        }
+    }
     const targetHost = targetHostForLog(payload);
     const regionPlan = resolveRegionPlan({ service, targetHost, path });
     let attemptNo = 0;

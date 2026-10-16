@@ -40,6 +40,7 @@
     "api.content.video.live": "video ini sedang tayang, jadi saya belum bisa mendownloadnya. tunggu hingga streaming langsung selesai, lalu coba lagi!",
     "api.content.video.private": "video ini bersifat pribadi, jadi saya tidak dapat mengaksesnya. ubah visibilitasnya atau coba yang lain!",
     "api.content.video.age": "video YouTube ini dikenai pembatasan usia dan memerlukan login ke YouTube untuk mengonfirmasi usia Anda. kami tidak dapat mendownloadnya saat ini, jadi silakan coba video tanpa batasan usia. tidak ada poin yang dikurangi untuk upaya yang gagal ini.",
+    "api.sooplive.age": "video SOOP ini dikenai pembatasan usia dan memerlukan login ke SOOP untuk mengonfirmasi usia Anda. kami tidak dapat mendownloadnya saat ini, jadi silakan coba video tanpa batasan usia. tidak ada poin yang dikurangi untuk upaya yang gagal ini.",
     "api.content.video.region": "video ini wilayahnya dikunci, dan server pemrosesan berada di lokasi yang berbeda. coba yang lain!",
     "api.youtube.disabled": "Video YouTube ini belum dapat diunduh saat ini. Pastikan videonya publik lalu coba lagi nanti.",
     "api.youtube.link.unsupported": "Halaman saluran YouTube belum didukung. Salin tautan ke video YouTube atau daftar putar tertentu, lalu coba lagi.",

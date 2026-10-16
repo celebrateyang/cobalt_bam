@@ -35,6 +35,7 @@
     "api.content.video.live": "Dieses Video ist derzeit live, daher kann ich es noch nicht herunterladen. Warten Sie, bis der Livestream beendet ist, und versuchen Sie es dann erneut!",
     "api.content.video.private": "Dieses Video ist privat, daher kann ich nicht darauf zugreifen. Ändern Sie seine Sichtbarkeit oder versuchen Sie ein anderes!",
     "api.content.video.age": "Dieses YouTube-Video ist altersbeschränkt. YouTube verlangt eine Anmeldung und Altersbestätigung, deshalb können wir es derzeit nicht herunterladen. Versuchen Sie ein Video ohne Altersbeschränkung. Für diesen fehlgeschlagenen Versuch werden keine Punkte abgezogen.",
+    "api.sooplive.age": "Dieses SOOP-Video ist altersbeschränkt. SOOP verlangt eine Anmeldung und Altersbestätigung, deshalb können wir es derzeit nicht herunterladen. Versuchen Sie ein Video ohne Altersbeschränkung. Für diesen fehlgeschlagenen Versuch werden keine Punkte abgezogen.",
     "api.content.video.region": "Dieses Video ist regional gesperrt und der Verarbeitungsserver befindet sich an einem anderen Ort. Versuchen Sie ein anderes!",
     "api.youtube.disabled": "Dieses YouTube-Video kann derzeit nicht heruntergeladen werden. Prüfen Sie, ob es öffentlich ist, und versuchen Sie es später erneut.",
     "api.youtube.link.unsupported": "YouTube-Kanalseiten werden noch nicht unterstützt. Kopiere den Link zu einem konkreten YouTube-Video oder zu einer Playlist und versuche es erneut.",

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import sooplive, { selectSoopQuality } from "./sooplive.js";
+import sooplive, { requestSoopVideo, selectSoopQuality } from "./sooplive.js";
 
 const qualityInfo = [
     {
@@ -23,6 +23,24 @@ const qualityInfo = [
         file: "https://vod-normal-global-cdn-z02.sooplive.com/path/540.m3u8",
     },
 ];
+
+test("sends SOOP credentials only to the metadata endpoint and rejects redirects", async (t) => {
+    const originalFetch = globalThis.fetch;
+    t.after(() => { globalThis.fetch = originalFetch; });
+    const cookie = "session=test-only";
+    globalThis.fetch = async (url, options) => {
+        assert.equal(url, "https://api.m.sooplive.com/station/video/a/view");
+        assert.equal(options.headers.cookie, cookie);
+        assert.equal(options.redirect, "error");
+        assert.ok(options.signal instanceof AbortSignal);
+        return Response.json({ data: { files: [{ quality_info: qualityInfo }] } });
+    };
+    const response = await requestSoopVideo("123", "https://vod.sooplive.com/player/123", cookie);
+    assert.equal(response.data.files.length, 1);
+
+    globalThis.fetch = async () => new Response("invalid JSON");
+    assert.equal(await requestSoopVideo("123", "https://vod.sooplive.com/player/123", cookie), null);
+});
 
 test("selects SOOP quality using the largest video dimension", () => {
     assert.equal(selectSoopQuality(qualityInfo, "max").resolution, "640x1080");
@@ -100,4 +118,28 @@ test("offers multi-part SOOP VODs as separate picker items", async (t) => {
     assert.equal(result.picker.length, 2);
     assert.deepEqual(result.picker.map((item) => item.label), ["Part 1", "Part 2"]);
     assert.ok(result.picker.every((item) => item.type === "video" && /^https?:/.test(item.url)));
+});
+
+test("identifies SOOP age gates without mislabeling other unavailable videos", async (t) => {
+    const originalFetch = globalThis.fetch;
+    t.after(() => { globalThis.fetch = originalFetch; });
+
+    const cases = [
+        [{ grade: 19, adult_status: "notLogin", files: [] }, "sooplive.age"],
+        [{ adult_status: "notLogin", files: [] }, "sooplive.age"],
+        [{ grade: "19", files: [] }, "sooplive.age"],
+        [{ grade: 0, files: [] }, "fetch.empty"],
+        [{ sub_upload_type: "restricted", files: [] }, "content.video.unavailable"],
+        [{ code: -6221, grade: 19 }, "content.video.unavailable"],
+        [{ code: -6205 }, "content.video.unavailable"],
+    ];
+    for (const [data, error] of cases) {
+        globalThis.fetch = async () => Response.json({ result: 1, data });
+        assert.deepEqual(await sooplive({ id: "209840699", quality: "max" }), { error });
+    }
+
+    globalThis.fetch = async () => Response.json({
+        data: { grade: 19, adult_status: "verified", files: [{ quality_info: qualityInfo }] },
+    });
+    assert.equal((await sooplive({ id: "123456", quality: "max" })).urls, qualityInfo[1].file);
 });

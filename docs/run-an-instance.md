@@ -29,6 +29,31 @@ if you need help with installing docker, follow *only the first step* of these t
 if you want your instance to support services that require authentication to view public content, create `cookies.json` file in the same directory as `docker-compose.yml`. example cookies file [can be found here](examples/cookies.example.json).
 for vimeo, adding `vimeo_bearer` (`access_token=<token>`) lets cobalt prefer Vimeo's direct file links and keep downloads on redirect instead of tunneling through your server when possible.
 
+### SOOP age-verified sessions on the home upstream
+
+Add a `sooplive` array to the JSON file selected by `COOKIE_PATH`. Each entry
+must be the full Cookie request header from a SOOP browser session whose account
+has completed age verification and can play the requested video. Use the header
+sent to `api.m.sooplive.com/station/video/a/view`; a Netscape cookie export must
+be converted to header format first. Never commit real session values.
+
+SOOP cookies load only when `IS_UPSTREAM_SERVER=true`. Restart the upstream after
+editing the file. In this deployment, run `pnpm start` from `api/` on the home
+machine and expose it with `cloudflared tunnel run freesave` as usual.
+
+The main API sends all SOOP requests directly to the first URL configured in
+`UPSTREAM_CN_URLS` (the home `api2` node in this deployment). Keep that URL first;
+an empty list disables SOOP forwarding. There is no failover to other nodes.
+Media processing uses that upstream's tunnel, preserving its network exit.
+Session cookies are sent only to the SOOP metadata endpoint, not to the browser
+or indiscriminately to CDN hosts. Extra CDN authentication, if required, still
+needs verification with the actual account; cookie support alone does not prove
+a complete download works. Expired or insufficient sessions retain the age error.
+
+Validate using the affected VOD: confirm authenticated metadata contains usable
+media URLs, then download the entire MP4 through the upstream and verify audio,
+video, and duration. Do not log Cookie headers or signed media URLs.
+
 cobalt package will update automatically thanks to watchtower.
 
 it's highly recommended to use a reverse proxy (such as nginx) if you want your instance to face the public internet. look up tutorials online.

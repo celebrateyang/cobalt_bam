@@ -35,6 +35,7 @@
     "api.content.video.live": "video này hiện đang phát trực tiếp, nên tôi chưa thể tải xuống. đợi phát trực tiếp kết thúc, sau đó thử lại!",
     "api.content.video.private": "video này riêng tư, nên tôi không thể truy cập. thay đổi khả năng hiển thị của nó hoặc thử video khác!",
     "api.content.video.age": "video YouTube này bị giới hạn độ tuổi và yêu cầu đăng nhập YouTube để xác nhận tuổi. hiện tại chúng tôi không thể tải video này xuống; hãy thử một video không bị giới hạn độ tuổi. lần thử không thành công này không bị trừ điểm.",
+    "api.sooplive.age": "video SOOP này bị giới hạn độ tuổi và yêu cầu đăng nhập SOOP để xác nhận tuổi. hiện tại chúng tôi không thể tải video này xuống; hãy thử một video không bị giới hạn độ tuổi. lần thử không thành công này không bị trừ điểm.",
     "api.content.video.region": "video này bị khóa khu vực và máy chủ xử lý ở một vị trí khác. thử video khác!",
     "api.youtube.disabled": "Hiện chưa thể tải video YouTube này. Hãy kiểm tra video có công khai hay không rồi thử lại sau.",
     "api.youtube.link.unsupported": "Trang kênh YouTube chưa được hỗ trợ. Hãy sao chép liên kết của một video YouTube cụ thể hoặc danh sách phát rồi thử lại.",

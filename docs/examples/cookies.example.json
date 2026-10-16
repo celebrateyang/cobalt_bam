@@ -11,6 +11,9 @@
     "twitter": [
         "auth_token=<replace_this>; ct0=<replace_this>"
     ],
+    "sooplive": [
+        "<full Cookie request header from an age-verified SOOP session>"
+    ],
     "weibo": [
         "SUB=<replace_this>; SUBP=<replace_this>"
     ],

@@ -182,6 +182,7 @@ const requestUpstreamCobalt = async (payload, options = {}) => {
             : timeoutMs,
         bodyTimeoutMs: options.bodyTimeoutMs || env.upstreamBodyTimeoutMs,
         maxAttempts: options.maxAttempts,
+        allowedUpstreamOrigins: options.allowedUpstreamOrigins,
         returnFailureResponse: options.returnFailureResponse !== false,
     });
 
@@ -699,6 +700,17 @@ export default async function({ host, patternMatch, params, authType }) {
                 break;
 
             case "sooplive":
+                if (!isUpstreamServer) {
+                    const upstream = await requestUpstreamCobalt(params, {
+                        timeoutMs: 25000,
+                        allowedUpstreamOrigins: (env.upstreamCnURLs || []).slice(0, 1),
+                    });
+                    if (upstream) return upstream;
+                    return createResponse("error", {
+                        code: "error.api.upstream.unavailable",
+                        context: { service: friendlyServiceName(host) },
+                    });
+                }
                 r = await sooplive({
                     ...patternMatch,
                     quality: params.videoQuality,

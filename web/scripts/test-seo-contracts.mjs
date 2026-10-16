@@ -71,6 +71,7 @@ async function component(file) {
 }
 
 // Preload real nested components for this synchronous SSR module loader.
+framework['$components/save/GoogleDriveDownloadForm.svelte'] = { __esModule: true, default: await component('src/components/save/GoogleDriveDownloadForm.svelte') };
 framework['$components/save/SupportLink.svelte'] = { __esModule: true, default: await component('src/components/save/SupportLink.svelte') };
 framework['$components/youtube/YouTubeDownloadPage.svelte'] = { __esModule: true, default: await component('src/components/youtube/YouTubeDownloadPage.svelte') };
 for (const name of ['SourceDownloadForm', 'RedditDownloadPage', 'PinterestDownloadPage']) {
@@ -404,6 +405,7 @@ test('every advertised download and guide detail renders localized shared labels
                 assert(!html.includes('class="omnibox'), context);
             } else if (kind === 'download') {
                 const focused = params.slug === 'dailymotion-video-downloader'
+                    || params.slug === 'google-drive-video-downloader'
                     || load('src/lib/seo/tiktok-content.ts').isTiktokLanding(params.slug)
                     || (params.lang === 'de' && load('src/lib/seo/de-priority-landings.ts').isDePriorityLanding(params.slug))
                     || (params.lang === 'th' && load('src/lib/seo/th-priority-landings.ts').isThPriorityLanding(params.slug));
@@ -424,6 +426,46 @@ test('every advertised download and guide detail renders localized shared labels
     }
     assert.deepEqual([...seenLanguages].sort(), [...supportedLanguages].sort());
     t.diagnostic(`Verified localized shared labels on ${renderedCount} detail pages across ${seenLanguages.size} languages`);
+});
+
+test('Google Drive landing has a focused download entry, discoverable English route and truthful schema', async () => {
+    const slug = 'google-drive-video-downloader';
+    assert.deepEqual(routes.getDownloadSeoLanguages(slug), ['en']);
+    const loader = load('src/routes/[lang]/download/[slug]/+page.ts');
+    assert.deepEqual(loader.entries().filter(entry => entry.slug === slug), [{lang:'en',slug}]);
+    const directory = await load('src/routes/[lang]/download/+page.ts').load({params:{lang:'en'}});
+    assert(directory.cards.some(card => card.slug === slug));
+    assert(links.getRelatedDownloadLinks('vimeo-video-download', 6, 'international', 'en').some(link => link.slug === slug));
+    const data = await loader.load({params:{lang:'en',slug}});
+    setTestLocale('en', `download/${slug}`);
+    const rendered = (await component('src/routes/[lang]/download/[slug]/+page.svelte')).render({data});
+    assert(rendered.html.includes('id="google-drive-url" name="u" type="url"'));
+    assert(rendered.html.includes('Download Google Drive video'));
+    assert(rendered.html.indexOf('id="google-drive-url"') < rendered.html.indexOf('How to download a Google Drive video'));
+    assert(!rendered.html.includes('Free tools without points'));
+    assert(rendered.head.includes(data.landing.locales.en.metaTitle));
+    assert(!rendered.html.includes('Other supported collection formats'));
+    const schemas = [...rendered.head.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(m => JSON.parse(m[1]));
+    const webpage = schemas.find(item => item['@type'] === 'WebPage');
+    assert.equal(webpage.url, `https://freesavevideo.online/en/download/${slug}`);
+    assert(!webpage.mainEntity.offers);
+    assert(!webpage.mainEntity.knowsAbout.includes('playlist download'));
+    assert(!schemas.find(item => item['@type'] === 'HowTo').totalTime);
+    const faq = schemas.find(item => item['@type'] === 'FAQPage');
+    assert.equal(faq.mainEntity.length, data.landing.locales.en.faqs.length);
+    for (const question of faq.mainEntity) {
+        assert(rendered.html.includes(escapeText(question.name)));
+        assert(rendered.html.includes(escapeText(question.acceptedAnswer.text)));
+    }
+});
+
+test('Google Drive form accepts video links, preserves access parameters and rejects unrelated targets', () => {
+    const {parseGoogleDriveVideoInput:parse} = load('src/lib/seo/google-drive-input.ts');
+    for (const suffix of ['view', 'preview']) {
+        const url = `https://drive.google.com/file/d/example_ID-123/${suffix}?usp=sharing&resourcekey=example-key`;
+        assert.equal(parse(` ${url} `), url);
+    }
+    for (const value of ['https://drive.google.com.evil.test/file/d/id/view', 'https://user:pass@drive.google.com/file/d/id/view', 'https://drive.google.com:8080/file/d/id/view', 'https://drive.google.com/drive/folders/id', 'https://docs.google.com/document/d/id/edit', 'javascript:alert(1)', 'http://drive.google.com/file/d/id/view', 'https://drive.google.com/file/d/id/view https://example.com']) assert.equal(parse(value), null, value);
 });
 
 test('dedicated YouTube workspace renders keyword controls and FAQ schema in every supported language', async () => {
@@ -548,6 +590,8 @@ test('sitemap contains the repaired hubs and bilingual audio route without noind
     const { shouldNoindexLocalizedPath } = load('src/lib/seo/indexing.ts');
     const response = load('src/routes/sitemap.xml/+server.ts').GET();
     const xml = await response.text();
+    assert(xml.includes('<loc>https://freesavevideo.online/en/download/google-drive-video-downloader</loc>'));
+    assert(!xml.includes('/zh/download/google-drive-video-downloader'));
     for (const path of ['/en/download', '/zh/download', '/ja', '/ja/download', '/th', '/th/download', '/en/download/youtube-playlist-to-mp3']) assert(xml.includes(`<loc>https://freesavevideo.online${path}</loc>`));
     assert(!xml.includes('/fr/download/youtube-playlist-to-mp3'));
     for (const lang of supportedLanguages) {

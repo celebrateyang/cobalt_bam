@@ -3,8 +3,30 @@ import test from "node:test";
 
 import {
     shouldAttemptGenericFallbackForError,
+    shouldPreferLocalGenericExtraction,
     shouldUseGenericUpstreamResponse,
 } from "./index.js";
+
+test("extracts Google Drive on the API egress before using upstream metadata", () => {
+    assert.equal(shouldPreferLocalGenericExtraction(
+        "https://drive.google.com/file/d/19jcgT9WEnB5aVSk6rLC2lhSoHnoE0_UK/view",
+    ), true);
+    assert.equal(shouldPreferLocalGenericExtraction(
+        new URL("https://DRIVE.GOOGLE.COM/file/d/example/view?resourcekey=key"),
+    ), true);
+});
+
+test("preserves upstream-first extraction for other hosts and lookalikes", () => {
+    for (const url of [
+        "https://vimeo.com/123",
+        "https://drive.google.com.example.test/file/d/example/view",
+        "https://example.test/?url=https://drive.google.com/",
+        "invalid",
+        null,
+    ]) {
+        assert.equal(shouldPreferLocalGenericExtraction(url), false);
+    }
+});
 
 test("uses direct and processing-capable generic upstream responses", () => {
     assert.equal(shouldUseGenericUpstreamResponse({ status: "redirect" }), true);

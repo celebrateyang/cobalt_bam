@@ -40,6 +40,13 @@ export const getGenericServiceHost = (value) => {
     }
 };
 
+export const shouldPreferLocalGenericExtraction = (url) => {
+    // Drive stream URLs work from the API egress, while the current global
+    // upstreams return metadata whose media requests are rejected with 403.
+    // Keep extraction and delivery on the API before trying those upstreams.
+    return getGenericServiceHost(url) === "drive.google.com";
+};
+
 export const shouldUseGenericUpstreamResponse = (body) => {
     return Boolean(
         body?.status

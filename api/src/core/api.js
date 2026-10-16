@@ -29,6 +29,7 @@ import extractGeneric, {
     canAttemptGenericURL,
     getGenericServiceHost,
     shouldAttemptGenericFallbackForError,
+    shouldPreferLocalGenericExtraction,
     shouldUseGenericUpstreamResponse,
 } from "../processing/generic/index.js";
 import { requestUpstream } from "../processing/upstream/request.js";
@@ -506,10 +507,15 @@ const attemptGenericFallback = async ({ request, requestClientIp }) => {
         return null;
     }
 
-    const upstream = await requestGenericUpstream({
-        payload: request,
-        requestClientIp,
-    });
+    const localExtraction = shouldPreferLocalGenericExtraction(request.url)
+        ? await extractGeneric(request)
+        : null;
+    const upstream = localExtraction && !localExtraction.error
+        ? null
+        : await requestGenericUpstream({
+            payload: request,
+            requestClientIp,
+        });
     if (shouldUseGenericUpstreamResponse(upstream?.body)) {
         console.log(
             `[GENERIC RESULT] extractor=upstream host=${genericHost} status=${upstream.body.status}`,
@@ -528,7 +534,7 @@ const attemptGenericFallback = async ({ request, requestClientIp }) => {
         );
     }
 
-    const extracted = await extractGeneric(request);
+    const extracted = localExtraction || await extractGeneric(request);
     if (extracted?.error) {
         if (upstreamTunnelFallback) {
             console.log(

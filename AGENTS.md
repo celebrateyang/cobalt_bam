@@ -110,6 +110,8 @@
   - Sync enabled accounts: `pnpm -C api social:sync-enabled` (CronJob uses this)
 
 ## Product constraints & response format
+
+- Keep generated task artifacts (screenshots, audit reports, observation JSON, and operational tracking Markdown) outside the repository. Use `%USERPROFILE%/.codex/task-artifacts/<project-or-task>/` and absolute paths in follow-up tasks. Do not add these files under `docs/`; maintained project documentation and product assets may remain in the repository when needed.
 - No paid 3rd-party APIs; prefer free oEmbed; scraping as fallback; allow graceful degradation.
 - Responses use fixed format: `PM:` + `Dev:`; every `Dev` message asks 0~3 clarifying questions first, then provides方案与任务拆分.
 

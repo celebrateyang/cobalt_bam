@@ -118,6 +118,38 @@ test("a Douyin short link that redirects to a mix expands the collection", async
     }
 });
 
+test("a tt.site share expands through the equivalent TikTok short URL", async (t) => {
+    const requests = [];
+    t.mock.method(globalThis, "fetch", async (input) => {
+        const url = String(input);
+        requests.push(url);
+        if (url === "https://www.tiktok.com/t/ZSgNyrhsL/") {
+            return new Response(null, {
+                status: 301,
+                headers: { location: "https://www.tiktok.com/@medomn72/video/7696617465643666718" },
+            });
+        }
+        if (url === "https://www.tiktok.com/@i/video/7696617465643666718") {
+            const data = { __DEFAULT_SCOPE__: { "webapp.video-detail": {
+                itemInfo: { itemStruct: {
+                    id: "7696617465643666718", author: { uniqueId: "medomn72" },
+                    desc: "Test video", video: { duration: 19 },
+                } },
+            } } };
+            return new Response('<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__" type="application/json">'
+                + JSON.stringify(data) + '</script>');
+        }
+        throw new Error(`Unexpected fetch: ${url}`);
+    });
+
+    const result = await expandURL("https://www.tt.site/t/ZSgNyrhsL/");
+    assert.equal(result.service, "tiktok");
+    assert.equal(result.kind, "single");
+    assert.equal(result.items[0].url, "https://www.tiktok.com/@medomn72/video/7696617465643666718");
+    assert.equal(result.items[0].duration, 19);
+    assert.equal(requests.length, 2);
+});
+
 test("an explicit TikTok shared collection returns a specific error", async () => {
     const result = await expandURL(
         "https://www.tiktok.com/@creator/collection/asmr-7407927138970110726",

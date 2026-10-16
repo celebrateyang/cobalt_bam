@@ -6,6 +6,7 @@ import { services } from "./service-config.js";
 import { getRedirectingURL } from "../misc/utils.js";
 import { friendlyServiceName } from "./service-alias.js";
 import { normalizePlatformDomain } from "./platform-domain.js";
+import { normalizeTikTokShortLinkAlias } from "./tiktok-short-link.js";
 
 const serviceByPlatformDomain = new Map([
     ["12371.cn", "cctv"],
@@ -54,6 +55,7 @@ const normalizeBilibiliCreatorListVideoURL = (url) => {
 
 function aliasURL(url) {
     assert(url instanceof URL);
+    url = normalizeTikTokShortLinkAlias(url);
 
     const host = psl.parse(url.hostname);
     // Treat trailing slashes as optional for short-link style URLs (e.g. https://v.douyin.com/<id>/).

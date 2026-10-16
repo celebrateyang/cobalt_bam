@@ -180,6 +180,22 @@ test("keeps IP-bound TikTok yt-dlp media on the server tunnel", () => {
     assert.match(response.body.url, /\/tunnel\?/);
 });
 
+test("preserves TikTok Direct Bridge when the browser forces local processing", () => {
+    const url = "https://v16.tokcdn.com/example/video.mp4";
+    for (const localProcessing of ["disabled", "preferred", "forced"]) {
+        const response = matchAction({
+            ...baseArgs, host: "tiktok", localProcessing, alwaysProxy: true,
+            r: { urls: url, filename: "tiktok_7696617465643666718.mp4",
+                service: "tiktok", tiktokVideoSourceKind: "direct-provider" },
+        });
+        assert.equal(response.body.status, "redirect");
+        assert.equal(response.body.directUrl, url);
+        assert.equal(response.body.url, url);
+        assert.equal(response.body.tunnelUrl, undefined);
+        assert.equal(response.body.tunnel, undefined);
+    }
+});
+
 test("keeps portable TikTok media on Direct Bridge", () => {
     const mediaUrl = "https://v16.tokcdn.com/example/video.mp4";
     const response = matchAction({

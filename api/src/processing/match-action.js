@@ -593,6 +593,10 @@ export default function({
     const keepTencentVideoDirectBridge =
         host === "tencent_video" &&
         r.directClientDownload === true;
+    const keepTikTokDirectBridge =
+        host === "tiktok" &&
+        responseType === "redirect" &&
+        typeof params.directUrl === "string";
     const keepTikTokServerTunnel =
         host === "tiktok" &&
         r.tiktokVideoSourceKind === "yt-dlp";
@@ -604,7 +608,8 @@ export default function({
         !keepBilibiliCdnDirectBridge &&
         !keepSoundcloudDirectBridge &&
         !keepWechatDirectBridge &&
-        !keepTencentVideoDirectBridge
+        !keepTencentVideoDirectBridge &&
+        !keepTikTokDirectBridge
     ) {
         responseType = "tunnel";
         params.type = "proxy";
@@ -624,6 +629,7 @@ export default function({
         !keepSoundcloudDirectBridge &&
         !keepWechatDirectBridge &&
         !keepTencentVideoDirectBridge &&
+        !keepTikTokDirectBridge &&
         !keepTikTokServerTunnel &&
         !keepIqiyiServerTunnel
     ) {

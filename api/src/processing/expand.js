@@ -8,6 +8,7 @@ import { getRedirectingURL } from "../misc/utils.js";
 import { getCookie } from "./cookie/manager.js";
 import { buildPodcastExpandResult } from "./podcast.js";
 import { sliceCollectionFromItemKey } from "./collection-window.js";
+import { normalizeTikTokShortLinkAlias } from "./tiktok-short-link.js";
 
 const DEFAULT_TIMEOUT_MS = 15000;
 const DEFAULT_YTDLP_TIMEOUT_MS = 35000;
@@ -1817,10 +1818,15 @@ const expandYouTube = async (inputUrl) => {
 };
 
 export const expandURL = async (url) => {
-    const input = String(url || "");
+    let input = String(url || "");
     let parsed;
     try {
         parsed = new URL(input);
+        const canonical = normalizeTikTokShortLinkAlias(parsed);
+        if (canonical !== parsed) {
+            parsed = canonical;
+            input = canonical.toString();
+        }
     } catch {
         return {
             service: undefined,

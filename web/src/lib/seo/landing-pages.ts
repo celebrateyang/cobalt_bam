@@ -5,6 +5,7 @@ import { xinpianchangLanding } from '$lib/seo/xinpianchang-landing';
 import { soopliveLanding } from '$lib/seo/sooplive-landing';
 import { magnificLanding } from '$lib/seo/magnific-landing';
 import { dailymotionLanding } from '$lib/seo/dailymotion-landing';
+import { googleDriveLanding } from '$lib/seo/google-drive-landing';
 import { getSocialDownloadContent, socialPlatformForSlug } from '$lib/seo/social-download-content';
 import { getTiktokLandingContent, isTiktokLanding } from '$lib/seo/tiktok-content';
 
@@ -38,6 +39,7 @@ export type SeoLandingLocaleContent = {
     exampleInput?: string;
     exampleResult?: string;
     exampleActions?: string[];
+    sections?: Array<{ title: string; paragraphs: string[] }>;
 };
 
 export type SeoLandingPage = {
@@ -859,6 +861,7 @@ const buildGenericWorkflowLocales = (
 });
 
 const landingPages: SeoLandingPage[] = [
+    googleDriveLanding,
     dailymotionLanding,
     magnificLanding,
     soopliveLanding,

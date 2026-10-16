@@ -13,6 +13,7 @@
     import { isTiktokLanding } from '$lib/seo/tiktok-content';
 
     import SupportedServices from '$components/save/SupportedServices.svelte';
+    import GoogleDriveDownloadForm from '$components/save/GoogleDriveDownloadForm.svelte';
     import YouTubeDownloadPage from '$components/youtube/YouTubeDownloadPage.svelte';
     import RedditDownloadPage from '$components/social/RedditDownloadPage.svelte';
     import PinterestDownloadPage from '$components/social/PinterestDownloadPage.svelte';
@@ -73,7 +74,9 @@
     $: platformKey = getPlatformKey(data.slug);
     $: socialPlatform = socialPlatformForSlug(data.slug);
     $: isTiktok = isTiktokLanding(data.slug);
+    $: isGoogleDrive = data.slug === 'google-drive-video-downloader';
     $: usesFocusedPriorityContent =
+        isGoogleDrive ||
         isTiktok ||
         Boolean(socialPlatform) ||
         data.slug === 'dailymotion-video-downloader' ||
@@ -158,7 +161,7 @@
               '@type': 'HowTo',
               name: localeContent.stepsTitle,
               description: localeContent.lede,
-               ...(socialPlatform || ['xinpianchang-video-download', 'dailymotion-video-downloader'].includes(data.slug) ? {} : { totalTime: 'PT1M' }),
+               ...(socialPlatform || ['xinpianchang-video-download', 'dailymotion-video-downloader'].includes(data.slug) || isGoogleDrive ? {} : { totalTime: 'PT1M' }),
               tool: [
                   {
                       '@type': 'HowToTool',
@@ -201,9 +204,9 @@
                       localeContent.h1,
                       ...localeContent.metaKeywords,
                       'public video download',
-                        ...(socialPlatform || isTiktok || data.slug === 'dailymotion-video-downloader' ? [] : ['batch download', 'playlist download', 'audio extraction']),
+                        ...(socialPlatform || isTiktok || isGoogleDrive || data.slug === 'dailymotion-video-downloader' ? [] : ['batch download', 'playlist download', 'audio extraction']),
                   ],
-                    ...(socialPlatform || isTiktok || data.slug === 'dailymotion-video-downloader' ? {} : { offers: {
+                    ...(socialPlatform || isTiktok || isGoogleDrive || data.slug === 'dailymotion-video-downloader' ? {} : { offers: {
                       '@type': 'Offer',
                       price: '0',
                       priceCurrency: 'USD',
@@ -223,7 +226,7 @@
     let loadingOmnibox = false;
 
     onMount(() => { mounted = true; });
-    $: if (mounted && data.slug !== 'youtube-download' && !socialPlatform && !OmniboxComponent && !loadingOmnibox) {
+    $: if (mounted && data.slug !== 'youtube-download' && !isGoogleDrive && !socialPlatform && !OmniboxComponent && !loadingOmnibox) {
         loadingOmnibox = true;
         void import('$components/save/Omnibox.svelte')
             .then((module) => {
@@ -310,7 +313,9 @@
                 </div>
             {/if}
             <div class="hero-omnibox">
-                {#if OmniboxComponent}
+                {#if isGoogleDrive}
+                    <GoogleDriveDownloadForm />
+                {:else if OmniboxComponent}
                     <svelte:component this={OmniboxComponent} />
                 {:else if isTiktok && (data.lang === 'en' || isZh)}
                     <form class="dailymotion-form" action={homeUrl} method="GET">
@@ -445,6 +450,15 @@
                 {/if}
             </section>
         </section>
+
+        {#each localeContent.sections ?? [] as section}
+            <section class="card practical">
+                <h2>{section.title}</h2>
+                {#each section.paragraphs as paragraph}
+                    <p>{paragraph}</p>
+                {/each}
+            </section>
+        {/each}
 
         {#if productTips.length || productAdvantages.length}
         <section class="card practical">

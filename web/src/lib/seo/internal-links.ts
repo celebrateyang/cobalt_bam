@@ -18,6 +18,7 @@ type CrossLinkEntry = {
 export type LinkAudience = 'all' | 'international';
 
 const crossLinkEntries: CrossLinkEntry[] = [
+    { platform: 'Google Drive', downloadSlug: 'google-drive-video-downloader' },
     {
         platform: 'Dailymotion',
         downloadSlug: 'dailymotion-video-downloader',
@@ -237,6 +238,7 @@ const strategicDownloadOrder = [
 ] as const;
 
 const internationalDownloadSlugs = new Set([
+    'google-drive-video-downloader',
     'dailymotion-video-downloader',
     'magnific-download',
     'xinpianchang-video-download',
@@ -263,6 +265,7 @@ const internationalDownloadSlugs = new Set([
 ]);
 
 const englishOnlyDownloadSlugs = new Set([
+    'google-drive-video-downloader',
     'batch-video-downloader',
     'playlist-downloader',
 ]);
@@ -325,6 +328,7 @@ export const isDownloadAvailableInLanguage = (slug: string, lang: string): boole
 };
 
 export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
+    'google-drive-video-downloader': ['vimeo-video-download', 'dailymotion-video-downloader', 'youtube-download'],
     'dailymotion-video-downloader': ['vimeo-video-download', 'youtube-download', 'batch-video-downloader', 'playlist-downloader'],
     'magnific-download': [
         'pinterest-video-download',
@@ -576,6 +580,7 @@ export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
         'youtube-shorts-download',
     ],
     'vimeo-video-download': [
+        'google-drive-video-downloader',
         'youtube-download',
         'youtube-shorts-download',
         'facebook-video-download',

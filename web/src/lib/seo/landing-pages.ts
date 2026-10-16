@@ -4176,38 +4176,92 @@ const landingPages: SeoLandingPage[] = [
                 ],
             }),
             en: en({
-                metaTitle: `Vimeo Video Downloader - ${EN_BRAND}`,
+                metaTitle: `Vimeo Video Downloader - Download Vimeo to MP4 | ${EN_BRAND}`,
                 metaDescription:
-                    'Download Vimeo videos: copy link → paste → save. HD options when available. No app required.',
+                    'Download public Vimeo videos to MP4 online. Paste a Vimeo or Player link, choose an available quality, and save video with audio. No app installation needed.',
                 metaKeywords: [
                     'vimeo video downloader',
                     'download vimeo video',
+                    'vimeo to mp4',
                     'vimeo hd download',
                     'save vimeo video',
                 ],
                 h1: 'Vimeo Video Downloader',
-                lede: 'Paste a Vimeo link to download in your browser.',
+                lede: 'Download Vimeo video to MP4 from a public video link. Paste the URL below, choose an available quality, and save a copy for offline viewing.',
+                heroTags: ['Vimeo to MP4', 'HD when available', 'Video with audio', 'No app installation'],
+                facts: [
+                    'Use a public Vimeo video page or a Vimeo Player link. Save only videos you own or have permission to download.',
+                    'Available quality depends on the original upload and the versions Vimeo provides. A download may take longer when video and audio need to be combined.',
+                ],
                 stepsTitle: 'How to download Vimeo videos',
                 steps: [
-                    'Copy the Vimeo video link.',
-                    'Paste it below and click download.',
-                    'Choose an available quality option and save.',
+                    'Open the public video on Vimeo and copy its video URL. For an embedded video, use its player.vimeo.com/video/ID link.',
+                    'Paste the link into FreeSaveVideo. Choose your preferred video quality in the download settings and start the download.',
+                    'Wait for the video to finish processing. If video and audio arrive separately, they are combined into one file.',
+                    'Save the completed file to your device and check that the video plays with audio.',
                 ],
-                featuresTitle: 'Highlights',
+                featuresTitle: 'Save Vimeo video as MP4',
                 features: [
-                    'HD options when available.',
-                    'Browser-based, no install.',
-                    'Mobile and desktop friendly.',
+                    'Download from public Vimeo video pages and supported Vimeo Player URLs.',
+                    'Save MP4 video with audio, including supported streams with separate audio tracks.',
+                    'Choose an available quality; HD requires an HD version from the source.',
+                    'Use the web downloader on desktop or mobile without installing an app.',
                 ],
-                faqTitle: 'FAQ',
-                faqs: [
+                sections: [
                     {
-                        q: 'Why is HD missing?',
-                        a: 'HD availability depends on the source video. If it is not provided, it cannot be downloaded.',
+                        title: 'Vimeo to MP4: what happens to your video?',
+                        paragraphs: [
+                            'MP4 is a useful format for offline playback, sharing your own work, and importing video into an editor. FreeSaveVideo uses an available MP4 file or prepares a downloadable file from supported video streams.',
+                            'Some Vimeo videos deliver picture and sound separately. Keep the download running while those tracks are combined. Choosing a higher quality does not increase the resolution of the original video.',
+                        ],
                     },
                     {
-                        q: 'Why does it fail?',
-                        a: 'The video may be restricted or removed. Try another link or retry later.',
+                        title: 'Which Vimeo link should you paste?',
+                        paragraphs: [
+                            'Use a specific video page such as https://vimeo.com/123456789, or an embedded player address such as https://player.vimeo.com/video/123456789. These examples illustrate URL formats; they are not sample videos to download.',
+                            'Copy the complete shared URL, including any access parameters already present. A profile, search result, course website, or showcase homepage is not a substitute for a supported individual video link.',
+                        ],
+                    },
+                ],
+                supportedLinksTitle: 'Supported Vimeo links and download limits',
+                supportedLinks: [
+                    { title: 'Vimeo video pages', description: 'Paste the full vimeo.com/ID link for an individual public video.' },
+                    { title: 'Vimeo Player links', description: 'Use a public player.vimeo.com/video/ID link when the video is embedded on another website.' },
+                    { title: 'Public videos only', description: 'This page does not promise downloads of private, password-protected, paid, or DRM-protected videos. Being able to watch a video in your own account does not guarantee that this downloader can access it.' },
+                ],
+                faqTitle: 'Vimeo video download FAQ',
+                faqs: [
+                    {
+                        q: 'How do I download a Vimeo video?',
+                        a: 'Copy the public video URL, paste it into the downloader on this page, choose your preferred quality in the settings, and start the download. Save the file when processing finishes.',
+                    },
+                    {
+                        q: 'Can I convert Vimeo to MP4?',
+                        a: 'Yes, supported public videos can be saved as MP4. The downloader uses the available media and combines separate video and audio tracks when needed. It cannot create a higher-quality version than Vimeo provides.',
+                    },
+                    {
+                        q: 'Can I download Vimeo videos in 1080p or 4K?',
+                        a: 'Choose your preferred quality in the download settings. The result depends on the versions Vimeo makes available; selecting 1080p or 4K does not guarantee that resolution for every video.',
+                    },
+                    {
+                        q: 'Why does a public Vimeo video fail to download?',
+                        a: 'A video may be public but still trigger a source security check, regional restriction, or temporary access limit. Confirm the link opens and plays, copy the complete URL, and retry later. If it still fails, report the video link through feedback.',
+                    },
+                    {
+                        q: 'Why does my Vimeo download take time to prepare?',
+                        a: 'Some videos use separate video and audio streams that must be combined before saving. Larger files and higher resolutions can take longer. Keep the page open until the download finishes.',
+                    },
+                    {
+                        q: 'Can I download private or password-protected Vimeo videos?',
+                        a: 'This page is intended for supported public videos. It does not offer a way to bypass passwords, paid access, account permissions, or DRM protection.',
+                    },
+                    {
+                        q: 'Do I need to install an app to download Vimeo videos?',
+                        a: 'No app installation is required for this web download flow. Follow any account or credit requirements shown by FreeSaveVideo when you start a download.',
+                    },
+                    {
+                        q: 'Does this page download an entire Vimeo showcase?',
+                        a: 'Automatic showcase or profile expansion is not promised here. Use a supported individual Vimeo video link.',
                     },
                 ],
             }),

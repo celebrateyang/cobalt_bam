@@ -74,11 +74,13 @@
     $: platformKey = getPlatformKey(data.slug);
     $: socialPlatform = socialPlatformForSlug(data.slug);
     $: isTiktok = isTiktokLanding(data.slug);
+    $: isEnglishVimeo = data.lang === 'en' && data.slug === 'vimeo-video-download';
     $: isGoogleDrive = data.slug === 'google-drive-video-downloader';
     $: usesFocusedPriorityContent =
         isGoogleDrive ||
         isTiktok ||
         Boolean(socialPlatform) ||
+        isEnglishVimeo ||
         data.slug === 'dailymotion-video-downloader' ||
         (data.lang === 'de' && isDePriorityLanding(data.slug)) ||
         (data.lang === 'th' && isThPriorityLanding(data.slug));
@@ -161,7 +163,7 @@
               '@type': 'HowTo',
               name: localeContent.stepsTitle,
               description: localeContent.lede,
-               ...(socialPlatform || ['xinpianchang-video-download', 'dailymotion-video-downloader'].includes(data.slug) || isGoogleDrive ? {} : { totalTime: 'PT1M' }),
+              ...(socialPlatform || ['xinpianchang-video-download', 'dailymotion-video-downloader'].includes(data.slug) || isEnglishVimeo || isGoogleDrive ? {} : { totalTime: 'PT1M' }),
               tool: [
                   {
                       '@type': 'HowToTool',
@@ -204,9 +206,9 @@
                       localeContent.h1,
                       ...localeContent.metaKeywords,
                       'public video download',
-                        ...(socialPlatform || isTiktok || isGoogleDrive || data.slug === 'dailymotion-video-downloader' ? [] : ['batch download', 'playlist download', 'audio extraction']),
+                        ...(socialPlatform || isTiktok || isEnglishVimeo || isGoogleDrive || data.slug === 'dailymotion-video-downloader' ? [] : ['batch download', 'playlist download', 'audio extraction']),
                   ],
-                    ...(socialPlatform || isTiktok || isGoogleDrive || data.slug === 'dailymotion-video-downloader' ? {} : { offers: {
+                    ...(socialPlatform || isTiktok || isEnglishVimeo || isGoogleDrive || data.slug === 'dailymotion-video-downloader' ? {} : { offers: {
                       '@type': 'Offer',
                       price: '0',
                       priceCurrency: 'USD',
@@ -332,6 +334,12 @@
                         <label for="dailymotion-url">{dailymotionUi.urlLabel}</label>
                         <input id="dailymotion-url" name="u" type="url" placeholder="https://www.dailymotion.com/video/..." required />
                         <button type="submit">{dailymotionUi.continueLabel}</button>
+                    </form>
+                {:else if isEnglishVimeo}
+                    <form class="dailymotion-form" action={homeUrl} method="GET">
+                        <label for="vimeo-url">Vimeo video URL</label>
+                        <input id="vimeo-url" name="u" type="url" placeholder="https://vimeo.com/123456789" required />
+                        <button type="submit">Download Vimeo video</button>
                     </form>
                 {:else}
                     <a class="downloader-fallback" href={homeUrl}>

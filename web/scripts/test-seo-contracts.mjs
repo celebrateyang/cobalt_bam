@@ -407,6 +407,7 @@ test('every advertised download and guide detail renders localized shared labels
                 const focused = params.slug === 'dailymotion-video-downloader'
                     || params.slug === 'google-drive-video-downloader'
                     || load('src/lib/seo/tiktok-content.ts').isTiktokLanding(params.slug)
+                    || (params.lang === 'en' && params.slug === 'vimeo-video-download')
                     || (params.lang === 'de' && load('src/lib/seo/de-priority-landings.ts').isDePriorityLanding(params.slug))
                     || (params.lang === 'th' && load('src/lib/seo/th-priority-landings.ts').isThPriorityLanding(params.slug));
                 if (!focused) assert(hasLabel('h2', labels.toolsWithoutPoints), context);
@@ -426,6 +427,28 @@ test('every advertised download and guide detail renders localized shared labels
     }
     assert.deepEqual([...seenLanguages].sort(), [...supportedLanguages].sort());
     t.diagnostic(`Verified localized shared labels on ${renderedCount} detail pages across ${seenLanguages.size} languages`);
+});
+
+test('English Vimeo landing exposes a working SSR entry and accurate download schema', async () => {
+    const page = await component('src/routes/[lang]/download/[slug]/+page.svelte');
+    const loader = load('src/routes/[lang]/download/[slug]/+page.ts');
+    const params = { lang: 'en', slug: 'vimeo-video-download' };
+    setTestLocale(params.lang, `download/${params.slug}`);
+    const data = await loader.load({ params });
+    const rendered = page.render({ data });
+    assert(rendered.html.includes('id="vimeo-url" name="u" type="url"'));
+    assert(rendered.html.includes('action="/en" method="GET"') || rendered.html.includes('action="/en/" method="GET"'));
+    assert(rendered.html.indexOf('id="vimeo-url"') < rendered.html.indexOf('How to download Vimeo videos'));
+    assert(rendered.html.includes('Vimeo to MP4: what happens to your video?'));
+    assert(!rendered.html.includes('Free tools without points'));
+    const schemas = [...rendered.head.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(m => JSON.parse(m[1]));
+    const faq = schemas.find(s => s['@type'] === 'FAQPage');
+    assert.equal(faq.mainEntity.length, data.landing.locales.en.faqs.length);
+    for (const question of faq.mainEntity) assert(rendered.html.includes(escapeText(question.name)));
+    assert(!schemas.find(s => s['@type'] === 'HowTo').totalTime);
+    const app = schemas.find(s => s['@type'] === 'WebPage').mainEntity;
+    assert(!app.offers);
+    assert(!app.knowsAbout.includes('playlist download'));
 });
 
 test('Google Drive landing has a focused download entry, discoverable English route and truthful schema', async () => {

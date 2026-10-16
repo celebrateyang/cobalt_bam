@@ -205,6 +205,10 @@ function aliasURL(url) {
             break;
 
         case "xiaohongshu":
+            if (["xiaohongshu.com", "www.xiaohongshu.com"].includes(url.hostname)) {
+                const profileNote = /^\/user\/profile\/[0-9a-f]{24}\/([0-9a-f]{24})\/?$/i.exec(url.pathname);
+                if (profileNote) url.pathname = `/explore/${profileNote[1]}`;
+            }
             if (url.pathname === "/explore" && url.searchParams.get("target_note_id")) {
                 url.pathname = `/explore/${encodeURIComponent(url.searchParams.get("target_note_id"))}`;
             }

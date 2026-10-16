@@ -246,9 +246,14 @@ const BILIBILI_COM_HEADERS = Object.freeze({
     referer: "https://www.bilibili.com/",
 });
 
+const setComVideoId = (url, id, avParameter = 'aid') => {
+    const av = /^av(\d+)$/i.exec(String(id));
+    url.searchParams.set(av ? avParameter : 'bvid', av ? av[1] : id);
+};
+
 const fetchComVideoMeta = async (id) => {
     const url = new URL("https://api.bilibili.com/x/web-interface/view");
-    url.searchParams.set("bvid", id);
+    setComVideoId(url, id);
 
     const payload = await fetch(url, {
         headers: BILIBILI_COM_HEADERS,
@@ -265,7 +270,7 @@ const fetchComVideoMeta = async (id) => {
 
 const fetchComPlayInfo = async ({ id, cid }) => {
     const url = new URL("https://api.bilibili.com/x/player/playurl");
-    url.searchParams.set("bvid", id);
+    setComVideoId(url, id, 'avid');
     url.searchParams.set("cid", String(cid));
     url.searchParams.set("fnval", "4048");
     url.searchParams.set("qn", "64");
@@ -289,7 +294,7 @@ const fetchComPlayInfo = async ({ id, cid }) => {
 
 const fetchComProgressivePlayInfo = async ({ id, cid }) => {
     const url = new URL("https://api.bilibili.com/x/player/playurl");
-    url.searchParams.set("bvid", id);
+    setComVideoId(url, id, 'avid');
     url.searchParams.set("cid", String(cid));
     url.searchParams.set("fnval", "0");
     url.searchParams.set("platform", "html5");

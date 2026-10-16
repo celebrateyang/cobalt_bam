@@ -48,6 +48,20 @@ test("selects SOOP quality using the largest video dimension", () => {
     assert.equal(selectSoopQuality(qualityInfo, "144").resolution, "320x540");
 });
 
+test("handles expired sessions and metadata transport failures without leaking credentials", async (t) => {
+    const originalFetch = globalThis.fetch;
+    t.after(() => { globalThis.fetch = originalFetch; });
+    globalThis.fetch = async (_url, options) => {
+        assert.equal(options.headers.cookie, undefined);
+        return Response.json({ data: { grade: 19, adult_status: "notLogin", files: [] } });
+    };
+    assert.equal((await requestSoopVideo("123", "https://vod.sooplive.com/player/123")).data.adult_status, "notLogin");
+    globalThis.fetch = async () => new Response("Access denied", { status: 403 });
+    assert.equal(await requestSoopVideo("123", "https://vod.sooplive.com/player/123", "session=test-only"), null);
+    globalThis.fetch = async () => { throw new Error("Network failure"); };
+    assert.equal(await requestSoopVideo("123", "https://vod.sooplive.com/player/123", "session=test-only"), null);
+});
+
 test("rejects media URLs outside SOOP CDN domains", () => {
     assert.equal(selectSoopQuality([{
         resolution: "1920x1080",

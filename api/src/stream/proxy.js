@@ -7,6 +7,12 @@ import { getHeaders, closeRequest, closeResponse, pipe } from "./shared.js";
 import { safeDestroyStream } from "./safe-destroy.js";
 
 const defaultAgent = new Agent();
+
+// Header names are case-insensitive; extractor headers must replace defaults.
+export const mergeProxyHeaders = (...sources) => Object.fromEntries(
+    sources.flatMap(source => Object.entries(source || {}))
+        .map(([name, value]) => [name.toLowerCase(), value]),
+);
 const BILIBILI_HEADERS_TIMEOUT_MS = 30_000;
 const BILIBILI_BODY_TIMEOUT_MS = 120_000;
 const BILIBILI_IDLE_TIMEOUT_MS = 45_000;
@@ -205,11 +211,11 @@ export default async function (streamInfo, res) {
         res.setHeader('Content-disposition', contentDisposition(streamInfo.filename));
 
         const requestOptions = {
-            headers: {
-                ...getHeaders(streamInfo.service),
-                ...(streamInfo.headers || {}),
-                Range: upstreamRange
-            },
+            headers: mergeProxyHeaders(
+                getHeaders(streamInfo.service),
+                streamInfo.headers,
+                { Range: upstreamRange },
+            ),
             signal: abortController.signal,
             maxRedirections: 16,
             dispatcher: defaultAgent,

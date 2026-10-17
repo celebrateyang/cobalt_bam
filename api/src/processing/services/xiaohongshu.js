@@ -9,6 +9,18 @@ const https = (url) => {
     return url.replace(/^http:/i, 'https:');
 }
 
+const imageUrl = (image) => {
+    const info = Array.isArray(image?.infoList) ? image.infoList : [];
+    const candidates = [
+        image?.urlDefault,
+        ...info.filter(item => item?.imageScene === "WB_DFT").map(item => item.url),
+        image?.url,
+        ...info.map(item => item?.url),
+    ];
+    const url = candidates.find(value => typeof value === "string" && /^https?:\/\//i.test(value));
+    return url ? https(url) : null;
+};
+
 const encodeQueryValue = (value) => {
     try {
         return encodeURIComponent(decodeURIComponent(value));
@@ -223,13 +235,13 @@ const buildImagePickerItem = ({
     h265,
     isAudioOnly,
 }) => {
-    const imageUrl = https(image.urlDefault);
+    const thumbnail = imageUrl(image);
     const livePhotoUrl = getLivePhotoVideoUrl({ image, h265, isAudioOnly });
 
     if (livePhotoUrl) {
         return {
             type: "video",
-            thumb: imageUrl,
+            thumb: thumbnail || undefined,
             url: createStream({
                 service: "xiaohongshu",
                 type: "proxy",
@@ -241,12 +253,14 @@ const buildImagePickerItem = ({
         };
     }
 
+    if (!thumbnail) return null;
+
     return {
         type: "photo",
         url: createStream({
             service: "xiaohongshu",
             type: "proxy",
-            url: imageUrl,
+            url: thumbnail,
             filename: `${filenameBase}_${index + 1}.jpg`,
         })
     };
@@ -407,9 +421,11 @@ export default async function ({ id, token, shareType, shareId, h265, isAudioOnl
     }
 
     if (images.length === 1) {
+        const url = imageUrl(images[0]);
+        if (!url) return { error: "fetch.empty" };
         return {
             isPhoto: true,
-            urls: https(images[0].urlDefault),
+            urls: url,
             filename: `${filenameBase}.jpg`,
         }
     }
@@ -421,6 +437,8 @@ export default async function ({ id, token, shareType, shareId, h265, isAudioOnl
         h265,
         isAudioOnly,
     }));
+
+    if (picker.some(item => !item)) return { error: "fetch.empty" };
 
     return { picker };
 }

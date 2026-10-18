@@ -32,7 +32,7 @@ appears above the content; the global More menu retains one AI Video entry.
 Earlier `/<lang>/video-agent` preview links redirect to the nested route.
 The same build-time flag controls the Video Agent submenu and direct route
 access; a disabled route returns 404. Restart the development server after
-changing the flag. Production changes require the next user-run build/deployment.
+changing the flag. Production changes require the next build/deployment.
 
 This first stage provides the project, conversation, and results layout, editable
 prompt/link inputs, and example prompts. Upload and execution remain disabled

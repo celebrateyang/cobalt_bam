@@ -160,8 +160,8 @@
   - stop further edits immediately,
   - restore text before continuing feature changes.
 
-## Build ownership (must-follow)
-- Do not run `pnpm build`, `pnpm run build`, or `pnpm -C web build` for development tasks in this repository.
-- The user runs production builds manually because builds are resource-intensive and often fail in the agent environment.
-- Use targeted checks and tests instead, such as `pnpm -C web check`, API tests, syntax checks, and i18n encoding checks.
+## Frontend build and deployment
+- The agent may run `pnpm build`, `pnpm run build`, or `pnpm -C web build` and complete frontend deployment to the existing Cloudflare Pages project when needed for the user's task.
+- For frontend deployment, verify the production build-time configuration, run the build, deploy using the command above, and verify the deployment result.
+- For routine development, prefer targeted checks and tests such as `pnpm -C web check`, API tests, syntax checks, and i18n encoding checks.
 

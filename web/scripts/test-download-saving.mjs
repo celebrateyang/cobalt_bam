@@ -23,7 +23,7 @@ const load = (path, dependencies, globals = {}) => {
     return exports;
 };
 
-const fixture = (pref = "download") => {
+const fixture = (pref = "download", browserWindow) => {
     const settings = { save: { savingMethod: pref } };
     const device = { is: { iOS: false }, supports: { share: true, directDownload: true } };
     const dialogs = [], events = [], callbacks = [], timers = [], dom = [];
@@ -51,7 +51,7 @@ const fixture = (pref = "download") => {
             body: { appendChild: () => dom.push("append") },
             createElement: () => ({ click: () => dom.push("click"), remove: () => dom.push("remove") }),
         },
-        window: { location: { href: "https://example.com/en" }, open: () => ({}) },
+        window: browserWindow ?? { location: { href: "https://example.com/en" }, open: () => ({}) },
         setTimeout: (callback, delay) => timers.push({ callback, delay }),
     });
     const file = new File(["media"], "video.mp4", { type: "video/mp4" });
@@ -126,6 +126,71 @@ test('ordinary proxy tunnels retain the existing browser handoff', async () => {
     assert.equal(f.pipelines.length, 0);
     assert.equal(f.downloads.length, 1);
     assert.equal(f.probes(), 1);
+});
+
+test("CDN downloads open once without a false blocked-popup dialog or Referer", async () => {
+    for (const host of ["video.twimg.com", "v.tiktokcdn.com", "v.tiktokcdn-us.com", "v.tiktokcdn-eu.com"]) {
+        const url = `https://${host}/video.mp4`;
+        const calls = [], navigation = [], links = [];
+        const opened = {
+            opener: {},
+            document: {
+                createElement: tag => {
+                    assert.equal(tag, "a");
+                    return {
+                        click() {
+                            assert.equal(opened.opener, null);
+                            assert.equal(this.target, "_self");
+                            assert.equal(this.rel, "noreferrer");
+                            assert.equal(this.referrerPolicy, "no-referrer");
+                            assert.equal(links[0], this);
+                            navigation.push(this.href);
+                        },
+                        remove() { links.splice(links.indexOf(this), 1); },
+                    };
+                },
+                body: { appendChild: link => links.push(link) },
+            },
+        };
+        const f = fixture("download", {
+            location: { href: "https://example.com/en" },
+            // Model the actual browser behavior that caused the false warning.
+            open: (...args) => { calls.push(args); return args[2]?.includes("noopener") ? null : opened; },
+        });
+        assert.equal(await f.api.downloadFile({ url, onSaveResult: f.params.onSaveResult }), "download");
+        assert.deepEqual(calls, [["", "_blank"]]);
+        assert.deepEqual(navigation, [url]);
+        assert.equal(links.length, 0);
+        assert.equal(f.dialogs.length, 0);
+        assert.deepEqual(f.callbacks, ["download"]);
+    }
+});
+
+test("genuinely blocked tabs keep the manual download fallback", async () => {
+    for (const url of ["https://video.twimg.com/video.mp4", "https://example.com/video.mp4"]) {
+        const calls = [];
+        const f = fixture("download", {
+            location: { href: "https://example.com/en" },
+            open: (...args) => { calls.push(args); return null; },
+        });
+        assert.equal(await f.api.downloadFile({ url, onSaveResult: f.params.onSaveResult }), "dialog");
+        assert.equal(calls.length, 1);
+        assert.equal(f.dialogs.length, 1);
+        assert.equal(f.dialogs[0].url, url);
+        assert.equal(f.dialogs[0].bodyText, "dialog.saving.blocked");
+        assert.deepEqual(f.callbacks, ["dialog"]);
+    }
+});
+
+test("ordinary URLs open directly without an extra tab or dialog", () => {
+    const calls = [];
+    const f = fixture("download", {
+        location: { href: "https://example.com/en" },
+        open: (...args) => { calls.push(args); return {}; },
+    });
+    assert.equal(f.api.openURL("https://example.com/video.mp4"), true);
+    assert.deepEqual(calls, [["https://example.com/video.mp4", "_blank"]]);
+    assert.equal(f.dialogs.length, 0);
 });
 
 test("browser handoff does not release a blob before the browser consumes it", async () => {

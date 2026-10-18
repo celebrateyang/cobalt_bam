@@ -79,23 +79,20 @@ export const shareFile = async (file: File) => {
 export const openURL = (url: string) => {
     // Some media CDNs return 403 when a foreign Referer is present.
     // Use noreferrer so the download works when opened from our UI.
-    let open: Window | null = null;
+    let needsNoReferrer = false;
     try {
         const { hostname } = new URL(url, window.location.href);
-        const needsNoReferrer =
+        needsNoReferrer =
             hostname.endsWith("twimg.com") ||
             hostname.endsWith("tiktokcdn.com") ||
             hostname.endsWith("tiktokcdn-us.com") ||
             hostname.endsWith("tiktokcdn-eu.com");
 
-        if (needsNoReferrer) {
-            open = window.open(url, "_blank", "noopener,noreferrer");
-        } else {
-            open = window.open(url, "_blank");
-        }
-    } catch {
-        open = window.open(url, "_blank");
-    }
+    } catch { /* preserve the browser handoff for non-standard URLs */ }
+
+    // noopener/noreferrer makes window.open return null even on success.
+    // Open a blank tab first so a null handle really means it was blocked.
+    const open = window.open(needsNoReferrer ? "" : url, "_blank");
 
     /* if new tab got blocked by user agent, show a saving dialog */
     if (!open) {
@@ -104,6 +101,23 @@ export const openURL = (url: string) => {
             body: get(t)("dialog.saving.blocked")
         });
         return false;
+    }
+
+    if (needsNoReferrer) {
+        try {
+            open.opener = null;
+            const link = open.document.createElement("a");
+            link.href = url;
+            link.target = "_self";
+            link.rel = "noreferrer";
+            link.referrerPolicy = "no-referrer";
+            open.document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            open.close();
+            throw error;
+        }
     }
     return true;
 }

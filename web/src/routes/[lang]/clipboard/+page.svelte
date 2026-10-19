@@ -49,7 +49,7 @@
     let messages: ClipboardMessage[] = [];
     const fallbackHost = env.HOST || 'freesavevideo.online';
     $: currentLang = $page.url.pathname.match(/^\/([a-z]{2})/)?.[1] || 'en';
-    $: hasLocalizedGuide = currentLang === 'en' || currentLang === 'zh';
+    $: hasLocalizedGuide = currentLang === 'en' || currentLang === 'zh' || currentLang === 'th';
     const faqKeys = ['wechat', 'install', 'history', 'disguise', 'privacy', 'files'];
     $: transferFaqs = hasLocalizedGuide ? faqKeys.map((key) => ({
         question: String($t(`clipboard.guide.faq.${key}.question`)),

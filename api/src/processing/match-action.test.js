@@ -561,6 +561,29 @@ test("keeps SoundCloud MP3 conversion on the processing path when source is HLS"
     assert.equal(response.body.directUrl, undefined);
 });
 
+test("SoundCloud AAC HLS uses an audio tunnel with the requested output format", () => {
+    for (const [audioFormat, extension] of [["best", "m4a"], ["mp3", "mp3"]]) {
+        const response = matchAction({
+            ...baseArgs,
+            host: "soundcloud",
+            isAudioOnly: true,
+            audioFormat,
+            r: {
+                ...soundcloudResult,
+                urls: "https://playback.media-streaming.soundcloud.cloud/playlist",
+                bestAudio: "m4a",
+                isHLS: true,
+                directClientDownload: false,
+            },
+        });
+        assert.equal(response.status, 200);
+        assert.equal(response.body.status, "tunnel");
+        assert.equal(response.body.type, "audio");
+        assert.ok(response.body.filename.endsWith(`.${extension}`));
+        assert.equal(response.body.directUrl, undefined);
+    }
+});
+
 test("creates a named MP3 tunnel for Kuaishou audio-only downloads", () => {
     const response = matchAction({
         ...baseArgs,

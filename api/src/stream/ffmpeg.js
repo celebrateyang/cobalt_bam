@@ -234,6 +234,10 @@ const render = async (res, streamInfo, ffargs, estimateMultiplier, inputStream) 
             });
         }
 
+        // Probe before starting FFmpeg: the output data listener below starts
+        // draining the pipe, so awaiting a CDN probe afterwards loses headers.
+        const estimatedLength = await estimateTunnelLength(streamInfo, estimateMultiplier);
+
         process = spawn(...getCommand(args, streamInfo), {
             windowsHide: true,
             stdio: [
@@ -267,7 +271,6 @@ const render = async (res, streamInfo, ffargs, estimateMultiplier, inputStream) 
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
 
-        const estimatedLength = await estimateTunnelLength(streamInfo, estimateMultiplier);
         res.setHeader('Estimated-Content-Length', estimatedLength);
 
         pipe(muxOutput, res, error => shutdown('pipe', error));
@@ -473,8 +476,14 @@ const convertAudio = async (streamInfo, res) => {
         args.push('-vbr', 'off');
     }
 
-    if (streamInfo.audioFormat === 'mp4a') {
-        args.push('-movflags', 'frag_keyframe+empty_moov');
+    if (streamInfo.audioFormat === 'mp4a' || streamInfo.audioFormat === 'm4a') {
+        // AAC encoder configuration is available after the first packet.
+        // Delay the streaming header so M4A includes AudioSpecificConfig.
+        args.push(
+            '-movflags', 'frag_keyframe+empty_moov+delay_moov',
+            // Audio has no video keyframe interval to bound fragment size.
+            '-frag_duration', '1000000',
+        );
     }
 
     if (streamInfo.metadata) {

@@ -54,7 +54,11 @@ const findBestForPreset = (transcodings, preset) => {
                 return entry;
             }
 
-            inferior = entry;
+            const bitrate = Number(entry.preset.match(/_(\d+)k/)?.[1]) || 0;
+            const previousBitrate = Number(inferior?.preset?.match(/_(\d+)k/)?.[1]) || 0;
+            if (!inferior || bitrate > previousBitrate) {
+                inferior = entry;
+            }
         }
     }
 
@@ -105,7 +109,7 @@ export default async function(obj) {
         return { error: "content.paid" };
     }
 
-    if (!json.media?.transcodings || !json.media?.transcodings.length === 0) {
+    if (!Array.isArray(json.media?.transcodings) || json.media.transcodings.length === 0) {
         return { error: "fetch.empty" };
     }
 
@@ -118,6 +122,13 @@ export default async function(obj) {
     if (mp3Media && (obj.format === "mp3" || !selectedStream)) {
         selectedStream = mp3Media;
         bestAudio = "mp3"
+    }
+
+    // Newer tracks may only expose AAC HLS. Keep the existing Opus/MP3
+    // preference, and let the audio pipeline convert AAC when requested.
+    if (!selectedStream) {
+        selectedStream = findBestForPreset(json.media.transcodings, "aac");
+        bestAudio = "m4a";
     }
 
     if (!selectedStream) {
@@ -158,7 +169,7 @@ export default async function(obj) {
         }
     }
 
-    const isHLS = file.pathname.endsWith('.m3u8');
+    const isHLS = selectedStream.format?.protocol === 'hls' || file.pathname.endsWith('.m3u8');
 
     return {
         urls: file.toString(),

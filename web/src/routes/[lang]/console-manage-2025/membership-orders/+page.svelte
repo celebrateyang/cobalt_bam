@@ -278,7 +278,7 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>用户</th>
+                        <th class="user-column">用户</th>
                         <th>套餐</th>
                         <th aria-sort={getAriaSort("duration_days")} class="sortable"><button class="sort-trigger" on:click={() => handleSort("duration_days")}>期限 <span class="sort-indicator">{getSortIcon("duration_days")}</span></button></th>
                         <th aria-sort={getAriaSort("status")} class="sortable"><button class="sort-trigger" on:click={() => handleSort("status")}>状态 <span class="sort-indicator">{getSortIcon("status")}</span></button></th>
@@ -293,7 +293,7 @@
                     {#each orders as item (item.id)}
                         <tr>
                             <td class="mono">{item.id}</td>
-                            <td>
+                            <td class="user-column">
                                 {#if item.user?.primary_email}
                                     <div class="email-cell">
                                         <span
@@ -320,7 +320,7 @@
                                 {:else}
                                     <div class="user-email mono">-</div>
                                 {/if}
-                                <div class="sub">#{item.user_id} · {item.user?.full_name || "-"}</div>
+                                <div class="sub user-details" title={`#${item.user_id} · ${item.user?.full_name || "-"}`}>#{item.user_id} · {item.user?.full_name || "-"}</div>
                             </td>
                             <td>{planLabel(item)}</td>
                             <td class="mono">{item.duration_days} 天</td>
@@ -367,9 +367,12 @@
     th[aria-sort="none"] .sort-indicator { opacity: 0.5; }
     .mono { font-family: "IBM Plex Mono", monospace; }
     .selectable { user-select: text; -webkit-user-select: text; cursor: text; }
-    .email-cell { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 0.2rem; }
-    .user-email { min-width: 0; }
-    .btn-copy { padding: 5px 8px; border-radius: 6px; font-size: 0.72rem; line-height: 1; }
+    .user-column { width: 220px; min-width: 220px; max-width: 220px; }
+    .email-cell { display: flex; width: 220px; align-items: center; gap: 8px; margin-bottom: 0.2rem; }
+    .user-email { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .email-cell .user-email { flex: 1; }
+    .user-details { width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .btn-copy { flex-shrink: 0; padding: 5px 8px; border-radius: 6px; font-size: 0.72rem; line-height: 1; }
     .btn-copy.copied { color: #12824b; background: rgba(18, 130, 75, 0.14); }
     .status { display: inline-flex; padding: 0.2rem 0.5rem; border-radius: 999px; font-weight: 600; font-size: 0.78rem; }
     .status-paid { color: #12824b; background: rgba(18, 130, 75, 0.14); }

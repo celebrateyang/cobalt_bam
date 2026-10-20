@@ -2627,6 +2627,9 @@
                     {#if activeOrder.provider === "buymeacoffee" && activeOrder.status !== "PAID"}
                         <p class="subtext">{$t("auth.bmc_payment_destination")}</p>
                         <p class="subtext">{$t(activeOrder.kind === "membership" ? "auth.download_pass_terms" : "auth.bmc_terms", { days: activeOrder.kind === "membership" ? activeOrder.duration_days : 0 })}</p>
+                        {#if activeOrder.kind === "membership"}
+                            <p class="subtext"><strong>{$t("auth.bmc_member_benefits")}</strong></p>
+                        {/if}
                         <p class="subtext">{$t(activeOrder.kind === "membership" ? "auth.bmc_member_checkout_notice" : "auth.bmc_checkout_notice")}</p>
                     {/if}
 
@@ -2713,7 +2716,6 @@
                                             href={`mailto:celebrateyang@gmail.com?subject=${encodeURIComponent(`FreeSaveVideo payment help: order ${activeOrder.id}`)}&body=${encodeURIComponent(`Account email: ${$clerkUser?.primaryEmailAddress?.emailAddress || ""}\nOrder: ${activeOrder.id}\nPlease attach your Buy Me a Coffee receipt. Do not include card details.`)}`}
                                             on:click={() => activeOrder && trackBuyMeACoffeeStep("help_opened", activeOrder.id, activeOrder.kind)}
                                         >{$t(activeOrder.kind === "membership" ? "auth.bmc_member_help" : "auth.bmc_help")}</a>
-                                        <p>{$t("auth.bmc_help_hint")}</p>
                                         {#if buyMeACoffeeStatusError}
                                             <p role="alert">{$t("auth.bmc_status_error")}</p>
                                         {/if}
@@ -2723,22 +2725,26 @@
                                 </div>
                             {/if}
 
-                            <div class="payment-actions">
-                                <button
-                                    class="button elevated"
-                                    on:click={() => {
-                                        if (activeOrder) checkActiveOrderStatus(activeOrder);
-                                    }}
-                                    disabled={orderStatusLoading}
-                                >
-                                    {$t("auth.check_status")}
-                                </button>
-                                {#if activeOrder.provider !== "buymeacoffee"}
-                                    <button class="button elevated" on:click={clearActiveOrder}>
-                                        {$t(activeOrder.status === "PAID" ? "auth.done" : "auth.cancel")}
-                                    </button>
-                                {/if}
-                            </div>
+                            {#if activeOrder.status !== "PAID" || activeOrder.provider !== "buymeacoffee"}
+                                <div class="payment-actions">
+                                    {#if activeOrder.status !== "PAID"}
+                                        <button
+                                            class="button elevated"
+                                            on:click={() => {
+                                                if (activeOrder) checkActiveOrderStatus(activeOrder);
+                                            }}
+                                            disabled={orderStatusLoading}
+                                        >
+                                            {$t("auth.check_status")}
+                                        </button>
+                                    {/if}
+                                    {#if activeOrder.provider !== "buymeacoffee"}
+                                        <button class="button elevated" on:click={clearActiveOrder}>
+                                            {$t(activeOrder.status === "PAID" ? "auth.done" : "auth.cancel")}
+                                        </button>
+                                    {/if}
+                                </div>
+                            {/if}
                         </div>
                     </div>
                 </div>

@@ -4,6 +4,7 @@
     import { page } from "$app/stores";
     import { auth } from "$lib/api/social";
     import { currentApiURL } from "$lib/api/api-url";
+    import BuyMeACoffeeFeedbackSummary from "$lib/payments/BuyMeACoffeeFeedbackSummary.svelte";
 
     type OrderUser = {
         primary_email: string | null;
@@ -528,6 +529,7 @@
                                     {#if o.provider_data?.bmc_step_status_check_failed}
                                         <div class="sub">曾发生状态查询失败</div>
                                     {/if}
+                                    <BuyMeACoffeeFeedbackSummary feedback={o.provider_data?.bmc_feedback} />
                                 {/if}
                             </td>
                             <td class="mono">{o.points}</td>

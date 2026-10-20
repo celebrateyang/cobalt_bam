@@ -4,6 +4,7 @@
     import { page } from "$app/stores";
     import { auth } from "$lib/api/social";
     import { currentApiURL } from "$lib/api/api-url";
+    import BuyMeACoffeeFeedbackSummary from "$lib/payments/BuyMeACoffeeFeedbackSummary.svelte";
 
     type OrderUser = {
         primary_email: string | null;
@@ -25,6 +26,7 @@
         paid_at: number | string | null;
         created_at: number | string;
         user?: OrderUser;
+        provider_data?: Record<string, unknown> | null;
     };
 
     type SortKey = "created_at" | "paid_at" | "status" | "duration_days";
@@ -324,7 +326,12 @@
                             </td>
                             <td>{planLabel(item)}</td>
                             <td class="mono">{item.duration_days} 天</td>
-                            <td><span class={`status status-${item.status.toLowerCase()}`}>{item.status}</span></td>
+                            <td>
+                                <span class={`status status-${item.status.toLowerCase()}`}>{item.status}</span>
+                                {#if item.provider === "buymeacoffee"}
+                                    <BuyMeACoffeeFeedbackSummary feedback={item.provider_data?.bmc_feedback} />
+                                {/if}
+                            </td>
                             <td class="mono">{formatAmount(item.amount_fen, item.currency)}</td>
                             <td class="mono">{item.provider}</td>
                             <td class="mono selectable">{item.out_trade_no}</td>

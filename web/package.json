@@ -20,7 +20,7 @@
         "test:clipboard": "node ./scripts/test-clipboard-ephemeral.mjs",
         "test:collection-selection": "node --test ./scripts/test-collection-selection.mjs",
         "test:bmc-translations": "node ./scripts/test-bmc-translations.mjs",
-        "test:bmc-checkout": "node --test ./scripts/test-bmc-checkout.mjs",
+        "test:bmc-checkout": "node --test ./scripts/test-bmc-checkout.mjs ./scripts/test-bmc-feedback.mjs",
         "test:saving": "node --test ./scripts/test-download-saving.mjs",
         "test:ffmpeg-startup": "node --test ./scripts/test-ffmpeg-startup.mjs",
         "test:fetch-startup": "node --test ./scripts/test-fetch-startup.mjs",

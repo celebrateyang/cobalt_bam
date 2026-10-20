@@ -10,7 +10,7 @@ const script = page.match(/<script[^>]*>([\s\S]*?)<\/script>/)[1];
 const ast = ts.createSourceFile('account.ts', script, ts.ScriptTarget.Latest, true);
 const names = ['clearActiveOrder', 'fetchOrderStatus', 'fetchMembershipOrderStatus', 'startBuyMeACoffeePay', 'restoreBuyMeACoffeeOrder',
     'rememberBuyMeACoffeeOrder', 'forgetBuyMeACoffeeOrder', 'recoverBuyMeACoffeeOrder',
-    'copyBuyMeACoffeePaymentCode', 'openBuyMeACoffeeCheckout', 'refreshBuyMeACoffeeOnReturn'];
+    'copyBuyMeACoffeePaymentCode', 'openBuyMeACoffeeCheckout', 'refreshBuyMeACoffeeOnReturn', 'recheckBuyMeACoffeeFeedback'];
 const handlers = ast.statements.filter(s => ts.isVariableStatement(s) &&
     s.declarationList.declarations.some(d => names.includes(d.name.getText(ast))))
     .map(s => s.getText(ast)).join('\n');
@@ -42,6 +42,8 @@ function harness(fetch) {
     buyMeACoffeePaymentCode: '', buyMeACoffeeCheckoutUrl: '', buyMeACoffeeCodeSaved: false,
     buyMeACoffeeCopyFailed: false, buyMeACoffeeStatusErrorTracked: false,
     buyMeACoffeeCheckoutOpened: false, buyMeACoffeeLastReturnCheck: 0,
+    buyMeACoffeeFeedbackReturn: 0,
+    buyMeACoffeeReturnPending: false,
     codeUrl: '', qrDataUrl: '', lastPointsUserId: null });
     vm.runInContext(compiled, context);
     return { context, storage, events, call: (name, ...args) => vm.runInContext(name, context)(...args) };
@@ -127,6 +129,21 @@ test('return focus and visibility notifications share one immediate status reque
     await new Promise(resolve => setImmediate(resolve));
     assert.equal(requests, 1);
     assert.equal(h.events.filter(e => e[0] === 'returned').length, 1);
+    assert.equal(h.context.buyMeACoffeeFeedbackReturn, 1);
+});
+
+test('return feedback requires a successful pending status and stays isolated from account changes', async () => {
+    for (const status of ['CREATED', 'PAID', 'CANCELLED', 'network_error', 'switched_user']) {
+        const h = harness(async () => {
+            if (status === 'network_error') throw new Error('offline');
+            if (status === 'switched_user') { h.context.$clerkUser = { id: 'user_b' }; h.call('clearActiveOrder'); }
+            return response({ order: { ...order(1), status } });
+        });
+        h.context.activeOrder = order(1);
+        h.context.buyMeACoffeeCheckoutOpened = true;
+        await h.call('refreshBuyMeACoffeeOnReturn');
+        assert.equal(h.context.buyMeACoffeeFeedbackReturn, status === 'CREATED' ? 1 : 0, status);
+    }
 });
 
 test('recovery is isolated by user and rejects expired or malformed records', () => {

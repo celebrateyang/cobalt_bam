@@ -6,6 +6,7 @@ import { MEMBER_DOWNLOAD_LIMITS, getUserByClerkId, upsertUserFromClerk, getActiv
 import { recordBuyMeACoffeeReceipt } from "../db/buymeacoffee-receipts.js";
 import { fulfillBuyMeACoffeePurchase } from "../payments/buymeacoffee-fulfill.js";
 import { BUYMEACOFFEE_STEPS, recordBuyMeACoffeeStep } from "../payments/buymeacoffee-steps.js";
+import { normalizeBuyMeACoffeeFeedback, recordBuyMeACoffeeFeedback } from "../payments/buymeacoffee-feedback.js";
 import {
     createCreditOrder,
     getCreditOrderById,
@@ -881,6 +882,25 @@ if (!isClerkAuthConfigured) {
     });
 } else {
     router.use(clerkMiddleware());
+
+    userPaymentRoute("post", ["/credits/orders/:id/payment-feedback", "/memberships/orders/:id/payment-feedback"], async (req, res) => {
+        try {
+            const auth = paymentAuth(req);
+            if (!auth.userId) return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
+            const id = Number(req.params.id);
+            const feedback = normalizeBuyMeACoffeeFeedback(req.body);
+            if (!Number.isSafeInteger(id) || id <= 0 || !feedback) {
+                return jsonError(res, 400, "INVALID_FEEDBACK", "Invalid payment feedback");
+            }
+            const kind = req.path.startsWith("/memberships/") ? "membership" : "credit";
+            const result = await recordBuyMeACoffeeFeedback({ id, kind, clerkUserId: auth.userId, feedback });
+            if (!result) return jsonError(res, 404, "NOT_FOUND", "Order not found");
+            return res.json({ status: "success", data: result });
+        } catch (error) {
+            console.error("Buy Me a Coffee payment feedback error:", error);
+            return jsonError(res, 500, "SERVER_ERROR", "Could not save feedback");
+        }
+    });
 
     userPaymentRoute("post", ["/credits/orders/:id/payment-step", "/memberships/orders/:id/payment-step"], async (req, res) => {
         try {

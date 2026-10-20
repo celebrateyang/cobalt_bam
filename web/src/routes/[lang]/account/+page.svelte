@@ -5,6 +5,7 @@
     import { page } from "$app/stores";
 
     import { t } from "$lib/i18n/translations";
+    import BuyMeACoffeeFeedback from "$lib/payments/BuyMeACoffeeFeedback.svelte";
     import {
         clerkEnabled,
         clerkLoaded,
@@ -955,6 +956,8 @@
 
     const clearActiveOrder = () => {
         paymentViewVersion += 1;
+        buyMeACoffeeFeedbackReturn = 0;
+        buyMeACoffeeReturnPending = false;
         stopPolling();
         activeOrder = null;
         codeUrl = "";
@@ -1122,6 +1125,10 @@
             console.debug("load order status failed", error);
         } finally {
             if (requestViewVersion === paymentViewVersion) orderStatusLoading = false;
+            if (buyMeACoffeeReturnPending && requestViewVersion === paymentViewVersion) {
+                buyMeACoffeeReturnPending = false;
+                void refreshBuyMeACoffeeOnReturn();
+            }
         }
 
         return null;
@@ -1203,6 +1210,10 @@
             console.debug("load membership order status failed", error);
         } finally {
             if (requestViewVersion === paymentViewVersion) orderStatusLoading = false;
+            if (buyMeACoffeeReturnPending && requestViewVersion === paymentViewVersion) {
+                buyMeACoffeeReturnPending = false;
+                void refreshBuyMeACoffeeOnReturn();
+            }
         }
 
         return null;
@@ -1469,15 +1480,29 @@
         }
     };
 
-    const refreshBuyMeACoffeeOnReturn = () => {
-        if (!buyMeACoffeeCheckoutOpened || document.hidden || orderStatusLoading ||
+    let buyMeACoffeeFeedbackReturn = 0;
+    let buyMeACoffeeReturnPending = false;
+    const recheckBuyMeACoffeeFeedback = async () => {
+        if (!activeOrder || orderStatusLoading) return null;
+        return activeOrder.kind === "membership"
+            ? fetchMembershipOrderStatus(activeOrder.id)
+            : fetchOrderStatus(activeOrder.id);
+    };
+
+    const refreshBuyMeACoffeeOnReturn = async () => {
+        if (!buyMeACoffeeCheckoutOpened || document.hidden ||
             activeOrder?.provider !== "buymeacoffee" || activeOrder.status !== "CREATED") return;
+        if (orderStatusLoading) { buyMeACoffeeReturnPending = true; return; }
         const now = Date.now();
         if (now - buyMeACoffeeLastReturnCheck < 1500) return;
         buyMeACoffeeLastReturnCheck = now;
         trackBuyMeACoffeeStep("returned", activeOrder.id, activeOrder.kind);
-        if (activeOrder.kind === "membership") void fetchMembershipOrderStatus(activeOrder.id);
-        else void fetchOrderStatus(activeOrder.id);
+        const view = paymentViewVersion;
+        const userId = $clerkUser?.id;
+        const order = await recheckBuyMeACoffeeFeedback();
+        if (view === paymentViewVersion && userId === $clerkUser?.id && order?.status === "CREATED") {
+            buyMeACoffeeFeedbackReturn += 1;
+        }
     };
 
     const resumeNowPaymentsCheckout = async () => {
@@ -2723,6 +2748,18 @@
                                         {$t("auth.payment_waiting_hint")}
                                     {/if}
                                 </div>
+                            {/if}
+
+                            {#if activeOrder.provider === "buymeacoffee" && activeOrder.status === "CREATED" && $clerkUser}
+                                {#key `${$clerkUser.id}:${activeOrder.kind}:${activeOrder.id}`}
+                                    <BuyMeACoffeeFeedback
+                                        userId={$clerkUser.id} orderId={activeOrder.id} kind={activeOrder.kind}
+                                        returnCheck={buyMeACoffeeFeedbackReturn} loading={orderStatusLoading}
+                                        statusError={buyMeACoffeeStatusError}
+                                        savedFeedback={activeOrder.provider_data?.bmc_feedback}
+                                        recheck={recheckBuyMeACoffeeFeedback}
+                                    />
+                                {/key}
                             {/if}
 
                             {#if activeOrder.status !== "PAID" || activeOrder.provider !== "buymeacoffee"}

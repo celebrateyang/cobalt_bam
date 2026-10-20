@@ -53,7 +53,7 @@ export const selectFfmpegExecutable = (
     streamInfo,
     platform = process.platform,
 ) =>
-    (['amazon', 'cctv', 'dailymotion', 'iqiyi', 'sooplive'].includes(streamInfo?.service)
+    (['amazon', 'bilibili', 'cctv', 'dailymotion', 'iqiyi', 'sooplive'].includes(streamInfo?.service)
         || streamInfo?.isHLS === true) && platform !== 'win32'
         ? '/usr/bin/ffmpeg'
         : ffmpeg;

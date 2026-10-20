@@ -177,6 +177,21 @@ export default async function(obj) {
                     const item = initState[key];
                     if (item && item.photo) {
                         const photo = item.photo;
+                        if (photo.singlePicture === true || photo.photoType === "SINGLE_PICTURE") {
+                            const image = photo.coverUrls?.find((entry) => (
+                                typeof entry?.url === "string" && /^https?:\/\//i.test(entry.url)
+                            ));
+                            if (image) {
+                                videoInfo = {
+                                    url: image.url,
+                                    isPhoto: true,
+                                    title: photo.caption,
+                                    id: photo.photoId,
+                                };
+                                break;
+                            }
+                            continue;
+                        }
                         let url;
                         const duration = toSeconds(photo.duration || photo.manifest?.adaptationSet?.[0]?.duration);
                         // Try mainMvUrls
@@ -214,6 +229,21 @@ export default async function(obj) {
 
     // 4. Return Result
     const mediaId = videoInfo.id || videoId || Date.now();
+
+    if (videoInfo.isPhoto) {
+        const extension = new URL(videoInfo.url).pathname.match(/\.(jpe?g|png|webp)$/i)?.[1]?.toLowerCase() || "jpg";
+        return {
+            type: "proxy",
+            isPhoto: true,
+            urls: videoInfo.url,
+            original_url: originalUrl || targetUrl,
+            filename: `kuaishou_${mediaId}.${extension}`,
+            headers: {
+                "User-Agent": MOBILE_UA,
+                "Referer": `${new URL(fetchedUrl).origin}/`,
+            },
+        };
+    }
 
     return {
         type: "video",

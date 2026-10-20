@@ -26,6 +26,14 @@ test("keeps the system ffmpeg workaround for iQIYI on Linux", () => {
     );
 });
 
+test("avoids the reproduced Bilibili non-HLS merge crash while preserving Windows", () => {
+    for (const type of ['merge', 'remux', 'mute', 'audio']) {
+        const info = { service: 'bilibili', type, isHLS: false };
+        assert.equal(selectFfmpegExecutable(info, 'linux'), '/usr/bin/ffmpeg');
+        assert.equal(selectFfmpegExecutable(info, 'win32'), ffmpeg);
+    }
+});
+
 test("avoids the static ffmpeg SOOP crash on Linux", () => {
     assert.equal(
         selectFfmpegExecutable({ service: "sooplive", isHLS: true }, "linux"),

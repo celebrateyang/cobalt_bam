@@ -3,8 +3,9 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import ts from 'typescript';
 import vm from 'node:vm';
+import { compile as compileSvelte } from 'svelte/compiler';
 
-const compile = source => ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
+const compile = source => ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, verbatimModuleSyntax: true } }).outputText;
 const script = readFileSync(new URL('../src/lib/payments/BuyMeACoffeeFeedback.svelte', import.meta.url), 'utf8').match(/<script[^>]*>([\s\S]*?)<\/script>/)[1];
 const ast = ts.createSourceFile('feedback.ts', script, ts.ScriptTarget.Latest, true);
 const declarations = ast.statements.filter(s => ts.isVariableStatement(s) && !s.modifiers?.some(m => m.kind === ts.SyntaxKind.ExportKeyword)).map(s => s.getText(ast)).join('\n');
@@ -110,6 +111,34 @@ test('background status polling does not block feedback submission or reset the 
     await h.submit('payment_issue', 'page');
     assert.equal(h.read('done'), true);
     assert.deepEqual(submitted, { reason: 'payment_issue', issue: 'page', note: 'Checkout did not open' });
+});
+
+test('rendered feedback form stays present while the parent toggles background polling', async () => {
+    const componentSource = readFileSync(new URL('../src/lib/payments/BuyMeACoffeeFeedback.svelte', import.meta.url), 'utf8');
+    const prepared = componentSource.replace(/<script[^>]*>[\s\S]*?<\/script>/, `<script>${compile(script)}</script>`);
+    const dataModule = source => `data:text/javascript;base64,${Buffer.from(source).toString('base64')}`;
+    const mocks = {
+        'svelte/internal': import.meta.resolve('svelte/internal'),
+        svelte: import.meta.resolve('svelte'),
+        '$lib/i18n/translations': dataModule('export const t = {subscribe(fn) {fn(key => key); return () => {};}};'),
+        '$lib/state/clerk': dataModule('export const clerkUser = {subscribe(fn) {fn({id:"user_a"}); return () => {};}}; export const getClerkToken = async () => "token";'),
+        '$lib/api/api-url': dataModule('export const currentApiURL = () => "https://api.example.com";'),
+        './buymeacoffee-feedback': dataModule(compile(readFileSync(new URL('../src/lib/payments/buymeacoffee-feedback.ts', import.meta.url), 'utf8'))),
+    };
+    const compiled = compileSvelte(prepared, { generate: 'ssr', filename: 'Feedback.svelte' }).js.code
+        .replace(/from (["'])([^"']+)\1/g, (_match, _quote, name) => `from ${JSON.stringify(mocks[name] || name)}`);
+    const { default: component } = await import(dataModule(compiled));
+    const renders = [false, true, false].map((loading, index) => component.render({
+        userId: `render_${index}`, orderId: 1, kind: 'credit', returnCheck: 1, loading, recheck: async () => {},
+    }).html);
+    for (const html of renders) {
+        assert.match(html, /<textarea/);
+        assert.match(html, /auth\.bmc_feedback_reason_paid_not_received/);
+        assert.match(html, /auth\.bmc_feedback_reason_not_now/);
+        assert.doesNotMatch(html, /auth\.loading/);
+    }
+    assert.equal(renders[0], renders[1]);
+    assert.equal(renders[1], renders[2]);
 });
 
 test('feedback suppression works without browser storage', () => {

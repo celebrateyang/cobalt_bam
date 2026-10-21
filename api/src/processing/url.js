@@ -370,7 +370,16 @@ function cleanURL(url) {
             stripQuery = false;
             break;
         case "wechat_channels":
-            if (url.searchParams.get("id")) {
+            if (url.hostname === "mp.weixin.qq.com") url.protocol = "https:";
+            if (url.hostname === "mp.weixin.qq.com" && /^\/mp\/video\/?$/.test(url.pathname)) {
+                const cleaned = new URLSearchParams();
+                for (const key of ["vid", "__biz", "mid", "idx", "sn", "vidsn"]) {
+                    const value = url.searchParams.get(key);
+                    if (value) cleaned.set(key, value);
+                }
+                url.search = cleaned.toString();
+                stripQuery = false;
+            } else if (url.searchParams.get("id")) {
                 limitQuery("id");
             } else if (
                 /^\/s\//.test(url.pathname) &&

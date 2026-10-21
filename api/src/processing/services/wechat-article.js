@@ -160,15 +160,16 @@ const parseArticleMetadata = (html) => {
     };
 };
 
-const parseNativeVideo = (objectText) => {
-    const id = quotedField(objectText, "video_id");
+const parseNativeVideo = (objectText, videoId = null) => {
+    const id = videoId || quotedField(objectText, "video_id");
     const transInfo = extractNamedArray(objectText, "mp_video_trans_info");
     const formats = extractTopLevelObjects(transInfo)
         .map((format) => ({
             url: secureUrl(quotedField(format, "url")),
             width: numericField(format, "width"),
             height: numericField(format, "height"),
-            duration: numericField(format, "duration"),
+            duration: numericField(format, "duration")
+                ?? (numericField(format, "duration_ms") / 1000 || null),
             filesize: numericField(format, "filesize"),
             quality: quotedField(format, "video_quality_wording"),
             formatId: quotedField(format, "format_id"),
@@ -238,6 +239,16 @@ const parseContentOrder = (html) => {
 };
 
 export const parseWechatArticle = (html) => {
+    // Standalone MP video pages expose their formats in cgiData rather than
+    // video_page_infos and have no article iframe to establish content order.
+    const cgiMatch = /\bwindow\.cgiData\s*=\s*\{/.exec(html);
+    if (cgiMatch) {
+        const objectStart = cgiMatch.index + cgiMatch[0].lastIndexOf("{");
+        const objectText = extractBalanced(html, objectStart, "{", "}");
+        const id = objectText.match(/\bvid\s*:\s*["'](wxv_\d{1,32})["']/)?.[1];
+        const video = id ? parseNativeVideo(objectText, id) : null;
+        if (video) return { ...parseArticleMetadata(html), items: [video] };
+    }
     const pageInfoArray = extractNamedArray(html, "video_page_infos");
     const pageVideos = extractTopLevelObjects(pageInfoArray);
     const nativeVideos = new Map();

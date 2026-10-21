@@ -386,6 +386,8 @@ export const services = {
     },
     wechat_channels: {
         patterns: [
+            "mp/video?vid=:mpVideoId&*",
+            "mp/video?vid=:mpVideoId",
             "sph/:shortUri",
             "s/:articleId?fsv_item=:selectedItem",
             "s/:articleId",

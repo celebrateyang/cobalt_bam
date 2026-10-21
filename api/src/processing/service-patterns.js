@@ -170,6 +170,7 @@ export const testers = {
     },
 
     "wechat_channels": pattern =>
+        /^wxv_\d{1,32}$/.test(pattern.mpVideoId || "") ||
         /^[A-Za-z0-9]{6,64}$/.test(pattern.shortUri || "") ||
         /^[A-Za-z0-9_-]{8,128}$/.test(pattern.articleId || ""),
 

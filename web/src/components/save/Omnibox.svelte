@@ -104,6 +104,7 @@
 
     const HTTP_TO_HTTPS_SHORTLINK_HOSTS = new Set([
         "t.cn",
+        "mp.weixin.qq.com",
     ]);
 
     const normalizeDetectedUrl = (url: URL) => {

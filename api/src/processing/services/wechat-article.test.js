@@ -5,6 +5,7 @@ import {
     buildWechatArticleResult,
     decodeWechatValue,
     parseWechatArticle,
+    resolveWechatArticle,
     resolveTencentVideo,
 } from "./wechat-article.js";
 
@@ -46,6 +47,33 @@ window.data = {
   ]
 };
 </script>`;
+
+test("resolves a standalone MP video from cgiData without an article iframe", async () => {
+    const html = `<meta property="og:title" content="Standalone video">
+    <script>window.cgiData = {
+        article_link: "https://mp.weixin.qq.com/mp/video?vid=wxv_123",
+        vid : "wxv_123",
+        mp_video_trans_info: [
+            { duration_ms: '277929' * 1 || 0, width: '854', height: '480',
+              url: 'http://mpvideo.qpic.cn/low.mp4?x=1\\x26amp;y=2' },
+            { duration_ms: '277929' * 1 || 0, width: '1920', height: '1080',
+              url: 'http://mpvideo.qpic.cn/high.mp4?x=1\\x26amp;y=2' }
+        ]
+    };</script>`;
+    const article = await resolveWechatArticle(
+        "https://mp.weixin.qq.com/mp/video?vid=wxv_123",
+        { fetchImpl: async () => new Response(html) },
+    );
+    assert.equal(article.items.length, 1);
+    assert.equal(article.items[0].id, "wxv_123");
+    assert.equal(article.items[0].width, 1920);
+    assert.equal(article.items[0].duration, 277.929);
+    const result = buildWechatArticleResult(article, "wxv_123");
+    assert.equal(result.directClientDownload, true);
+    assert.equal(result.urls, "https://mpvideo.qpic.cn/high.mp4?x=1&y=2");
+    assert.equal(result.urlCandidates.length, 1);
+    assert.equal(result.filename, "Standalone video.mp4");
+});
 
 test("decodes WeChat JavaScript and nested HTML escapes", () => {
     assert.equal(decodeWechatValue("a\\x26amp;amp;b"), "a&b");

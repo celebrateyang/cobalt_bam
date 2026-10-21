@@ -60,9 +60,9 @@ export const buildWechatChannelResult = (feed, shortUri) => {
     };
 };
 
-export default async function({ shortUri, articleId, url }) {
+export default async function({ shortUri, articleId, mpVideoId, url }) {
     try {
-        if (articleId) {
+        if (articleId || mpVideoId) {
             const article = await resolveWechatArticle(url.toString());
             const selectedItemParam = url.searchParams.get("fsv_item");
             let selectedItemIndex = null;
@@ -83,7 +83,7 @@ export default async function({ shortUri, articleId, url }) {
                     `[wechat_channels] article partial success resolved=${article.items.length} unavailable=${article.unavailableCount}`
                 );
             }
-            return buildWechatArticleResult(article, articleId, selectedItemIndex);
+            return buildWechatArticleResult(article, articleId || mpVideoId, selectedItemIndex);
         }
 
         const yuanbaoCookie = await readYuanbaoCookie();

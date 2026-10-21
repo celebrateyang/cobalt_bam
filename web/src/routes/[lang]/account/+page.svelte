@@ -956,6 +956,7 @@
 
     const clearActiveOrder = () => {
         paymentViewVersion += 1;
+        buyMeACoffeeEmailCopyState = "idle";
         buyMeACoffeeFeedbackReturn = 0;
         buyMeACoffeeHelpOpen = false;
         buyMeACoffeeReturnPending = false;
@@ -1310,6 +1311,20 @@
             console.debug("create wechat pay order failed", error);
         } finally {
             purchaseLoading = false;
+        }
+    };
+
+    let buyMeACoffeeEmailCopyState: "idle" | "copying" | "copied" | "failed" = "idle";
+    const copyBuyMeACoffeeEmail = async () => {
+        const email = $clerkUser?.primaryEmailAddress?.emailAddress;
+        if (!email || buyMeACoffeeEmailCopyState === "copying") return;
+        const version = paymentViewVersion;
+        buyMeACoffeeEmailCopyState = "copying";
+        try {
+            await navigator.clipboard.writeText(email);
+            if (version === paymentViewVersion) buyMeACoffeeEmailCopyState = "copied";
+        } catch {
+            if (version === paymentViewVersion) buyMeACoffeeEmailCopyState = "failed";
         }
     };
 
@@ -2701,8 +2716,19 @@
                             {:else if activeOrder.provider === "buymeacoffee"}
                                 <div class="bmc-payment-code">
                                     <strong>{$t("auth.bmc_email_checkout_hint")}</strong>
-                                    <input class="bmc-code-input" aria-label="Account email"
-                                        value={$clerkUser?.primaryEmailAddress?.emailAddress || ""} readonly />
+                                    <div class="bmc-email-row">
+                                        <input class="bmc-code-input" aria-label={$t("auth.bmc_email_checkout_hint")}
+                                            value={$clerkUser?.primaryEmailAddress?.emailAddress || ""} readonly />
+                                        <button type="button" class="button elevated" on:click={copyBuyMeACoffeeEmail}
+                                            disabled={buyMeACoffeeEmailCopyState === "copying" || !$clerkUser?.primaryEmailAddress?.emailAddress}>
+                                            {$t(buyMeACoffeeEmailCopyState === "copied" ? "auth.bmc_email_copied" : "auth.bmc_email_copy")}
+                                        </button>
+                                    </div>
+                                    <p class="subtext">{$t(activeOrder.kind === "membership" ? "auth.bmc_email_member_hint" : "auth.bmc_email_credit_hint")}</p>
+                                    <span class="subtext bmc-email-copy-status" role="status">
+                                        {#if buyMeACoffeeEmailCopyState === "failed"}{$t("auth.bmc_email_copy_failed")}
+                                        {:else if buyMeACoffeeEmailCopyState === "copied"}{$t("auth.bmc_email_copied")}{/if}
+                                    </span>
                                     {#if buyMeACoffeeCheckoutUrl}
                                         <a
                                             class="button elevated active"
@@ -3992,6 +4018,11 @@
         overflow-x: auto;
         font-size: 0.75rem;
     }
+
+    .bmc-email-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .bmc-email-row .bmc-code-input { flex: 1 1 110px; }
+    .bmc-email-row button { flex: 0 1 auto; white-space: normal; font-size: .75rem; padding: 8px 10px; }
+    .bmc-email-copy-status { min-height: 1.4em; }
 
     .bmc-payment-code :global(a.button) {
         justify-content: center;

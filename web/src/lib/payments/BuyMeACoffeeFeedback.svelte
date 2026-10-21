@@ -9,7 +9,6 @@
     export let orderId: number;
     export let kind: "credit" | "membership";
     export let returnCheck = 0;
-    export let loading = false;
     export let statusError = false;
     export let savedFeedback: unknown = null;
     export let recheck: () => Promise<unknown>;
@@ -42,7 +41,7 @@
     $: if (savedFeedback) done = true;
 
     const submit = async (reason: string, issue = "") => {
-        if (submitting || done || loading || statusError) return;
+        if (submitting || done || statusError) return;
         selectedReason = reason;
         selectedIssue = issue;
         failed = false;
@@ -74,9 +73,7 @@
 {:else}
     <section class="feedback" aria-label={$t("auth.bmc_feedback_title")}>
         <strong>{$t("auth.bmc_feedback_title")}</strong>
-        {#if loading}
-            <p role="status">{$t("auth.loading")}</p>
-        {:else if statusError}
+        {#if statusError}
             <p role="alert">{$t("auth.bmc_status_error")}</p>
             <button type="button" on:click={() => recheck()}>{$t("auth.check_status")}</button>
         {:else if done}

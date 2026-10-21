@@ -73,11 +73,11 @@ test('submission failures permit retry; duplicate clicks do not create duplicate
     assert.equal(h.read('done'), true);
 });
 
-test('paid reports recheck status; busy, failed status, switched accounts and destroyed views cannot submit', async () => {
+test('paid reports recheck status; failed status, switched accounts and destroyed views cannot submit', async () => {
     const h = harness();
     await h.submit('paid_not_received');
     assert.equal(h.rechecks(), 1);
-    for (const overrides of [{ loading: true }, { statusError: true }, { $clerkUser: { id: 'user_b' } }]) {
+    for (const overrides of [{ statusError: true }, { $clerkUser: { id: 'user_b' } }]) {
         let writes = 0;
         const blocked = harness(async () => { writes++; }, new Map(), overrides);
         await blocked.submit('trust');
@@ -91,6 +91,25 @@ test('paid reports recheck status; busy, failed status, switched accounts and de
     finishToken('token');
     await pending;
     assert.equal(writes, 0);
+});
+
+test('background status polling does not block feedback submission or reset the note and issue selection', async () => {
+    let submitted;
+    const h = harness(async (_url, options) => {
+        submitted = JSON.parse(options.body);
+        return { ok: true, json: async () => ({ status: 'success', data: { status: 'CREATED' } }) };
+    });
+    h.update({ returnCheck: 1 });
+    vm.runInContext('note = "Checkout did not open"; issuePicker = true', h.context);
+    for (const loading of [true, false, true]) {
+        h.update({ loading });
+        assert.equal(h.read('visible'), true);
+        assert.equal(h.read('issuePicker'), true);
+        assert.equal(h.read('note'), 'Checkout did not open');
+    }
+    await h.submit('payment_issue', 'page');
+    assert.equal(h.read('done'), true);
+    assert.deepEqual(submitted, { reason: 'payment_issue', issue: 'page', note: 'Checkout did not open' });
 });
 
 test('feedback suppression works without browser storage', () => {

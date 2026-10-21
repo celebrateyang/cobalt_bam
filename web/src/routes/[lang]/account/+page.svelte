@@ -2754,7 +2754,7 @@
                                 {#key `${$clerkUser.id}:${activeOrder.kind}:${activeOrder.id}`}
                                     <BuyMeACoffeeFeedback
                                         userId={$clerkUser.id} orderId={activeOrder.id} kind={activeOrder.kind}
-                                        returnCheck={buyMeACoffeeFeedbackReturn} loading={orderStatusLoading}
+                                        returnCheck={buyMeACoffeeFeedbackReturn}
                                         statusError={buyMeACoffeeStatusError}
                                         savedFeedback={activeOrder.provider_data?.bmc_feedback}
                                         recheck={recheckBuyMeACoffeeFeedback}

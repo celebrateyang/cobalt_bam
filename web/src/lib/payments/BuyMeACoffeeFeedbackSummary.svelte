@@ -2,7 +2,7 @@
     import { t } from "$lib/i18n/translations";
     export let feedback: unknown;
     $: data = feedback && typeof feedback === "object" ? feedback as Record<string, unknown> : null;
-    const reasons = ["paid_not_received", "payment_issue", "trust", "still_paying", "not_now"];
+    const reasons = ["paid_not_received", "payment_issue", "trust", "still_paying", "not_now", "browsing", "price", "unclear", "other"];
     const issues = ["page", "method", "declined", "other"];
 </script>
 

@@ -1,6 +1,6 @@
 import { query } from "../db/pg-client.js";
 
-const reasons = new Set(["paid_not_received", "payment_issue", "trust", "still_paying", "not_now"]);
+const reasons = new Set(["paid_not_received", "payment_issue", "trust", "still_paying", "not_now", "browsing", "price", "unclear", "other"]);
 const issues = new Set(["page", "method", "declined", "other"]);
 
 export const normalizeBuyMeACoffeeFeedback = (body) => {

@@ -43,6 +43,7 @@ function harness(fetch) {
     buyMeACoffeeCopyFailed: false, buyMeACoffeeStatusErrorTracked: false,
     buyMeACoffeeCheckoutOpened: false, buyMeACoffeeLastReturnCheck: 0,
     buyMeACoffeeFeedbackReturn: 0,
+    buyMeACoffeeHelpOpen: false,
     buyMeACoffeeReturnPending: false,
     codeUrl: '', qrDataUrl: '', lastPointsUserId: null });
     vm.runInContext(compiled, context);

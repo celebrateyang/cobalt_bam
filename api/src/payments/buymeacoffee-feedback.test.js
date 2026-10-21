@@ -13,6 +13,10 @@ test('feedback validates reasons, issue combinations and bounded text', () => {
     }
     assert.equal(normalizeBuyMeACoffeeFeedback({ reason: 'trust', note: '  note  ' }).note, 'note');
     assert.equal(normalizeBuyMeACoffeeFeedback({ reason: 'payment_issue', issue: 'page' }).issue, 'page');
+    for (const reason of ['browsing', 'price', 'unclear', 'other']) {
+        assert.equal(normalizeBuyMeACoffeeFeedback({ reason }).reason, reason);
+        assert.equal(normalizeBuyMeACoffeeFeedback({ reason, issue: 'page' }), null);
+    }
 });
 
 test('feedback is idempotent, owner scoped, bounded per order and cannot change financial state', async () => {

@@ -957,6 +957,7 @@
     const clearActiveOrder = () => {
         paymentViewVersion += 1;
         buyMeACoffeeFeedbackReturn = 0;
+        buyMeACoffeeHelpOpen = false;
         buyMeACoffeeReturnPending = false;
         stopPolling();
         activeOrder = null;
@@ -1481,9 +1482,20 @@
     };
 
     let buyMeACoffeeFeedbackReturn = 0;
+    let buyMeACoffeeHelpOpen = false;
+    $: buyMeACoffeeReturnView = activeOrder?.provider === "buymeacoffee" && activeOrder.status === "CREATED"
+        && (buyMeACoffeeFeedbackReturn > 0 || buyMeACoffeeHelpOpen);
     let buyMeACoffeeReturnPending = false;
     const recheckBuyMeACoffeeFeedback = async () => {
-        if (!activeOrder || orderStatusLoading) return null;
+        if (!activeOrder) return null;
+        const version = paymentViewVersion;
+        const deadline = Date.now() + 10000;
+        if (orderStatusLoading) {
+            while (orderStatusLoading && version === paymentViewVersion && Date.now() < deadline) {
+                await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            return version === paymentViewVersion && !orderStatusLoading ? activeOrder : null;
+        }
         return activeOrder.kind === "membership"
             ? fetchMembershipOrderStatus(activeOrder.id)
             : fetchOrderStatus(activeOrder.id);
@@ -2609,7 +2621,7 @@
                 role="presentation"
                 on:click={clearActiveOrder}
             >
-                <div class="payment-modal" on:click|stopPropagation>
+                <div class="payment-modal" class:return-view={buyMeACoffeeReturnView} on:click|stopPropagation>
                     <div class="payment-header">
                         <div class="payment-title">
                             {#if activeOrder.provider === "buymeacoffee"}
@@ -2632,6 +2644,24 @@
                         </button>
                     </div>
 
+                    {#if buyMeACoffeeReturnView && activeOrder && $clerkUser}
+                        <div class="payment-return-content">
+                            {#key `${$clerkUser.id}:${activeOrder.kind}:${activeOrder.id}`}
+                                <BuyMeACoffeeFeedback
+                                    userId={$clerkUser.id} orderId={activeOrder.id} kind={activeOrder.kind}
+                                    summary={$t(activeOrder.kind === "credit" ? "auth.bmc_credit_order_summary" : "auth.bmc_member_order_summary", {
+                                        count: activeOrder.kind === "credit" ? activeOrder.points : 0,
+                                        days: activeOrder.kind === "membership" ? activeOrder.duration_days : 0,
+                                        price: formatAmount(activeOrder.amount_fen, activeOrder.currency),
+                                    })}
+                                    accountEmail={$clerkUser.primaryEmailAddress?.emailAddress || ""}
+                                    checkoutUrl={buyMeACoffeeCheckoutUrl} statusError={buyMeACoffeeStatusError}
+                                    savedFeedback={activeOrder.provider_data?.bmc_feedback}
+                                    recheck={recheckBuyMeACoffeeFeedback} onCheckout={openBuyMeACoffeeCheckout} onClose={clearActiveOrder}
+                                />
+                            {/key}
+                        </div>
+                    {:else}
                     <div class="subtext payment-subtitle">
                         {#if activeOrder.provider === "buymeacoffee"}
                             {$t(activeOrder.kind === "credit" ? "auth.bmc_credit_order_summary" : "auth.bmc_member_order_summary", {
@@ -2751,15 +2781,9 @@
                             {/if}
 
                             {#if activeOrder.provider === "buymeacoffee" && activeOrder.status === "CREATED" && $clerkUser}
-                                {#key `${$clerkUser.id}:${activeOrder.kind}:${activeOrder.id}`}
-                                    <BuyMeACoffeeFeedback
-                                        userId={$clerkUser.id} orderId={activeOrder.id} kind={activeOrder.kind}
-                                        returnCheck={buyMeACoffeeFeedbackReturn}
-                                        statusError={buyMeACoffeeStatusError}
-                                        savedFeedback={activeOrder.provider_data?.bmc_feedback}
-                                        recheck={recheckBuyMeACoffeeFeedback}
-                                    />
-                                {/key}
+                                <button type="button" class="button elevated" on:click={() => { buyMeACoffeeHelpOpen = true; }}>
+                                    {$t("auth.bmc_feedback_open")}
+                                </button>
                             {/if}
 
                             {#if activeOrder.status !== "PAID" || activeOrder.provider !== "buymeacoffee"}
@@ -2784,6 +2808,7 @@
                             {/if}
                         </div>
                     </div>
+                    {/if}
                 </div>
             </div>
         {/if}
@@ -3808,6 +3833,9 @@
     }
 
     .payment-modal {
+        box-sizing: border-box;
+        max-height: calc(100dvh - var(--padding) * 2);
+        overflow-y: auto;
         width: min(720px, calc(100% - var(--padding) * 2));
         border-radius: 24px;
         background: var(--popup-bg);
@@ -3821,6 +3849,7 @@
     }
 
     .payment-header {
+        flex-shrink: 0;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -3833,6 +3862,9 @@
         letter-spacing: -0.02em;
         font-size: 16px;
     }
+
+    .payment-modal.return-view { width: min(520px, calc(100% - var(--padding) * 2)); overflow: hidden; }
+    .payment-return-content { overflow-y: auto; min-height: 0; padding: 8px 2px 4px; scrollbar-gutter: stable; }
 
     .bmc-creator-identity {
         display: inline-flex;

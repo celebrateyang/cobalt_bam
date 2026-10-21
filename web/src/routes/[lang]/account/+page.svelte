@@ -2695,12 +2695,14 @@
                     </div>
 
                     {#if activeOrder.provider === "buymeacoffee" && activeOrder.status !== "PAID"}
-                        <p class="subtext">{$t("auth.bmc_payment_destination")}</p>
-                        <p class="subtext">{$t(activeOrder.kind === "membership" ? "auth.download_pass_terms" : "auth.bmc_terms", { days: activeOrder.kind === "membership" ? activeOrder.duration_days : 0 })}</p>
-                        {#if activeOrder.kind === "membership"}
-                            <p class="subtext"><strong>{$t("auth.bmc_member_benefits")}</strong></p>
-                        {/if}
-                        <p class="subtext">{$t(activeOrder.kind === "membership" ? "auth.bmc_member_checkout_notice" : "auth.bmc_checkout_notice")}</p>
+                        <div class="bmc-payment-summary">
+                            <p class="subtext">{$t("auth.bmc_payment_destination")}</p>
+                            <p class="subtext">{$t(activeOrder.kind === "membership" ? "auth.download_pass_terms" : "auth.bmc_terms", { days: activeOrder.kind === "membership" ? activeOrder.duration_days : 0 })}</p>
+                            {#if activeOrder.kind === "membership"}
+                                <p class="subtext"><strong>{$t("auth.bmc_member_benefits")}</strong></p>
+                            {/if}
+                            <p class="subtext">{$t(activeOrder.kind === "membership" ? "auth.bmc_member_checkout_notice" : "auth.bmc_checkout_notice")}</p>
+                        </div>
                     {/if}
 
                     <div class="payment-body">
@@ -2717,14 +2719,13 @@
                                 <div class="bmc-payment-code">
                                     <strong>{$t("auth.bmc_email_checkout_hint")}</strong>
                                     <div class="bmc-email-row">
-                                        <input class="bmc-code-input" aria-label={$t("auth.bmc_email_checkout_hint")}
-                                            value={$clerkUser?.primaryEmailAddress?.emailAddress || ""} readonly />
+                                        <span class="bmc-account-email">{$clerkUser?.primaryEmailAddress?.emailAddress || ""}</span>
                                         <button type="button" class="button elevated" on:click={copyBuyMeACoffeeEmail}
                                             disabled={buyMeACoffeeEmailCopyState === "copying" || !$clerkUser?.primaryEmailAddress?.emailAddress}>
                                             {$t(buyMeACoffeeEmailCopyState === "copied" ? "auth.bmc_email_copied" : "auth.bmc_email_copy")}
                                         </button>
                                     </div>
-                                    <p class="subtext">{$t(activeOrder.kind === "membership" ? "auth.bmc_email_member_hint" : "auth.bmc_email_credit_hint")}</p>
+                                    <p class="subtext bmc-email-hint">{$t(activeOrder.kind === "membership" ? "auth.bmc_email_member_hint" : "auth.bmc_email_credit_hint")}</p>
                                     <span class="subtext bmc-email-copy-status" role="status">
                                         {#if buyMeACoffeeEmailCopyState === "failed"}{$t("auth.bmc_email_copy_failed")}
                                         {:else if buyMeACoffeeEmailCopyState === "copied"}{$t("auth.bmc_email_copied")}{/if}
@@ -3994,17 +3995,18 @@
     .bmc-payment-code {
         width: 100%;
         min-height: 240px;
-        padding: 18px;
+        padding: 14px;
         border-radius: 18px;
         background: var(--surface-1);
         box-shadow: 0 0 0 1px var(--surface-2) inset;
         display: flex;
         flex-direction: column;
         justify-content: center;
-        gap: 12px;
+        gap: 10px;
     }
 
-    .bmc-code-input {
+    .bmc-account-email {
+        display: block;
         width: 100%;
         min-width: 0;
         box-sizing: border-box;
@@ -4014,14 +4016,18 @@
         background: var(--surface-2);
         color: var(--text);
         user-select: all;
-        white-space: nowrap;
-        overflow-x: auto;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        line-height: 1.5;
         font-size: 0.75rem;
     }
 
-    .bmc-email-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-    .bmc-email-row .bmc-code-input { flex: 1 1 110px; }
-    .bmc-email-row button { flex: 0 1 auto; white-space: normal; font-size: .75rem; padding: 8px 10px; }
+    .payment-modal > .payment-subtitle { margin: 0; padding: 0; }
+    .bmc-payment-summary { display: grid; gap: 8px; }
+    .bmc-payment-summary p { margin: 0; padding: 0; line-height: 1.45; }
+    .bmc-email-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+    .bmc-email-row button { justify-self: start; max-width: 100%; white-space: normal; font-size: .75rem; padding: 8px 10px; }
+    .bmc-payment-code .bmc-email-hint { margin: 0; padding: 0; font-size: .7rem; line-height: 1.45; }
     .bmc-email-copy-status { min-height: 1.4em; }
 
     .bmc-payment-code :global(a.button) {

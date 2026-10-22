@@ -6,6 +6,7 @@
 
     import { t } from "$lib/i18n/translations";
     import BuyMeACoffeeFeedback from "$lib/payments/BuyMeACoffeeFeedback.svelte";
+    import ShareRewardPanel from "$components/points/ShareRewardPanel.svelte";
     import {
         clerkEnabled,
         clerkLoaded,
@@ -568,6 +569,7 @@
     };
 
     const promotionTypeLabel = (value: string) => {
+        if (value === "share") return $t("dialog.offer.share_button");
         if (value === "post") return $t("auth.promotion_post_type");
         if (value === "video") return $t("auth.promotion_video_type");
         return value;
@@ -1657,6 +1659,12 @@
         if ($page.url.searchParams.has("bmc_order")) return;
         if (!browser || checkoutIntentHandled || !$clerkUser) return;
         const checkoutIntent = $page.url.searchParams.get("checkout");
+        // A quoted offer must resolve to the same provider at checkout.
+        if (checkoutIntent && $page.url.searchParams.get("provider") === "buymeacoffee" &&
+            selectedPaymentProvider !== "buymeacoffee" && !isChinese) {
+            selectPaymentProvider("buymeacoffee");
+            return;
+        }
 
         if (
             checkoutIntent === "membership_3day" ||
@@ -1931,7 +1939,7 @@
                                                     <td class="mono col-time">{formatDateTime(item.created_at)}</td>
                                                     <td>{promotionTypeLabel(item.promotion_type)}</td>
                                                     <td>
-                                                        <div class="records-text">{item.access_method}</div>
+                                                        <div class="records-text">{item.promotion_type === "share" ? "WhatsApp" : item.access_method}</div>
                                                     </td>
                                                     <td>
                                                         <span class={`record-status ${item.status.toLowerCase()}`}>
@@ -2208,15 +2216,18 @@
                             <summary class="accordion-summary">
                                 <div>
                                     <div class="card-title">
-                                        {$t("auth.promotion_title")}
+                                        {isChinese ? $t("auth.promotion_title") : $t("dialog.offer.share_title", { count: 300 })}
                                     </div>
                                     <div class="subtext card-subtitle">
-                                        {$t("auth.promotion_subtitle")}
+                                        {isChinese ? $t("auth.promotion_subtitle") : $t("dialog.offer.share_summary")}
                                     </div>
                                 </div>
                             </summary>
 
                             <div class="accordion-body">
+                                {#if !isChinese}
+                                    <ShareRewardPanel source="account" />
+                                {:else}
                                 <div class="subtext promotion-rules-title">
                                     {$t("auth.promotion_rules")}
                                 </div>
@@ -2274,6 +2285,7 @@
                                         <div class="subtext notice">{promotionSubmitSuccess}</div>
                                     {/if}
                                 </div>
+                                {/if}
                             </div>
                         </details>
                     </section>

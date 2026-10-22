@@ -1,6 +1,7 @@
 import express from "express";
 import { clerkClient, clerkMiddleware, getAuth } from "@clerk/express";
 import { createUserPointsHandler } from "./user-points.js";
+import { awardShareReward, isShareRewardRequest, listShareRewards } from "../db/share-rewards.js";
 
 import {
     consumeUserPoints,
@@ -1033,6 +1034,30 @@ const updatePointsHandler = async (req, res) => {
 router.post("/admin/users/:id/points", requireAdminAuth, updatePointsHandler);
 // Optional: allow PATCH as well for REST-style clients.
 router.patch("/admin/users/:id/points", requireAdminAuth, updatePointsHandler);
+
+router.get("/admin/users/:id/share-rewards", requireAdminAuth, async (req, res) => {
+    const userId = Number(req.params.id);
+    if (!Number.isSafeInteger(userId) || userId <= 0) return jsonError(res, 400, "INVALID_INPUT", "Invalid user id");
+    try {
+        return res.json({ status: "success", data: { rewards: await listShareRewards(userId) } });
+    } catch (error) {
+        console.error("GET share rewards failed:", error);
+        return jsonError(res, 500, "SERVER_ERROR", "Failed to load share rewards");
+    }
+});
+
+router.post("/admin/users/:id/share-rewards", requireAdminAuth, async (req, res) => {
+    const input = { userId: Number(req.params.id), requestId: req.body?.requestId, note: req.body?.note };
+    if (!isShareRewardRequest(input)) return jsonError(res, 400, "INVALID_INPUT", "A request UUID and review note are required");
+    try {
+        const result = await awardShareReward({ ...input, reviewer: req.user?.username || req.user?.email || "admin" });
+        if (!result.ok) return jsonError(res, result.code === "USER_NOT_FOUND" ? 404 : 400, result.code, "Unable to award share reward");
+        return res.json({ status: "success", data: result });
+    } catch (error) {
+        console.error("POST share reward failed:", error);
+        return jsonError(res, 500, "SERVER_ERROR", "Failed to award share reward; retry the same request");
+    }
+});
 
 // Admin-only: list credit orders for a user (paginated)
 router.get("/admin/users/:id/orders", requireAdminAuth, async (req, res) => {
@@ -2734,7 +2759,7 @@ if (!isClerkApiConfigured) {
                         res,
                         400,
                         "INVALID_INPUT",
-                        "promotionType must be 'post' or 'video'",
+                        "promotionType must be 'share', 'post' or 'video'",
                     );
                 }
 

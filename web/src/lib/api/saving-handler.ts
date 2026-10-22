@@ -23,6 +23,7 @@ import { redditPhotoHandoff } from "$lib/api/reddit-photo-handoff";
 import {
     fetchCurrentUserPointsProfile,
     isFirstDownloadGraceEligible,
+    showSingleDownloadOffer,
     showPointsInsufficientDialog,
 } from "$lib/points/ui";
 import {
@@ -644,12 +645,11 @@ export const savingHandler = async ({
                 }
 
                 if (!shouldSuppressError(response.error.code)) {
-                    showPointsInsufficientDialog(
-                        current,
-                        required,
-                        null,
-                        getCurrentRedirectPath(),
-                    );
+                    if (queueMeta) {
+                        showPointsInsufficientDialog(current, required, null, getCurrentRedirectPath());
+                    } else {
+                        showSingleDownloadOffer(current, required, getCurrentRedirectPath());
+                    }
                 }
                 return response;
             }

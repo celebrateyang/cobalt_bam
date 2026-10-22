@@ -1,6 +1,10 @@
 import { getClient, query } from "./pg-client.js";
 
 const PROMOTION_TYPES = Object.freeze({
+    share: {
+        key: "share",
+        requestedPoints: 300,
+    },
     post: {
         key: "post",
         requestedPoints: 50,
@@ -58,13 +62,13 @@ export const getPromotionTypeConfig = (rawType) => {
     return PROMOTION_TYPES[key] ?? null;
 };
 
-export const initPromotionSubmissionsDatabase = async () => {
-    await query(`
+export const initPromotionSubmissionsDatabase = async (runQuery = query) => {
+    await runQuery(`
         CREATE TABLE IF NOT EXISTS user_promotion_submissions (
             id SERIAL PRIMARY KEY,
             user_id INTEGER NOT NULL,
             clerk_user_id TEXT NOT NULL,
-            promotion_type TEXT NOT NULL, -- post | video
+            promotion_type TEXT NOT NULL, -- post | video | share
             access_method TEXT NOT NULL,
             requested_points INTEGER NOT NULL,
             status TEXT NOT NULL DEFAULT 'PENDING', -- PENDING | APPROVED | REJECTED
@@ -78,15 +82,15 @@ export const initPromotionSubmissionsDatabase = async () => {
         );
     `);
 
-    await query(
+    await runQuery(
         `CREATE INDEX IF NOT EXISTS idx_user_promotion_submissions_user_created
          ON user_promotion_submissions(user_id, created_at DESC);`,
     );
-    await query(
+    await runQuery(
         `CREATE INDEX IF NOT EXISTS idx_user_promotion_submissions_status_created
          ON user_promotion_submissions(status, created_at DESC);`,
     );
-    await query(
+    await runQuery(
         `CREATE INDEX IF NOT EXISTS idx_user_promotion_submissions_clerk
          ON user_promotion_submissions(clerk_user_id);`,
     );

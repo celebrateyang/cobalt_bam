@@ -56,6 +56,64 @@
     let saving: Record<number, boolean> = {};
     let copiedUserId: number | null = null;
     let copiedTimeout: ReturnType<typeof setTimeout> | null = null;
+    type ShareReward = { id: number; awarded_points: number; admin_note: string; reviewed_by: string; reviewed_at: number };
+    let rewardDialog: HTMLDialogElement;
+    let rewardUser: AdminUser | null = null;
+    let rewardHistory: ShareReward[] = [];
+    let rewardHistoryLoading = false;
+    let rewardHistoryReady = false;
+    let rewardNote = "";
+    let rewardRequestId = "";
+    let rewardSaving = false;
+    let rewardDone = false;
+    let rewardError = "";
+    const rewardStorageKey = (userId: number) => `fsv_share_reward_pending:${userId}`;
+
+    async function openShareReward(user: AdminUser) {
+        rewardUser = user; rewardHistory = []; rewardNote = ""; rewardError = "";
+        rewardDone = false; rewardHistoryReady = false; rewardHistoryLoading = true;
+        rewardRequestId = crypto.randomUUID();
+        try {
+            const pending = JSON.parse(sessionStorage.getItem(rewardStorageKey(user.id)) || "null");
+            if (pending?.requestId) { rewardRequestId = pending.requestId; rewardNote = pending.note || ""; }
+        } catch { /* Persistence is checked again before submitting. */ }
+        rewardDialog.showModal();
+        try {
+            const response = await fetch(`${currentApiURL()}/user/admin/users/${user.id}/share-rewards`, {
+                headers: { Authorization: `Bearer ${getToken()}` },
+            });
+            const data = await response.json();
+            if (!response.ok || data.status !== "success") throw new Error("Failed to load reward history. Close and retry.");
+            rewardHistory = data.data.rewards;
+            rewardHistoryReady = true;
+        } catch (e) { rewardError = e instanceof Error ? e.message : "Failed to load rewards"; }
+        finally { rewardHistoryLoading = false; }
+    }
+
+    async function grantShareReward() {
+        if (!rewardUser || rewardSaving || rewardDone || !rewardHistoryReady || !rewardNote.trim()) return;
+        const userId = rewardUser.id;
+        rewardSaving = true; rewardError = "";
+        try {
+            // Keep the same approval across retries, closing the dialog, and reloads.
+            sessionStorage.setItem(rewardStorageKey(userId), JSON.stringify({ requestId: rewardRequestId, note: rewardNote }));
+            const response = await fetch(`${currentApiURL()}/user/admin/users/${userId}/share-rewards`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
+                body: JSON.stringify({ requestId: rewardRequestId, note: rewardNote }),
+            });
+            const data = await response.json();
+            if (!response.ok || data.status !== "success") throw new Error(data?.error?.message || "Reward failed. Retry this approval.");
+            const points = data.data.points;
+            const reward = data.data.reward as ShareReward;
+            rewardHistory = [reward, ...rewardHistory.filter(item => item.id !== reward.id)];
+            users = users.map(user => user.id === userId ? { ...user, points } : user);
+            pointsDraft = { ...pointsDraft, [userId]: String(points) };
+            rewardDone = true;
+            try { sessionStorage.removeItem(rewardStorageKey(userId)); } catch { /* Retrying the same UUID stays safe. */ }
+        } catch (e) { rewardError = e instanceof Error ? e.message : "Reward failed. Retry this approval."; }
+        finally { rewardSaving = false; }
+    }
 
     let showOrdersModal = false;
     let activeUser: AdminUser | null = null;
@@ -640,6 +698,8 @@
                                             : "保存"}
                                     </button>
                                 </div>
+                                <button class="btn-secondary" type="button" disabled={saving[user.id]}
+                                    on:click={() => openShareReward(user)}>Share reward +300</button>
                             </td>
                             <td>
                                 <button
@@ -821,7 +881,35 @@
     </div>
 {/if}
 
+<dialog class="reward-dialog" bind:this={rewardDialog} on:cancel={(event) => { if (rewardSaving || rewardHistoryLoading) event.preventDefault(); }}>
+    <h2>Share reward +300</h2>
+    <p class="reward-email">{rewardUser?.primary_email || rewardUser?.clerk_user_id}</p>
+    <p>Review the WhatsApp sharing proof before approving. Each approval adds 300 points.</p>
+    <h3>Recent rewards (up to 50)</h3>
+    {#if rewardHistoryLoading}<p>Loading...</p>
+    {:else if rewardHistory.length === 0}<p>No share rewards recorded.</p>
+    {:else}
+        <ul>{#each rewardHistory as reward}<li>+{reward.awarded_points} · {formatDate(reward.reviewed_at)} · {reward.reviewed_by}<br />{reward.admin_note}</li>{/each}</ul>
+    {/if}
+    <label for="share-reward-note">Review note / proof reference</label>
+    <textarea id="share-reward-note" rows="3" maxlength="4000" bind:value={rewardNote} disabled={rewardSaving || rewardDone}></textarea>
+    {#if rewardError}<p role="alert">{rewardError}</p>{/if}
+    {#if rewardDone}<p role="status">Reward recorded. Balance updated.</p>{/if}
+    <div class="reward-actions">
+        <button class="btn-primary" disabled={rewardSaving || rewardDone || !rewardHistoryReady || !rewardNote.trim()}
+            on:click={grantShareReward}>{rewardSaving ? "Saving..." : "Confirm +300 points"}</button>
+        <button class="btn-secondary" disabled={rewardSaving || rewardHistoryLoading} on:click={() => rewardDialog.close()}>Close</button>
+    </div>
+</dialog>
+
 <style>
+    .reward-dialog { display: block; position: fixed; inset: 0; margin: auto; width: min(520px, calc(100vw - 32px)); height: auto; max-height: 85vh; overflow-y: auto; box-sizing: border-box; padding: 24px; border: 1px solid var(--popup-stroke); border-radius: 16px; background: var(--popup-bg); color: var(--text); }
+    .reward-dialog:not([open]) { display: none; }
+    .reward-dialog::backdrop { display: block; background: rgba(0,0,0,.55); }
+    .reward-dialog p, .reward-dialog li { line-height: 1.6; overflow-wrap: anywhere; }
+    .reward-email { user-select: text; }
+    .reward-dialog textarea { display: block; width: 100%; box-sizing: border-box; margin: 10px 0; }
+    .reward-actions { display: flex; gap: 10px; flex-wrap: wrap; }
     .admin-container {
         width: 100%;
         max-width: 1200px;

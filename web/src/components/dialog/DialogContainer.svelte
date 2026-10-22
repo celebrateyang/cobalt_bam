@@ -6,6 +6,8 @@
 
     export let id: string;
     export let dismissable = true;
+    export let managedCancel = false;
+    export let ariaLabel: string | undefined = undefined;
 
     let dialogParent: HTMLDialogElement;
 
@@ -33,7 +35,13 @@
     }
 </script>
 
-<dialog id="dialog-{id}" bind:this={dialogParent} class:closing class:open>
+<dialog id="dialog-{id}" aria-label={ariaLabel} bind:this={dialogParent} class:closing class:open
+    on:cancel={(event) => {
+        if (managedCancel) {
+            event.preventDefault();
+            if (dismissable) close();
+        }
+    }}>
     <slot></slot>
     <DialogBackdropClose closeFunc={dismissable ? close : () => {}} />
 </dialog>

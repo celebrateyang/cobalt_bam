@@ -56,6 +56,7 @@
     });
 
     const typeLabel = (promotionType: string) => {
+        if (promotionType === "share") return "Website Share (WhatsApp)";
         if (promotionType === "post") return "Post Promotion";
         if (promotionType === "video") return "Video Promotion";
         return promotionType;

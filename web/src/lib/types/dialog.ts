@@ -6,6 +6,7 @@ import type { SaveContext, SaveOutcome } from "$lib/analytics/saving";
 
 export type DialogButton = {
     text: string,
+    description?: string,
     color?: "red",
     main: boolean,
     timeout?: number, // milliseconds
@@ -47,6 +48,13 @@ type SmallDialog = Dialog & {
     bodySubText?: string,
     buttons?: DialogButton[],
     leftAligned?: boolean,
+};
+
+type DownloadOfferDialog = Dialog & {
+    type: "download-offer",
+    currentPoints: number,
+    requiredPoints: number,
+    redirectPath?: string | null,
 };
 
 type PickerDialog = Dialog & {
@@ -128,4 +136,4 @@ type MembershipUpgradeDialog = Dialog & {
     returnPath?: string | null,
 };
 
-export type DialogInfo = SmallDialog | PickerDialog | SavingDialog | TikTokDownloadDialog | PreviewDownloadDialog | BatchDialog | FeedbackDialog | MembershipUpgradeDialog | XinpianchangDownloadDialog | RedditPhotosDialog;
+export type DialogInfo = DownloadOfferDialog | SmallDialog | PickerDialog | SavingDialog | TikTokDownloadDialog | PreviewDownloadDialog | BatchDialog | FeedbackDialog | MembershipUpgradeDialog | XinpianchangDownloadDialog | RedditPhotosDialog;

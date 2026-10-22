@@ -8,11 +8,34 @@
 
 <div class="popup-buttons">
     {#each buttons as button}
-        <DialogButton {button} {closeFunc} />
+        {#if button.description}
+            <div class="described-button">
+                <DialogButton {button} {closeFunc} />
+                <p class="button-description">{button.description}</p>
+            </div>
+        {:else}
+            <DialogButton {button} {closeFunc} />
+        {/if}
     {/each}
 </div>
 
 <style>
+    .described-button {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+    }
+
+    .button-description {
+        margin: 0;
+        font-size: 0.8rem;
+        line-height: 1.4;
+        text-align: center;
+        overflow-wrap: anywhere;
+        opacity: 0.8;
+    }
+
     .popup-buttons {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(min(132px, 100%), 1fr));

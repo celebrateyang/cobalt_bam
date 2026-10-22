@@ -179,6 +179,7 @@ export const showPointsInsufficientDialog = (
       buttons: [
         {
           text: get(t)("dialog.points_insufficient.whatsapp"),
+          description: get(t)("dialog.points_insufficient.whatsapp_hint"),
           main: false,
           action: () => {
             window.open(WHATSAPP_CONTACT_URL, "_blank", "noopener,noreferrer");
@@ -278,5 +279,26 @@ export const showPointsInsufficientDialog = (
         },
       },
     ],
+  });
+};
+
+// Only single-download failures opt into the offer. Batch and Discover retain
+// their existing dialog and navigation behavior.
+export const showSingleDownloadOffer = (
+  currentPoints: number,
+  requiredPoints: number,
+  redirectPath?: string | null,
+) => {
+  if (get(page)?.params?.lang === "zh" || /^\/[^/]+\/discover(?:\/|$)/.test(get(page)?.url?.pathname || "")) {
+    showPointsInsufficientDialog(currentPoints, requiredPoints, null, redirectPath);
+    return;
+  }
+  trackTopupPrompt("view", "single_download", currentPoints, requiredPoints);
+  createDialog({
+    id: "single-download-offer",
+    type: "download-offer",
+    currentPoints,
+    requiredPoints,
+    redirectPath,
   });
 };

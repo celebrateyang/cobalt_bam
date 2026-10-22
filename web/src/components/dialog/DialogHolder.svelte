@@ -2,6 +2,7 @@
     import dialogs from "$lib/state/dialogs";
 
     import SmallDialog from "$components/dialog/SmallDialog.svelte";
+    import DownloadOfferDialog from "$components/dialog/DownloadOfferDialog.svelte";
     import PickerDialog from "$components/dialog/PickerDialog.svelte";
     import SavingDialog from "$components/dialog/SavingDialog.svelte";
     import TikTokDownloadDialog from "$components/dialog/TikTokDownloadDialog.svelte";
@@ -21,7 +22,9 @@
 -->
 <div id="dialog-holder">
     {#each $dialogs as dialog}
-        {#if dialog.type === "small"}
+        {#if dialog.type === "download-offer"}
+            <DownloadOfferDialog {...dialog} />
+        {:else if dialog.type === "small"}
             <SmallDialog {...dialog} />
         {:else if dialog.type === "picker"}
             <PickerDialog {...dialog} />

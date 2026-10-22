@@ -65,7 +65,7 @@ export const trackCheckoutStarted = (item: CommerceItem) => {
 
 export const trackTopupPrompt = (
   action: "view" | "topup" | "membership" | "referral" | "contact" | "dismiss",
-  source: "points_insufficient" | "low_points_balloon",
+  source: "points_insufficient" | "low_points_balloon" | "single_download",
   currentPoints: number,
   requiredPoints?: number,
 ) => {
@@ -167,4 +167,14 @@ export const trackReferralShared = (
   });
   target.clarity?.("set", "referral_share_source", source);
   target.clarity?.("event", "referral_shared");
+};
+
+export const trackShareRewardStep = (
+  step: "view" | "share_opened" | "share_returned" | "share_cancelled" | "copied" | "whatsapp_opened",
+  source: "single_download" | "account",
+) => {
+  try {
+    analyticsWindow().gtag?.("event", "share_reward", { step, source });
+    analyticsWindow().clarity?.("event", `share_reward_${step}`);
+  } catch { /* Analytics must not interrupt sharing. Never include email. */ }
 };

@@ -3,7 +3,18 @@ import test from "node:test";
 
 import ffmpeg from "ffmpeg-static";
 
-import { selectFfmpegExecutable, selectHlsAudioArgs } from "./ffmpeg.js";
+import { selectFfmpegExecutable, selectHlsAudioArgs, selectMp4MovFlags } from "./ffmpeg.js";
+
+test('NAVER HLS streams AAC-LC as MP4 with ADTS conversion and a delayed header', () => {
+    const info = { service: 'naver', isHLS: true, type: 'remux', hlsAudioCodec: 'mp4a.40.2' };
+    assert.deepEqual(selectHlsAudioArgs(info, 'mp4'), ['-c:a', 'copy', '-bsf:a', 'aac_adtstoasc']);
+    assert.match(selectMp4MovFlags(info), /delay_moov/);
+    assert.deepEqual(selectHlsAudioArgs({ ...info, hlsAudioCodec: undefined }, 'mp4'),
+        ['-c:a', 'aac', '-bsf:a', 'aac_adtstoasc']);
+    assert.deepEqual(selectHlsAudioArgs({ ...info, type: 'mute' }, 'mp4'), []);
+    assert.doesNotMatch(selectMp4MovFlags({ ...info, type: 'mute' }), /delay_moov/);
+    assert.doesNotMatch(selectMp4MovFlags({ ...info, isHLS: false }), /delay_moov/);
+});
 
 test("uses the system ffmpeg for Amazon HLS on Linux", () => {
     assert.equal(

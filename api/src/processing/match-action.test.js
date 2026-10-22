@@ -26,6 +26,19 @@ const youtubeResult = {
     duration: 60,
 };
 
+test("NAVER HLS uses a server MP4 remux tunnel even when local processing is forced", () => {
+    for (const localProcessing of ['disabled', 'preferred', 'forced']) {
+        const response = matchAction({ ...baseArgs, host: 'naver', localProcessing,
+            r: { service: 'naver', urls: 'https://cdn.example.com/720.m3u8',
+                isHLS: true, filename: 'naver_720p.mp4', duration: 16672.98 } });
+        assert.equal(response.body.status, 'tunnel');
+        assert.equal(response.body.type, 'remux');
+        assert.equal(response.body.isHLS, true);
+        assert.equal(response.body.filename, 'naver_720p.mp4');
+        assert.match(response.body.url, /\/tunnel\?/);
+    }
+});
+
 test("Pinterest HLS is remuxed to MP4 instead of redirecting to a playlist", () => {
     const url = "https://v1.pinimg.com/videos/iht/hls/example.m3u8";
     const response = matchAction({

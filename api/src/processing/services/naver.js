@@ -1,5 +1,6 @@
 import { genericUserAgent } from "../../config.js";
 import { getRedirectingURL } from "../../misc/utils.js";
+import HLS from "hls-parser";
 
 const CARD_API_URL = "https://creatorhub-api.naver.com/api/v7.0/clipviewer/card";
 
@@ -61,6 +62,19 @@ const collectRepresentations = (playback) => {
             : [set?.Representation].filter(Boolean);
 
         for (const item of items) {
+            const hlsUrl = readFirst(item?.["@nvod:m3u"]);
+            if (typeof hlsUrl === "string" && /^https?:\/\//i.test(hlsUrl)) {
+                // Use the representation playlist, not the set's master, so
+                // FFmpeg cannot silently switch to a different resolution.
+                representations.push({
+                    url: hlsUrl,
+                    height: getResolution(item),
+                    bandwidth: parseNumber(item?.["@bandwidth"]),
+                    isHLS: true,
+                    hlsAudioCodec: String(item?.["@codecs"] || set?.["@codecs"] || "")
+                        .split(",").map(codec => codec.trim()).find(codec => codec.startsWith("mp4a.")),
+                });
+            }
             // A DASH BaseURL with a SegmentTemplate is a directory, not a
             // complete progressive video. Never return it as an MP4 download.
             if (item?.SegmentTemplate || set?.SegmentTemplate) continue;
@@ -78,22 +92,83 @@ const collectRepresentations = (playback) => {
         }
     }
 
-    return representations.filter((item) => item.mimeType.includes("video/mp4") || /\.mp4(?:$|[?#])/i.test(item.url));
+    return representations.filter((item) => item.isHLS || item.mimeType.includes("video/mp4") || /\.mp4(?:$|[?#])/i.test(item.url));
 };
 
-const pickBest = (items, quality) => {
-    if (!items.length) return;
-
+const rankCandidates = (items, quality) => {
     const target = normalizeQuality(quality);
     return items
         .map((item) => ({
             ...item,
             score:
                 (target >= 9000 ? item.height : -Math.abs(item.height - target) * 2)
-                + Math.min(item.bandwidth, 8000) / 10
                 + item.height * 0.1,
         }))
-        .sort((a, b) => b.score - a.score)[0];
+        .sort((a, b) => b.score - a.score
+            || Number(Boolean(a.isHLS)) - Number(Boolean(b.isHLS))
+            || b.bandwidth - a.bandwidth);
+};
+
+const probeMedia = async (url, headers, range, isHlsSegment = false) => {
+    let reader;
+    try {
+        const response = await fetch(url, {
+            headers: { ...headers, range },
+            signal: AbortSignal.timeout(5_000),
+        });
+        reader = response.body?.getReader();
+        const contentType = response.headers.get("content-type") || "";
+        const mediaType = isHlsSegment
+            ? /^(video\/(mp2t|mpeg|mp4)|application\/octet-stream)(?:;|$)/i
+            : /^(video\/mp4|application\/octet-stream)(?:;|$)/i;
+        if (!response.ok
+            || !mediaType.test(contentType)
+            || response.headers.get("content-length") === "0") return false;
+        const chunk = await reader?.read();
+        return Boolean(chunk?.value?.length);
+    } catch {
+        return false;
+    } finally {
+        // A server may ignore Range; never buffer a multi-gigabyte video here.
+        await reader?.cancel().catch(() => {});
+    }
+};
+
+const probeHls = async (url, headers) => {
+    try {
+        const response = await fetch(url, { headers, signal: AbortSignal.timeout(10_000) });
+        if (!response.ok) {
+            await response.body?.cancel();
+            return false;
+        }
+        const manifest = await response.text();
+        if (!manifest.trimStart().startsWith("#EXTM3U")) return false;
+        const playlist = HLS.parse(manifest);
+        if (playlist.isMasterPlaylist || !playlist.segments?.length) return false;
+        const segments = playlist.segments;
+        const samples = [...new Set([0, Math.floor(segments.length / 2), segments.length - 1])];
+        const checks = await Promise.all(samples.map(index => {
+            const segment = segments[index];
+            if (!segment.uri) return false;
+            return probeMedia(new URL(segment.uri, response.url || url).href, headers, "bytes=0-0", true);
+        }));
+        return checks.every(Boolean);
+    } catch {
+        return false;
+    }
+};
+
+const selectPlayable = async (items, quality, headers) => {
+    for (const candidate of rankCandidates(items, quality)) {
+        if (candidate.isHLS) {
+            if (await probeHls(candidate.url, headers)) return candidate;
+            continue;
+        }
+        // Old NAVER encodes may return 403, or serve only cached initial bytes.
+        // Read both ends before issuing a tunnel or charging points.
+        if (await probeMedia(candidate.url, headers, "bytes=0-0")
+            && await probeMedia(candidate.url, headers, "bytes=-1")) return candidate;
+    }
 };
 
 const getSummaryText = (summary, key) => {
@@ -232,21 +307,25 @@ export default async function naver(obj) {
     }
 
     const candidates = collectRepresentations(playback);
-    const selected = pickBest(candidates, obj.quality);
-    if (!selected?.url) {
+    if (!candidates.length) {
         return { error: "fetch.empty" };
     }
+    const headers = {
+        referer: `https://m.naver.com/shorts/?mediaId=${encodeURIComponent(params.mediaId)}`,
+        origin: "https://m.naver.com",
+        "user-agent": genericUserAgent,
+    };
+    const selected = await selectPlayable(candidates, obj.quality, headers);
+    if (!selected) return { error: "fetch.fail" };
 
     const metadata = buildMetadata(content, playback);
     const title = metadata.title || `naver_${params.mediaId}`;
 
     return {
         urls: selected.url,
-        headers: {
-            referer: `https://m.naver.com/shorts/?mediaId=${encodeURIComponent(params.mediaId)}`,
-            origin: "https://m.naver.com",
-            "user-agent": genericUserAgent,
-        },
+        isHLS: selected.isHLS === true,
+        hlsAudioCodec: selected.hlsAudioCodec,
+        headers,
         filenameAttributes: {
             service: "naver",
             id: params.mediaId,

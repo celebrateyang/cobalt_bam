@@ -4,6 +4,20 @@ import test from "node:test";
 import { env } from "../config.js";
 import { createStream, verifyStream, getInternalTunnelFromURL, destroyInternalStream } from "./manage.js";
 
+test("NAVER HLS remux and mute preserve the selected rendition and source headers", async () => {
+    const source = 'https://cdn.example.com/hls/720.m3u8?token=test';
+    const headers = { referer: 'https://m.naver.com/', origin: 'https://m.naver.com' };
+    for (const type of ['remux', 'mute']) {
+        const p = new URL(createStream({ type, url: source, service: 'naver',
+            isHLS: true, hlsAudioCodec: 'mp4a.40.2', filename: 'naver.mp4', headers })).searchParams;
+        const info = await verifyStream(p.get('id'), p.get('sig'), p.get('exp'), p.get('sec'), p.get('iv'));
+        assert.equal(info.urls, source);
+        assert.deepEqual(info.headers, headers);
+        assert.equal(info.isHLS, true);
+        assert.equal(info.hlsAudioCodec, 'mp4a.40.2');
+    }
+});
+
 test("SOOP HLS tunnels preserve CDN inputs and headers for FFmpeg", async (t) => {
     const originalApiURL = env.apiURL;
     env.apiURL = "https://api.example.com/";

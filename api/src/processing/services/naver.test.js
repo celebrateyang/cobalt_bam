@@ -15,9 +15,103 @@ const card = (representations, playable = true) => ({
         }] }] } },
     } } },
 });
+const hls = (height) => ({
+    ...progressive(height, 'https://cdn.example.com/hls/'),
+    '@mimeType': 'video/mp2t', '@bandwidth': '9000000',
+    '@codecs': 'avc1.4d401f,mp4a.40.2',
+    '@nvod:m3u': `https://cdn.example.com/hls/${height}.m3u8?token=test`,
+    SegmentTemplate: [{}],
+});
+const playlist = '#EXTM3U\n#EXT-X-TARGETDURATION:5\n#EXTINF:5,\nfirst.ts?token=test\n#EXTINF:5,\nmiddle.ts?token=test\n#EXTINF:5,\nlast.ts?token=test\n#EXT-X-ENDLIST\n';
+const videoResponse = () => new Response(new Uint8Array([0]), {
+    status: 206, headers: { 'content-type': 'video/mp4' },
+});
+
+test('prefers a readable MP4 over the same-resolution HLS even at a higher HLS bitrate', async t => {
+    const calls = [];
+    t.mock.method(globalThis, 'fetch', async url => {
+        if (url instanceof URL) return { ok: true, json: async () => card([
+            hls(720), progressive(720, 'https://cdn.example.com/720.mp4'),
+        ]) };
+        calls.push(url);
+        return videoResponse();
+    });
+    const result = await naver(params);
+    assert.equal(result.isHLS, false);
+    assert.deepEqual(calls, Array(2).fill('https://cdn.example.com/720.mp4'));
+});
+
+test('uses 720p HLS before a lower-resolution MP4 and checks first, middle and last segments', async t => {
+    const calls = [];
+    t.mock.method(globalThis, 'fetch', async (url, options) => {
+        if (url instanceof URL) return { ok: true, json: async () => card([
+            progressive(480, 'https://cdn.example.com/480.mp4'),
+            hls(720), progressive(720, 'https://cdn.example.com/720.mp4'),
+        ]) };
+        calls.push(url);
+        assert.equal(options.headers.origin, 'https://m.naver.com');
+        if (url.endsWith('/720.mp4')) return new Response('Forbidden', { status: 403 });
+        if (url.includes('.m3u8')) return new Response(playlist);
+        assert.equal(options.headers.range, 'bytes=0-0');
+        return new Response(new Uint8Array([0x47]), { status: 206, headers: { 'content-type': 'video/MP2T' } });
+    });
+    const result = await naver({ ...params, quality: 'max' });
+    assert.equal(result.isHLS, true);
+    assert.equal(result.hlsAudioCodec, 'mp4a.40.2');
+    assert.equal(result.urls, 'https://cdn.example.com/hls/720.m3u8?token=test');
+    assert.equal(result.filenameAttributes.qualityLabel, '720p');
+    assert.equal(result.filenameAttributes.extension, 'mp4');
+    assert.deepEqual(calls, ['https://cdn.example.com/720.mp4',
+        'https://cdn.example.com/hls/720.m3u8?token=test',
+        ...['first', 'middle', 'last'].map(name => `https://cdn.example.com/hls/${name}.ts?token=test`)]);
+});
+
+test('only lowers quality after the same-resolution MP4 and HLS have failed', async t => {
+    for (const failure of ['http', 'html', 'empty', 'master', 'segment']) {
+        const calls = [];
+        t.mock.method(globalThis, 'fetch', async url => {
+            if (url instanceof URL) return { ok: true, json: async () => card([
+                progressive(720, 'https://cdn.example.com/720.mp4'), hls(720),
+                progressive(480, 'https://cdn.example.com/480.mp4'),
+            ]) };
+            calls.push(url);
+            if (url.endsWith('/720.mp4')) return new Response('Forbidden', { status: 403 });
+            if (url.includes('.m3u8')) {
+                if (failure === 'http') return new Response('', { status: 403 });
+                if (failure === 'html') return new Response('<html>error</html>');
+                if (failure === 'empty') return new Response('#EXTM3U\n#EXT-X-TARGETDURATION:5\n#EXT-X-ENDLIST\n');
+                if (failure === 'master') return new Response('#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1280x720\n720.m3u8\n');
+                return new Response(playlist);
+            }
+            if (url.includes('middle.ts')) return new Response('Forbidden', { status: 403 });
+            return videoResponse();
+        });
+        const result = await naver(params);
+        assert.equal(result.isHLS, false, failure);
+        assert.equal(result.filenameAttributes.qualityLabel, '480p', failure);
+        assert.deepEqual(calls.slice(0,2), ['https://cdn.example.com/720.mp4',
+            'https://cdn.example.com/hls/720.m3u8?token=test']);
+        t.mock.restoreAll();
+    }
+});
+
+test('supports a representation HLS playlist even when there is no progressive MP4', async t => {
+    t.mock.method(globalThis, 'fetch', async url => {
+        if (url instanceof URL) return { ok: true, json: async () => card([hls(720)]) };
+        return url.includes('.m3u8') ? new Response(playlist) : videoResponse();
+    });
+    const result = await naver(params);
+    assert.equal(result.isHLS, true);
+    assert.equal(result.filenameAttributes.qualityLabel, '720p');
+});
 
 test('uses the current NAVER v7 API and selects a progressive MP4 instead of a DASH directory', async t => {
     t.mock.method(globalThis, 'fetch', async (url, options) => {
+        if (typeof url === 'string') {
+            assert.equal(url, 'https://cdn.example.com/720.mp4?token=test');
+            assert.ok(['bytes=0-0', 'bytes=-1'].includes(options.headers.range));
+            return new Response(new Uint8Array([0]), { status: 206, headers: { 'content-type': 'video/mp4' } });
+        }
         assert.equal(url.pathname, '/api/v7.0/clipviewer/card');
         assert.equal(url.searchParams.get('seedMediaId'), params.mediaId);
         assert.equal(url.searchParams.get('serviceType'), 'NTV');
@@ -34,6 +128,71 @@ test('uses the current NAVER v7 API and selects a progressive MP4 instead of a D
     assert.equal(result.filenameAttributes.qualityLabel, '720p');
     assert.equal(result.duration, 225.2);
     assert.equal(result.headers.origin, 'https://m.naver.com');
+});
+
+test('SPORTS falls back from forbidden 720p and 480p to a readable 360p MP4', async t => {
+    const probes = [];
+    let cancelled = 0;
+    t.mock.method(globalThis, 'fetch', async (url, options) => {
+        if (url instanceof URL) return { ok: true, json: async () => card([
+            progressive(270, 'https://cdn.example.com/270.mp4'),
+            progressive(720, 'https://cdn.example.com/720.mp4'),
+            progressive(360, 'https://cdn.example.com/360.mp4'),
+            progressive(480, 'https://cdn.example.com/480.mp4'),
+        ]) };
+        probes.push([url, options.headers.range]);
+        assert.equal(options.headers.origin, 'https://m.naver.com');
+        return {
+            ok: url.endsWith('/360.mp4'),
+            headers: new Headers({ 'content-type': 'video/mp4' }),
+            body: { getReader: () => ({
+                read: async () => ({ value: new Uint8Array([0]) }),
+                cancel: async () => { cancelled++; },
+            }) },
+        };
+    });
+    const result = await naver({ ...params, serviceType: 'SPORTS', quality: 'max' });
+    assert.deepEqual(probes, [
+        ['https://cdn.example.com/720.mp4', 'bytes=0-0'],
+        ['https://cdn.example.com/480.mp4', 'bytes=0-0'],
+        ['https://cdn.example.com/360.mp4', 'bytes=0-0'],
+        ['https://cdn.example.com/360.mp4', 'bytes=-1'],
+    ]);
+    assert.equal(cancelled, 4);
+    assert.equal(result.urls, 'https://cdn.example.com/360.mp4');
+    assert.equal(result.filenameAttributes.qualityLabel, '360p');
+});
+
+test('skips an encode with a readable header but a broken tail', async t => {
+    t.mock.method(globalThis, 'fetch', async (url, options) => {
+        if (url instanceof URL) return { ok: true, json: async () => card([
+            progressive(360, 'https://cdn.example.com/360.mp4'),
+            progressive(144, 'https://cdn.example.com/144.mp4'),
+        ]) };
+        if (url.endsWith('/360.mp4') && options.headers.range === 'bytes=-1') {
+            return new Response(new ReadableStream({ start(controller) {
+                controller.error(new Error('terminated'));
+            } }), { status: 206, headers: { 'content-type': 'video/mp4' } });
+        }
+        return new Response(new Uint8Array([0]), { status: 206, headers: { 'content-type': 'video/mp4' } });
+    });
+    const result = await naver({ ...params, quality: 'max' });
+    assert.equal(result.filenameAttributes.qualityLabel, '144p');
+});
+
+test('rejects unreadable media, empty bodies and HTML responses before creating a tunnel', async t => {
+    for (const mediaResponse of [
+        () => new Response('Forbidden', { status: 403 }),
+        () => new Response('<html>error</html>', { headers: { 'content-type': 'text/html' } }),
+        () => new Response(null, { headers: { 'content-type': 'video/mp4', 'content-length': '0' } }),
+        () => { throw new Error('timeout'); },
+    ]) {
+        t.mock.method(globalThis, 'fetch', async url => url instanceof URL
+            ? { ok: true, json: async () => card([progressive(720, 'https://cdn.example.com/720.mp4')]) }
+            : mediaResponse());
+        assert.deepEqual(await naver(params), { error: 'fetch.fail' });
+        t.mock.restoreAll();
+    }
 });
 
 test('reports unavailable content separately from API failures', async t => {

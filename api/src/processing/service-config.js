@@ -1,7 +1,7 @@
 import UrlPattern from "url-pattern";
 
 export const audioIgnore = new Set(["vk", "ok", "loom", "sooplive"]);
-export const hlsExceptions = new Set(["amazon", "dailymotion", "vimeo", "rutube", "bsky", "youtube", "cctv", "bjnews", "niconico", "weibo", "sooplive"]);
+export const hlsExceptions = new Set(["amazon", "dailymotion", "naver", "vimeo", "rutube", "bsky", "youtube", "cctv", "bjnews", "niconico", "weibo", "sooplive"]);
 
 export const services = {
     xinpianchang: {

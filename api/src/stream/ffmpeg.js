@@ -83,8 +83,10 @@ const isGenericHostService = (service) => {
 
 export const selectMp4MovFlags = (streamInfo) => {
     // ADTS-to-ASC produces AAC extradata only after the first audio packet.
-    // Delay iQIYI's fragmented MP4 header until that configuration is available.
-    const delayHeader = streamInfo.service === 'iqiyi' && streamInfo.type !== 'mute';
+    // Delay iQIYI and NAVER HLS MP4 headers until that configuration is available.
+    const delayHeader = (streamInfo.service === 'iqiyi'
+        || (streamInfo.service === 'naver' && streamInfo.isHLS === true))
+        && streamInfo.type !== 'mute';
     return 'faststart+frag_keyframe+empty_moov' + (delayHeader ? '+delay_moov' : '');
 };
 
@@ -93,10 +95,10 @@ export const selectHlsAudioArgs = (streamInfo, format) => {
         return [];
     }
 
-    // The Dailymotion manifest advertises AAC-LC. Preserve its audio instead of
+    // Dailymotion and NAVER manifests can advertise AAC-LC. Preserve it instead of
     // spending CPU re-encoding AAC to AAC; keep the legacy policy for unknown
     // codecs, other containers, and other services with HLS workarounds.
-    if (streamInfo.service === 'dailymotion' && format === 'mp4'
+    if (['dailymotion', 'naver'].includes(streamInfo.service) && format === 'mp4'
         && streamInfo.hlsAudioCodec === 'mp4a.40.2') {
         return ['-c:a', 'copy', '-bsf:a', 'aac_adtstoasc'];
     }

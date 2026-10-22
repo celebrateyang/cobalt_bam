@@ -457,7 +457,7 @@ const shouldUseDirectFfmpegInputs = (streamInfo) =>
     (
         streamInfo?.service === 'iqiyi' ||
         (
-            ['amazon', 'bjnews', 'cctv', 'dailymotion', 'niconico', 'sooplive', 'weibo'].includes(streamInfo?.service) &&
+            ['amazon', 'bjnews', 'cctv', 'dailymotion', 'naver', 'niconico', 'sooplive', 'weibo'].includes(streamInfo?.service) &&
             streamInfo?.isHLS === true
         )
     );

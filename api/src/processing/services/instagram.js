@@ -3,10 +3,11 @@ import { resolveRedirectingURL } from "../url.js";
 import { env, genericUserAgent } from "../../config.js";
 import { createStream } from "../../stream/manage.js";
 import { getCookie, updateCookie } from "../cookie/manager.js";
-import { requestUpstream } from "../upstream/request.js";
+import { requestInstagramUpstream } from "../upstream/instagram.js";
 import { hasUpstreams } from "../upstream/pool.js";
 
 const INSTAGRAM_DEBUG = /^(1|true|yes)$/i.test(process.env.DEBUG_INSTAGRAM || "");
+const IS_UPSTREAM_SERVER = /^(1|true)$/i.test(String(process.env.IS_UPSTREAM_SERVER || "").trim());
 const truncate = (value, max = 250) => {
     const s = String(value ?? "");
     return s.length > max ? s.slice(0, max) + "..." : s;
@@ -158,7 +159,7 @@ export default function instagram(obj) {
 
         try {
             const start = Date.now();
-            const upstream = await requestUpstream({
+            const upstream = await requestInstagramUpstream({
                 payload: { url: String(postUrl) },
                 service: "instagram",
                 timeoutMs,
@@ -788,6 +789,18 @@ export default function instagram(obj) {
         };
         let data, result;
         let gqlUnavailable = false;
+        let upstreamAttempted = false;
+        const tryUpstream = async () => {
+            upstreamAttempted = true;
+            const upstream = await requestUpstreamCobalt(`https://www.instagram.com/p/${id}/`);
+            if (!upstream?.url) return;
+            return {
+                urls: upstream.url,
+                filename: upstream.filename || `instagram_${id}.mp4`,
+                audioFilename: `instagram_${id}_audio`,
+                duration: upstream.duration,
+            };
+        };
         log(
             "getPost start",
             id,
@@ -813,6 +826,12 @@ export default function instagram(obj) {
                 const gqlAnon = await requestGQL(id).catch(() => null);
                 if (isUnavailableFromGql(gqlAnon?.gql_data)) gqlUnavailable = true;
                 data = gqlAnon ?? data;
+            }
+            // Keep the public fast path, but delegate session-dependent posts
+            // before the main API's slower cookie/mobile/embed fallbacks.
+            if (!hasData(data) && !IS_UPSTREAM_SERVER && hasUpstreams()) {
+                const upstream = await tryUpstream();
+                if (upstream) return upstream;
             }
             if (!hasData(data) && cookie) {
                 const gqlCookie = await requestGQL(id, cookie).catch(() => null);
@@ -842,19 +861,14 @@ export default function instagram(obj) {
         } catch {}
 
         if (!hasData(data)) {
-            if (hasUpstreams()) {
+            if (!upstreamAttempted && hasUpstreams()) {
                 const upstreamUrl = `https://www.instagram.com/p/${id}/`;
                 log("getPost", "no data, trying upstream", urlForLog(upstreamUrl));
 
-                const upstream = await requestUpstreamCobalt(upstreamUrl);
-                if (upstream?.url) {
+                const upstream = await tryUpstream();
+                if (upstream) {
                     log("getPost", "upstream ok");
-                    return {
-                        urls: upstream.url,
-                        filename: upstream.filename || `instagram_${id}.mp4`,
-                        audioFilename: `instagram_${id}_audio`,
-                        duration: upstream.duration,
-                    };
+                    return upstream;
                 }
 
                 log("getPost", "upstream failed");

@@ -322,6 +322,7 @@ export const requestUpstream = async ({
     acceptResponse,
     requireStatus = true,
     returnFailureResponse = false,
+    signal,
 } = {}) => {
     const traceId = String(payload?.traceId || randomUUID()).slice(0, 128);
     if (!hasUpstreams()) {
@@ -362,6 +363,7 @@ export const requestUpstream = async ({
 
     for (const regions of regionPlan.groups) {
         for (let groupAttempt = 1; groupAttempt <= attempts; groupAttempt++) {
+            if (signal?.aborted) return null;
             if (attemptNo >= attempts) break;
 
             const node = selectUpstreamNode(excluded, { regions });
@@ -389,6 +391,9 @@ export const requestUpstream = async ({
             const effectiveTimeoutMs = resolveTimeoutMs(timeoutMs);
             const effectiveBodyTimeoutMs = resolveBodyTimeoutMs(bodyTimeoutMs);
             const controller = new AbortController();
+            const abort = () => controller.abort();
+            signal?.addEventListener("abort", abort, { once: true });
+            if (signal?.aborted) controller.abort();
             let phase = "headers";
             let timeout = setTimeout(() => controller.abort(), effectiveTimeoutMs);
             const startedAt = Date.now();
@@ -431,6 +436,7 @@ export const requestUpstream = async ({
                 phase = "body";
                 timeout = setTimeout(() => controller.abort(), effectiveBodyTimeoutMs);
                 const body = await response.json().catch(() => null);
+                if (signal?.aborted) return null;
                 const elapsedMs = Date.now() - startedAt;
                 const bodyMs = elapsedMs - headersMs;
                 const tunnelMs = calculateTunnelMs(elapsedMs, upstreamAppMs);
@@ -523,6 +529,8 @@ export const requestUpstream = async ({
                     upstreamUrl: node.url,
                 };
             } catch (error) {
+                // A faster parallel request won. Cancellation is not a node failure.
+                if (signal?.aborted) return null;
                 const elapsedMs = Date.now() - startedAt;
                 const failure = classifyFetchError(error, phase);
                 const retryable = failure.retryable || isInstagram;
@@ -546,6 +554,7 @@ export const requestUpstream = async ({
                     `[UPSTREAM RETRY] trace_id=${traceId} event=retry_next_node service=${service} failed_upstream=${node.origin} next_attempt=${attemptNo + 1}`,
                 );
             } finally {
+                signal?.removeEventListener("abort", abort);
                 clearTimeout(timeout);
                 node.inFlight = Math.max(0, node.inFlight - 1);
             }

@@ -47,7 +47,9 @@ const createNode = (rawUrl, existing, region) => {
     if (!endpoint) return null;
 
     const parsed = new URL(endpoint);
-    return {
+    // In-flight requests keep references to these objects. Preserve identity
+    // across refreshes so concurrent completions update the live pool state.
+    return Object.assign(existing || {}, {
         url: endpoint,
         origin: parsed.origin,
         region: region || existing?.region || inferRegion(endpoint),
@@ -59,7 +61,7 @@ const createNode = (rawUrl, existing, region) => {
         lastFailureReason: existing?.lastFailureReason ?? "",
         circuitOpenUntil: existing?.circuitOpenUntil ?? 0,
         latencyMs: existing?.latencyMs ?? null,
-    };
+    });
 };
 
 const configuredURLs = () => {

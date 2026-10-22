@@ -1,4 +1,6 @@
 {
+    "offer.opening": "Opening…",
+    "offer.all_plans": "View all plans",
     "offer.title": "Continue your download",
     "offer.balance": "This download needs {{ required }} points. You have {{ current }}; {{ gap }} more needed.",
     "offer.pass_title": "{{ days }}-day download pass",
@@ -21,7 +23,7 @@
     "offer.email_missing": "Please enter your registered email in the message",
     "offer.claim_button": "Claim {{ count }} points on WhatsApp",
     "offer.review_note": "Points are added to your account after we review your share.",
-    "offer.share_text": "I use FreeSaveVideo to download videos. Try it here:",
+    "offer.share_text": "Just found a handy tool called FreeSaveVideo for downloading videos from different sites. Thought I’d share it here in case anyone else finds it useful 👇",
     "offer.whatsapp_message": "Hi, I'd like to claim the {{ count }}-point website sharing reward.\nMy account email: {{ value }}\nI'll attach a screenshot or link to my share here.",
     "offer.copied": "Copied. Share it on your preferred social platform.",
     "offer.copy_manual": "Select and copy the text below to share.",

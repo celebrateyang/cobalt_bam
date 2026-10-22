@@ -1,4 +1,6 @@
 {
+    "offer.opening": "여는 중…",
+    "offer.all_plans": "모든 요금제 보기",
     "offer.title": "다운로드 계속하기",
     "offer.balance": "이번 다운로드에 {{ required }}포인트가 필요합니다. 잔액은 {{ current }}포인트이며 {{ gap }}포인트가 부족합니다.",
     "offer.pass_title": "{{ days }}일 다운로드 패스",
@@ -21,7 +23,7 @@
     "offer.email_missing": "메시지에 가입 이메일을 입력해 주세요",
     "offer.claim_button": "WhatsApp으로 {{ count }}포인트 신청",
     "offer.review_note": "공유 내용을 확인한 후 계정에 포인트를 지급합니다.",
-    "offer.share_text": "저는 FreeSaveVideo로 동영상을 다운로드합니다. 여기서 사용해 보세요:",
+    "offer.share_text": "여러 사이트의 동영상을 다운로드할 수 있는 FreeSaveVideo라는 편리한 도구를 발견했어요. 다른 분들께도 도움이 될 것 같아서 공유해요 👇",
     "offer.whatsapp_message": "안녕하세요. 사이트 공유 보상 {{ count }}포인트를 신청합니다.\n계정 이메일: {{ value }}\n공유한 게시물의 스크린샷이나 링크를 첨부하겠습니다.",
     "offer.copied": "복사했습니다. 원하는 소셜 미디어에 공유하세요.",
     "offer.copy_manual": "아래 문구를 선택하고 복사하여 공유하세요.",

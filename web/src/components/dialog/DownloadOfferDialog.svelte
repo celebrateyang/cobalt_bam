@@ -9,6 +9,8 @@
     import { trackTopupPrompt, trackShareRewardStep } from "$lib/analytics/commerce";
     import DialogContainer from "./DialogContainer.svelte";
     import ShareRewardPanel from "$components/points/ShareRewardPanel.svelte";
+    import OfferIcon from "$components/points/OfferIcon.svelte";
+    import "$lib/points/offer-controls.css";
 
     export let id: string;
     export let currentPoints: number;
@@ -20,7 +22,8 @@
     let pass: Offer | undefined;
     let loading = true;
     let failed = false;
-    let busy = false;
+    let busyAction: "credit" | "membership" | "all_plans" | null = null;
+    $: busy = busyAction !== null;
     let sharing = false;
     let claimOpened = false;
     let checking = false;
@@ -60,15 +63,17 @@
     onMount(() => { void load(); return () => { disposed = true; controller.abort(); }; });
 
     async function buy(kind: "credit" | "membership") {
-        if (busy) return;
-        busy = true;
+        if (busyAction) return;
+        busyAction = kind;
         purchaseError = "";
-        trackTopupPrompt(kind === "credit" ? "topup" : "membership", "single_download", currentPoints, requiredPoints);
-        const target = new URL(accountPath(kind === "credit" ? "topup" : "membership", redirectPath,
-            kind === "credit" ? "credit_199" : "membership_3day"), window.location.origin);
-        target.searchParams.set("provider", OFFER_PROVIDER);
-        try { await goto(`${target.pathname}${target.search}`); close(); }
-        catch { busy = false; purchaseError = $t("dialog.offer.load_failed"); }
+        try {
+            try { trackTopupPrompt(kind === "credit" ? "topup" : "membership", "single_download", currentPoints, requiredPoints); } catch { /* Best-effort analytics. */ }
+            const target = new URL(accountPath(kind === "credit" ? "topup" : "membership", redirectPath,
+                kind === "credit" ? "credit_199" : "membership_3day"), window.location.origin);
+            target.searchParams.set("provider", OFFER_PROVIDER);
+            await goto(`${target.pathname}${target.search}`);
+            close();
+        } catch { busyAction = null; purchaseError = $t("dialog.offer.load_failed"); }
     }
 
     async function checkBalance() {
@@ -88,10 +93,24 @@
         } catch { balanceMessage = $t("dialog.offer.load_failed"); }
         finally { checking = false; }
     }
+
+    async function viewAllPlans() {
+        if (busyAction) return;
+        busyAction = "all_plans";
+        purchaseError = "";
+        try {
+            try { trackTopupPrompt("all_plans", "single_download", currentPoints, requiredPoints); } catch { /* Best-effort analytics. */ }
+            await goto(accountPath("topup", redirectPath));
+            close();
+        } catch {
+            busyAction = null;
+            purchaseError = $t("dialog.offer.load_failed");
+        }
+    }
 </script>
 
 <DialogContainer {id} managedCancel={true} ariaLabel={sharing ? $t("dialog.offer.share_title", { count: SHARE_REWARD_POINTS }) : $t("dialog.offer.title")} bind:close>
-    <div class="dialog-body offer-dialog">
+    <div class="dialog-body offer-dialog offer-controls">
         <header>
             <h2>{sharing ? $t("dialog.offer.share_title", { count: SHARE_REWARD_POINTS }) : $t("dialog.offer.title")}</h2>
             <button class="close" aria-label={$t("dialog.offer.close")} on:click={() => { trackTopupPrompt("dismiss", "single_download", currentPoints, requiredPoints); close(); }}>&times;</button>
@@ -100,10 +119,13 @@
             {#if sharing}
                 <ShareRewardPanel source="single_download" showTitle={false} on:claim={() => claimOpened = true} />
                 {#if claimOpened}
-                    <button class="button elevated" disabled={checking} on:click={checkBalance}>{$t("dialog.offer.check_balance")}</button>
+                    <button class="offer-action" disabled={checking} aria-busy={checking} on:click={checkBalance}>
+                        {#if checking}<span class="offer-spinner" aria-hidden="true"></span>{/if}
+                        <span>{$t("dialog.offer.check_balance")}</span>
+                    </button>
                     <p role="status">{balanceMessage}</p>
                 {/if}
-                <button class="text-button" on:click={() => sharing = false}>{$t("dialog.offer.back")}</button>
+                <button class="offer-action offer-action--link" on:click={() => sharing = false}>{$t("dialog.offer.back")}</button>
             {:else}
                 <div class="purchase-options">
                 <p class="balance">{$t("dialog.offer.balance", { current: currentPoints, required: requiredPoints, gap })}</p>
@@ -111,36 +133,56 @@
                     <p role="status">{$t("dialog.offer.loading")}</p>
                 {:else}
                     {#if pass}
-                        <section class="plan recommended">
-                            <span class="badge">{$t("dialog.offer.recommended")}</span>
+                        <section class="plan offer-card recommended">
                             <div class="plan-heading"><h3>{$t("dialog.offer.pass_title", { days: pass.durationDays })}</h3>
-                            <strong class="price">{price(pass)}</strong></div>
+                            <div class="plan-price"><span class="badge">{$t("dialog.offer.recommended")}</span>
+                            <strong class="price">{price(pass)}</strong></div></div>
                             <p>{$t("dialog.offer.pass_body", { days: pass.durationDays })}</p>
                             <p>{$t("dialog.offer.pass_limit", { count: pass.limits?.dailySuccessfulDownloads })}</p>
                             <p class="note">{$t("dialog.offer.one_time")}</p>
-                            <button class="button elevated active" disabled={busy} on:click={() => buy("membership")}>{$t("dialog.offer.buy_pass", { days: pass.durationDays })}</button>
+                            <button class="offer-action offer-action--primary" disabled={busy} aria-busy={busyAction === "membership"} on:click={() => buy("membership")}>
+                                {#if busyAction === "membership"}<span class="offer-spinner" aria-hidden="true"></span>{/if}
+                                <span>{busyAction === "membership" ? $t("dialog.offer.opening") : $t("dialog.offer.buy_pass", { days: pass.durationDays })}</span>
+                            </button>
                         </section>
                     {/if}
                     {#if credit}
-                        <section class="plan">
+                        <section class="plan offer-card">
                             <div class="plan-heading"><h3>{$t("dialog.offer.credit_title", { count: credit.points })}</h3>
                             <strong class="price">{price(credit)}</strong></div>
                             <p>{$t("dialog.offer.credit_body")}</p>
-                            <button class="button elevated" class:active={!pass} disabled={busy} on:click={() => buy("credit")}>{$t("dialog.offer.buy_credit", { count: credit.points })}</button>
+                            <div class="plan-actions">
+                            <button class="offer-action" class:offer-action--primary={!pass} disabled={busy} aria-busy={busyAction === "credit"} on:click={() => buy("credit")}>
+                                {#if busyAction === "credit"}<span class="offer-spinner" aria-hidden="true"></span>{/if}
+                                <span>{busyAction === "credit" ? $t("dialog.offer.opening") : $t("dialog.offer.buy_credit", { count: credit.points })}</span>
+                            </button>
+                            <button class="offer-action offer-action--link" disabled={busy} aria-busy={busyAction === "all_plans"} on:click={viewAllPlans}>
+                                {#if busyAction === "all_plans"}<span class="offer-spinner" aria-hidden="true"></span>{/if}
+                                <span>{busyAction === "all_plans" ? $t("dialog.offer.opening") : $t("dialog.offer.all_plans")}</span>
+                                {#if busyAction !== "all_plans"}<OfferIcon name="arrow" />{/if}
+                            </button>
+                            </div>
                         </section>
                     {/if}
                     {#if failed || (!credit && !pass)}
                         <p role="status">{$t("dialog.offer.load_failed")}</p>
-                        <button class="text-button" on:click={load}>{$t("dialog.offer.retry")}</button>
+                        <button class="offer-action offer-action--link" on:click={load}>{$t("dialog.offer.retry")}</button>
                     {/if}
                 {/if}
                 {#if purchaseError}<p role="alert">{purchaseError}</p>{/if}
                 </div>
+                {#if !credit}
+                <button class="offer-action offer-action--link" disabled={busy} aria-busy={busyAction === "all_plans"} on:click={viewAllPlans}>
+                    {#if busyAction === "all_plans"}<span class="offer-spinner" aria-hidden="true"></span>{/if}
+                    <span>{busyAction === "all_plans" ? $t("dialog.offer.opening") : $t("dialog.offer.all_plans")}</span>
+                    {#if busyAction !== "all_plans"}<OfferIcon name="arrow" />{/if}
+                </button>
+                {/if}
                 <section class="free-option">
-                    <h3>{$t("dialog.offer.share_title", { count: SHARE_REWARD_POINTS })}</h3>
+                    <h3><span class="reward-icon"><OfferIcon name="gift" /></span><span>{$t("dialog.offer.share_title", { count: SHARE_REWARD_POINTS })}</span></h3>
                     <p>{$t("dialog.offer.share_summary")}</p>
-                    <button class="button elevated" on:click={() => { sharing = true; trackShareRewardStep("view", "single_download"); }}>
-                        {$t("dialog.offer.share_claim", { count: SHARE_REWARD_POINTS })}
+                    <button class="offer-action offer-action--reward" disabled={busy} on:click={() => { sharing = true; trackShareRewardStep("view", "single_download"); }}>
+                        <OfferIcon name="share" /><span>{$t("dialog.offer.share_claim", { count: SHARE_REWARD_POINTS })}</span>
                     </button>
                 </section>
             {/if}
@@ -149,23 +191,35 @@
 </DialogContainer>
 
 <style>
-    .offer-dialog { width: min(440px, calc(100% - 24px)); box-sizing: border-box; max-height: 90dvh; display: flex; flex-direction: column; align-items: stretch; text-align: left; }
+    .offer-dialog { width: min(460px, calc(100% - 24px)); box-sizing: border-box; max-height: 94dvh; display: flex; flex-direction: column; align-items: stretch; text-align: left; color: var(--text); }
     header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-shrink: 0; padding-bottom: 12px; }
     h2 { margin: 0; font-size: 21px; line-height: 1.4; }
-    .close { background: none; border: 0; color: inherit; font-size: 26px; min-width: 36px; min-height: 36px; cursor: pointer; }
-    .offer-content { overflow-y: auto; min-height: 0; display: flex; flex-direction: column; gap: 14px; padding: 2px; }
+    .close { background: transparent; border: 1px solid var(--popup-stroke); box-shadow: none; color: var(--text); font-size: 26px; min-width: 44px; min-height: 44px; padding: 0; border-radius: 12px; cursor: pointer; transition: background-color 160ms ease, border-color 160ms ease; }
+    .close:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+    .offer-content { overflow-y: auto; min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 4px; }
     .offer-content:not(.sharing) { overflow-y: hidden; }
-    .purchase-options { overflow-y: auto; min-height: 0; display: flex; flex-direction: column; gap: 12px; padding: 2px; }
+    .purchase-options { overflow-y: auto; min-height: 0; display: flex; flex-direction: column; gap: 12px; padding: 4px; scrollbar-width: thin; }
     .plan-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px 12px; }
+    .plan-heading h3 { flex: 1 1 120px; min-width: 0; }
+    .plan-price { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+    .plan-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .85fr); gap: 8px; }
+    .plan-actions :global(.offer-action--link) { padding-inline: 6px; font-size: 12px; }
     h3, p { margin: 0; }
     h3 { font-size: 17px; line-height: 1.4; }
     p { font-size: 13px; line-height: 1.6; }
     .balance, .note { color: var(--subtext); }
-    .plan { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 12px; border: 1px solid var(--button-stroke); border-radius: 14px; background: var(--button-elevated); flex-shrink: 0; }
-    .recommended { border-color: var(--accent); }
-    .badge { position: absolute; top: -8px; right: 12px; padding: 0 6px; background: var(--popup-bg); color: var(--accent); font-size: 11px; line-height: 16px; font-weight: 700; }
-    .price { font-size: 22px; white-space: nowrap; }
-    .button { height: auto; min-height: 44px; padding: 10px 14px; white-space: normal; line-height: 1.4; }
-    .free-option { display: flex; flex-direction: column; flex-shrink: 0; gap: 8px; padding-top: 12px; border-top: 1px solid var(--button-stroke); }
-    .text-button { background: none; border: 0; color: var(--text); padding: 6px; min-height: 32px; cursor: pointer; text-decoration: underline; font-size: 13px; flex-shrink: 0; }
+    .plan { position: relative; display: flex; flex-direction: column; gap: 7px; padding: 13px; border: 1px solid color-mix(in srgb, var(--text) 14%, transparent); border-radius: 15px; background: var(--background); box-shadow: 0 1px 3px rgb(0 0 0 / 4%); flex-shrink: 0; transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease; }
+    .recommended { border-color: color-mix(in srgb, var(--accent-strong) 55%, transparent); background: color-mix(in srgb, var(--accent) 7%, var(--background)); }
+    .badge { max-width: 100%; box-sizing: border-box; padding: 3px 8px; border: 1px solid color-mix(in srgb, var(--accent-strong) 25%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--accent) 14%, var(--background)); color: var(--offer-ink); font-size: 10.5px; line-height: 1.25; font-weight: 700; }
+    .price { font-size: 23px; white-space: nowrap; font-variant-numeric: tabular-nums; letter-spacing: -.03em; }
+    .free-option { display: flex; flex-direction: column; flex-shrink: 0; gap: 8px; padding: 12px; border: 1px solid color-mix(in srgb, var(--accent-strong) 18%, transparent); border-radius: 15px; background: color-mix(in srgb, var(--accent) 4%, var(--popup-bg)); }
+    .free-option h3 { display: flex; align-items: center; gap: 9px; color: var(--offer-ink); font-size: 16px; }
+    .reward-icon { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; flex: 0 0 30px; border-radius: 9px; background: color-mix(in srgb, var(--accent) 15%, var(--popup-bg)); }
+    .reward-icon :global(svg) { width: 19px; height: 19px; }
+    .offer-content > .offer-action { flex-shrink: 0; }
+    @media (hover: hover) and (pointer: fine) {
+        .plan:hover { border-color: color-mix(in srgb, var(--accent-strong) 65%, transparent); box-shadow: 0 4px 12px rgb(0 0 0 / 8%); transform: translateY(-1px); }
+        .close:hover { background: var(--button-hover); border-color: color-mix(in srgb, var(--text) 25%, transparent); }
+    }
+    @media (prefers-reduced-motion: reduce) { .close { transition: none; } }
 </style>

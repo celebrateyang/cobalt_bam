@@ -1,4 +1,6 @@
 {
+    "offer.opening": "開いています…",
+    "offer.all_plans": "すべてのプランを見る",
     "offer.title": "ダウンロードを続ける",
     "offer.balance": "今回必要なポイント：{{ required }}。残高：{{ current }}。あと {{ gap }} ポイント必要です。",
     "offer.pass_title": "{{ days }} 日間ダウンロードパス",
@@ -21,7 +23,7 @@
     "offer.email_missing": "メッセージに登録メールアドレスを入力してください",
     "offer.claim_button": "WhatsApp で {{ count }} ポイントを申請",
     "offer.review_note": "シェア内容の確認後、アカウントにポイントを付与します。",
-    "offer.share_text": "動画のダウンロードに FreeSaveVideo を使っています。こちらから試せます：",
+    "offer.share_text": "いろんなサイトの動画をダウンロードできる、FreeSaveVideo という便利なツールを見つけました。誰かの役に立つかもと思ったのでシェアします 👇",
     "offer.whatsapp_message": "こんにちは。サイトのシェア特典 {{ count }} ポイントを申請します。\n登録メールアドレス：{{ value }}\nシェアした投稿のスクリーンショットまたはリンクを添付します。",
     "offer.copied": "コピーしました。普段使う SNS にシェアしてください。",
     "offer.copy_manual": "下の文章を選択してコピーし、シェアしてください。",

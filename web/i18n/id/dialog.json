@@ -1,4 +1,6 @@
 {
+    "offer.opening": "Membuka…",
+    "offer.all_plans": "Lihat semua paket",
     "offer.title": "Lanjutkan unduhan Anda",
     "offer.balance": "Unduhan ini memerlukan {{ required }} poin. Anda memiliki {{ current }}; kurang {{ gap }} lagi.",
     "offer.pass_title": "Pas unduhan {{ days }} hari",
@@ -21,7 +23,7 @@
     "offer.email_missing": "Masukkan email terdaftar Anda dalam pesan",
     "offer.claim_button": "Ajukan {{ count }} poin via WhatsApp",
     "offer.review_note": "Poin ditambahkan ke akun setelah kami memeriksa postingan Anda.",
-    "offer.share_text": "Saya menggunakan FreeSaveVideo untuk mengunduh video. Coba di sini:",
+    "offer.share_text": "Baru nemu alat praktis namanya FreeSaveVideo buat mengunduh video dari berbagai situs. Aku bagikan di sini, siapa tahu kalian juga butuh 👇",
     "offer.whatsapp_message": "Halo, saya ingin mengajukan hadiah {{ count }} poin karena membagikan situs.\nEmail akun saya: {{ value }}\nSaya akan melampirkan tangkapan layar atau tautan postingan di sini.",
     "offer.copied": "Tersalin. Bagikan di media sosial pilihan Anda.",
     "offer.copy_manual": "Pilih dan salin teks di bawah untuk dibagikan.",

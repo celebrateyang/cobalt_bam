@@ -1,4 +1,6 @@
 {
+    "offer.opening": "正在打开…",
+    "offer.all_plans": "查看更多方案",
     "offer.title": "继续下载这个视频",
     "offer.balance": "本次需要 {{ required }} 积分，当前余额 {{ current }} 积分，还差 {{ gap }} 积分。",
     "offer.pass_title": "{{ days }} 天下载通行证",
@@ -21,7 +23,7 @@
     "offer.email_missing": "请在消息中补充注册邮箱",
     "offer.claim_button": "通过 WhatsApp 申请 {{ count }} 积分",
     "offer.review_note": "我们确认分享后，会将积分发放到你的账号。",
-    "offer.share_text": "我在使用 FreeSaveVideo 下载视频，你也可以试试：",
+    "offer.share_text": "刚发现一个挺方便的视频下载工具，叫 FreeSaveVideo，可以下载不同网站的视频。分享出来，说不定你们也用得上 👇",
     "offer.whatsapp_message": "你好，我想申请分享网站的 {{ count }} 积分奖励。\n我的注册邮箱：{{ value }}\n我会在这里附上分享截图或链接。",
     "offer.copied": "已复制，请分享到你常用的社交平台。",
     "offer.copy_manual": "请选中并复制下方内容进行分享。",

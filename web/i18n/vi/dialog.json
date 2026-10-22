@@ -1,4 +1,6 @@
 {
+    "offer.opening": "Đang mở…",
+    "offer.all_plans": "Xem tất cả các gói",
     "offer.title": "Tiếp tục tải xuống",
     "offer.balance": "Lượt tải này cần {{ required }} điểm. Bạn có {{ current }} điểm; còn thiếu {{ gap }} điểm.",
     "offer.pass_title": "Gói tải xuống {{ days }} ngày",
@@ -21,7 +23,7 @@
     "offer.email_missing": "Hãy điền email đăng ký vào tin nhắn",
     "offer.claim_button": "Yêu cầu {{ count }} điểm qua WhatsApp",
     "offer.review_note": "Điểm được cộng vào tài khoản sau khi chúng tôi kiểm tra bài chia sẻ.",
-    "offer.share_text": "Tôi dùng FreeSaveVideo để tải video. Hãy thử tại đây:",
+    "offer.share_text": "Mới tìm được một công cụ khá tiện tên là FreeSaveVideo để tải video từ nhiều trang khác nhau. Chia sẻ ở đây, biết đâu mọi người cũng cần 👇",
     "offer.whatsapp_message": "Xin chào, tôi muốn nhận thưởng {{ count }} điểm vì đã chia sẻ trang web.\nEmail tài khoản của tôi: {{ value }}\nTôi sẽ đính kèm ảnh chụp màn hình hoặc liên kết bài chia sẻ tại đây.",
     "offer.copied": "Đã sao chép. Hãy chia sẻ lên mạng xã hội bạn muốn.",
     "offer.copy_manual": "Chọn và sao chép nội dung bên dưới để chia sẻ.",

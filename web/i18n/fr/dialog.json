@@ -1,4 +1,6 @@
 {
+    "offer.opening": "Ouverture…",
+    "offer.all_plans": "Voir toutes les offres",
     "offer.title": "Continuez votre téléchargement",
     "offer.balance": "Ce téléchargement nécessite {{ required }} points. Vous en avez {{ current }} ; il en manque {{ gap }}.",
     "offer.pass_title": "Pass de téléchargement de {{ days }} jours",
@@ -21,7 +23,7 @@
     "offer.email_missing": "Indiquez votre e-mail d’inscription dans le message",
     "offer.claim_button": "Demander {{ count }} points sur WhatsApp",
     "offer.review_note": "Les points sont ajoutés à votre compte après vérification de votre partage.",
-    "offer.share_text": "J’utilise FreeSaveVideo pour télécharger des vidéos. Essayez ici :",
+    "offer.share_text": "Je viens de découvrir un outil bien pratique, FreeSaveVideo, pour télécharger des vidéos depuis différents sites. Je vous le partage ici, ça pourra peut-être vous servir aussi 👇",
     "offer.whatsapp_message": "Bonjour, je souhaite demander les {{ count }} points pour le partage du site.\nE-mail de mon compte : {{ value }}\nJe joindrai ici une capture ou un lien vers mon partage.",
     "offer.copied": "Copié. Partagez sur votre réseau social préféré.",
     "offer.copy_manual": "Sélectionnez et copiez le texte ci-dessous pour le partager.",

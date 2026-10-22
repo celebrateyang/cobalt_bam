@@ -10,6 +10,92 @@ import {
 import { env } from "../../config.js";
 import { refreshUpstreamPool } from "./pool.js";
 
+const setupInstagramPool = (t) => {
+    const keys = ["upstreamURLs", "upstreamCnURLs", "upstreamGlobalURLs",
+        "upstreamMaxAttempts", "apiURL"];
+    const previous = Object.fromEntries(keys.map((key) => [key, env[key]]));
+    const originalFetch = globalThis.fetch;
+    t.after(() => {
+        Object.assign(env, previous);
+        globalThis.fetch = originalFetch;
+        refreshUpstreamPool();
+    });
+    // Reset the cursor and circuit state for deterministic node selection.
+    env.upstreamURLs = env.upstreamCnURLs = env.upstreamGlobalURLs = [];
+    refreshUpstreamPool();
+    env.apiURL = "http://localhost:9000/";
+    env.upstreamMaxAttempts = 2;
+    env.upstreamCnURLs = ["https://api2.freesavevideo.online"];
+    env.upstreamGlobalURLs = [3, 5, 7].map((n) => `https://api${n}.freesavevideo.online`);
+    refreshUpstreamPool();
+    return env.upstreamGlobalURLs;
+};
+
+test("Instagram reaches the third global node after timeout and missing-session errors", async (t) => {
+    const nodes = setupInstagramPool(t);
+    const called = [];
+    globalThis.fetch = async (url, { signal }) => {
+        called.push(new URL(url).origin);
+        if (called.length === 1) {
+            return new Promise((resolve, reject) => {
+                signal.addEventListener("abort", () => reject(signal.reason), { once: true });
+            });
+        }
+        if (called.length === 2) {
+            return Response.json({ status: "error", error: { code: "error.api.fetch.empty" } }, { status: 400 });
+        }
+        return Response.json({ status: "redirect", url: "https://cdn.example/video.mp4" });
+    };
+    const result = await requestUpstream({
+        service: "instagram", payload: { url: "https://www.instagram.com/reel/example/" },
+        timeoutMs: 10,
+        acceptResponse: ({ body }) => body.status === "redirect",
+    });
+    assert.deepEqual(called, nodes);
+    assert.equal(result.upstreamOrigin, nodes[2]);
+    assert.equal(result.body.status, "redirect");
+});
+
+test("Instagram stops when an earlier node gains a working session", async (t) => {
+    const nodes = setupInstagramPool(t);
+    const called = [];
+    globalThis.fetch = async (url) => {
+        called.push(new URL(url).origin);
+        return called.length === 1
+            ? Response.json({ status: "error", error: { code: "error.api.fetch.empty" } }, { status: 400 })
+            : Response.json({ status: "redirect", url: "https://cdn.example/video.mp4" });
+    };
+    const result = await requestUpstream({ service: "instagram", payload: { url: "https://www.instagram.com/p/example/" } });
+    assert.deepEqual(called, nodes.slice(0, 2));
+    assert.equal(result.upstreamOrigin, nodes[1]);
+});
+
+test("Instagram tries each node once when all sessions fail", async (t) => {
+    const nodes = setupInstagramPool(t);
+    const called = [];
+    globalThis.fetch = async (url) => {
+        called.push(new URL(url).origin);
+        return Response.json({ status: "error", error: { code: "error.api.fetch.empty" } }, { status: 400 });
+    };
+    const result = await requestUpstream({ service: "instagram", payload: { url: "https://www.instagram.com/p/example/" } });
+    assert.deepEqual(called, nodes);
+    assert.equal(result.body.error.code, "error.api.fetch.empty");
+});
+
+test("other services retain their timeout stop behavior", async (t) => {
+    const nodes = setupInstagramPool(t);
+    const called = [];
+    globalThis.fetch = async (url, { signal }) => {
+        called.push(new URL(url).origin);
+        return new Promise((resolve, reject) => {
+            signal.addEventListener("abort", () => reject(signal.reason), { once: true });
+        });
+    };
+    const result = await requestUpstream({ service: "twitter", payload: { url: "https://twitter.com/example/status/123" }, timeoutMs: 10 });
+    assert.deepEqual(called, nodes.slice(0, 1));
+    assert.equal(result.body.error.code, "error.api.upstream.timeout");
+});
+
 test("forwards the Bilibili Direct Bridge intent to a regional upstream", () => {
     assert.deepEqual(
         buildUpstreamDownloadBody({

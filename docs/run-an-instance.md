@@ -202,7 +202,7 @@ sudo service nscd start
 | `UPSTREAM_TIMEOUT_MS` | `12000` | `8000` | headers wait timeout (ms) for ordinary upstream fallback requests. supersedes `INSTAGRAM_UPSTREAM_TIMEOUT_MS` when set. |
 | `UPSTREAM_YOUTUBE_HEADERS_TIMEOUT_MS` | `20000` | `20000` | YouTube-specific upstream headers wait timeout (ms). Allows normal yt-dlp work to finish without using the same budget for JSON body transfer. |
 | `UPSTREAM_BODY_TIMEOUT_MS` | `5000` | `5000` | timeout (ms) for reading the upstream JSON response after headers arrive. |
-| `UPSTREAM_MAX_ATTEMPTS` | `2` | `1` | maximum upstream nodes to try for one request. single-node pools are tried once. |
+| `UPSTREAM_MAX_ATTEMPTS` | `2` | `1` | maximum upstream nodes to try for one request. Instagram download fallback tries each eligible global node once instead, unless the caller supplies an explicit attempt limit. single-node pools are tried once. |
 | `UPSTREAM_CIRCUIT_FAILURES` | `3` | `3` | consecutive node-level failures before an upstream is temporarily removed from selection. |
 | `UPSTREAM_CIRCUIT_COOLDOWN_MS` | `60000` | `120000` | cooldown before a failed upstream node can be tried again. |
 | `UPSTREAM_HEALTH_CHECK_INTERVAL_MS` | `600000` | `600000` | active upstream `/health` polling interval on the main API. Set to 600000 for 10 minutes. |
@@ -246,6 +246,8 @@ When multiple upstream URLs are configured, the API tracks node-level failures a
 Each upstream request carries `X-FSV-Trace-ID`. Main API logs split `headers_ms`, `body_ms`, `upstream_app_ms`, and inferred `tunnel_ms`; the upstream app logs the same trace around request receipt, yt-dlp start/completion, and response start/completion. Timeout failures are not automatically replayed on another node because the first node may still be finishing expensive extraction work. Network failures can still use node-level failover.
 
 Upstream nodes are region-aware. By default, hostnames matching `api<number>.freesavevideo.online` are classified by parity: odd numbers are `global`, even numbers are `cn`. Foreign services such as YouTube, Amazon Live, Instagram, X/Twitter, Facebook, TikTok, and NicoNico use global upstreams only. China services such as Douyin, Bilibili, Kuaishou, Haokan, Xiaohongshu, and CCTV prefer `cn` upstreams and automatically fall back to `global` upstreams when cn nodes are unavailable or fail. Use `UPSTREAM_GLOBAL_URLS` and `UPSTREAM_CN_URLS` to override or extend the automatic classification.
+
+Instagram download fallback continues to another eligible global node after a parsing error or a per-node timeout, since nodes may have different login sessions. It stops at the first accepted result or after trying each eligible node once. Self and circuit-open nodes are skipped. Each attempt retains the configured header and body timeouts, so larger pools can increase total fallback latency. No hostname is pinned: adding a working Instagram cookie to an existing node lets it serve subsequent requests without changing the main API's routing code.
 
 The main API actively checks each upstream node's `/health` endpoint every `UPSTREAM_HEALTH_CHECK_INTERVAL_MS` milliseconds (default 10 minutes). Health check failures use the same circuit-breaker settings as request failures, so set `UPSTREAM_CIRCUIT_FAILURES=1` if a single failed health check should immediately remove a node from routing until cooldown.
 

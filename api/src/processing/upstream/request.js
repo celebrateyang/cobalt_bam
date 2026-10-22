@@ -338,7 +338,6 @@ export const requestUpstream = async ({
             : null;
     }
 
-    const attempts = resolveMaxAttempts(maxAttempts);
     const excluded = new Set();
     if (Array.isArray(allowedUpstreamOrigins)) {
         const allowed = new Set(allowedUpstreamOrigins.map(value => new URL(value).origin));
@@ -348,6 +347,16 @@ export const requestUpstream = async ({
     }
     const targetHost = targetHostForLog(payload);
     const regionPlan = resolveRegionPlan({ service, targetHost, path });
+    // Instagram nodes can have different login sessions. Try every eligible
+    // node before giving up, rather than limiting the pool to two attempts.
+    const isInstagram = service === "instagram";
+    const attempts = isInstagram && maxAttempts === undefined
+        ? Math.max(1, getUpstreamNodes().filter((node) =>
+            !excluded.has(node.url)
+            && !isSelfOrigin(node.origin)
+            && regionPlan.groups.some((regions) => regions.includes(node.region))
+        ).length)
+        : resolveMaxAttempts(maxAttempts);
     let attemptNo = 0;
     let lastErrorResult = null;
 
@@ -516,6 +525,7 @@ export const requestUpstream = async ({
             } catch (error) {
                 const elapsedMs = Date.now() - startedAt;
                 const failure = classifyFetchError(error, phase);
+                const retryable = failure.retryable || isInstagram;
                 const reason = failure.reason;
                 markUpstreamFailure(node, reason);
                 if (returnFailureResponse || !lastErrorResult) {
@@ -527,9 +537,9 @@ export const requestUpstream = async ({
                     });
                 }
                 console.warn(
-                    `[UPSTREAM FAILOVER] trace_id=${traceId} event=${failure.code} phase=${phase} service=${service} upstream=${node.origin} region=${node.region} reason=${reason} total_ms=${elapsedMs} retryable=${failure.retryable}`,
+                    `[UPSTREAM FAILOVER] trace_id=${traceId} event=${failure.code} phase=${phase} service=${service} upstream=${node.origin} region=${node.region} reason=${reason} total_ms=${elapsedMs} retryable=${retryable}`,
                 );
-                if (!failure.retryable) {
+                if (!retryable) {
                     return lastErrorResult?.upstreamFailure ? lastErrorResult : null;
                 }
                 console.warn(

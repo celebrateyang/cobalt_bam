@@ -4,6 +4,7 @@ import { env, genericUserAgent } from "../../config.js";
 import { createStream } from "../../stream/manage.js";
 import { getCookie, updateCookie } from "../cookie/manager.js";
 import { requestUpstream } from "../upstream/request.js";
+import { hasUpstreams } from "../upstream/pool.js";
 
 const INSTAGRAM_DEBUG = /^(1|true|yes)$/i.test(process.env.DEBUG_INSTAGRAM || "");
 const truncate = (value, max = 250) => {
@@ -841,7 +842,7 @@ export default function instagram(obj) {
         } catch {}
 
         if (!hasData(data)) {
-            if (Array.isArray(env.upstreamURLs) && env.upstreamURLs.length > 0) {
+            if (hasUpstreams()) {
                 const upstreamUrl = `https://www.instagram.com/p/${id}/`;
                 log("getPost", "no data, trying upstream", urlForLog(upstreamUrl));
 

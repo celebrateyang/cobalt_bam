@@ -160,6 +160,9 @@ function aliasURL(url) {
                 url = new URL(`https://naver.com/_shortLink/${
                     encodeURIComponent(parts[1])
                 }`);
+            } else if (["m.blog.naver.com", "blog.naver.com"].includes(url.hostname)
+                && /^\/[A-Za-z0-9_-]{1,64}\/clip\/\d{1,18}\/?$/.test(url.pathname)) {
+                url = new URL(`https://naver.com/_blogClip/${parts[1]}/${parts[3]}`);
             } else if (/^\/shorts\/oembed\/?$/.test(url.pathname)) {
                 // Embedded/share players identify the same video as /shorts.
                 url.pathname = "/shorts";

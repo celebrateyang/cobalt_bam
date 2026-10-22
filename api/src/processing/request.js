@@ -212,24 +212,30 @@ export function createResponse(responseType, responseData) {
 
             case "local-processing":
                 const shouldExposeDirectSource =
-                    responseData?.frontendProcessing === "hls" &&
-                    responseData?.isHLS === true;
+                    responseData?.frontendProcessing === "direct" || (
+                        responseData?.frontendProcessing === "hls" &&
+                        responseData?.isHLS === true
+                    );
+                const browserOnly = responseData?.service === "naver" && shouldExposeDirectSource;
+                // NAVER media allows CORS, but its thumbnail CDN does not.
+                // An optional cover must not block a direct media download.
+                const processingCover = browserOnly ? undefined : responseData?.cover;
 
                 response = {
                     type: responseData?.type,
                     service: responseData?.service,
-                    tunnel: createProxyTunnels(responseData),
+                    tunnel: browserOnly ? [] : createProxyTunnels(responseData),
                     source: shouldExposeDirectSource
                         ? {
-                            kind: "hls",
+                            kind: responseData.frontendProcessing,
                             urls: Array.isArray(responseData?.url)
                                 ? responseData.url
                                 : [responseData?.url].filter(Boolean),
                             subtitles: responseData?.subtitles || undefined,
-                            cover: responseData?.cover || undefined,
+                            cover: processingCover || undefined,
                         }
                         : undefined,
-                    fallback: shouldExposeDirectSource
+                    fallback: shouldExposeDirectSource && !browserOnly
                         ? {
                             type: "tunnel",
                             url: createStream(responseData),
@@ -248,7 +254,7 @@ export function createResponse(responseType, responseData) {
                         copy: responseData?.audioCopy,
                         format: responseData?.audioFormat,
                         bitrate: responseData?.audioBitrate,
-                        cover: !!responseData?.cover || undefined,
+                        cover: !!processingCover || undefined,
                         cropCover: !!responseData?.cropCover || undefined,
                     },
 

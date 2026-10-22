@@ -99,7 +99,7 @@ export type CobaltLocalProcessingResponse = {
         cropCover?: boolean,
     },
     source?: {
-        kind: 'hls',
+        kind: 'hls' | 'direct',
         urls: string[],
         subtitles?: string,
         cover?: string,

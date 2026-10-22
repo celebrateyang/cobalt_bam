@@ -87,6 +87,7 @@ export const testers = {
         /^(?:[a-z]{2})?\d{1,16}$/i.test(pattern.id || ""),
 
     "naver": pattern =>
+        (/^[A-Za-z0-9_-]{1,64}$/.test(pattern.blogId || "") && /^\d{1,18}$/.test(pattern.clipId || "")) ||
         pattern.shortLink?.length <= 32 ||
         /^[0-9A-F]{16,64}$/i.test(pattern.mediaId || ""),
 

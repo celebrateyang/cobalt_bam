@@ -133,7 +133,7 @@ const makeRemuxArgs = (info: CobaltLocalProcessingResponse) => {
     }
 
     if (
-        info.service === "weibo" &&
+        ["weibo", "naver"].includes(info.service || "") &&
         info.source?.kind === "hls" &&
         info.output.filename.endsWith(".mp4")
     ) {
@@ -227,7 +227,7 @@ const buildFetchValidation = (info: CobaltLocalProcessingResponse) => {
 };
 
 const getDirectInputSources = (info: CobaltLocalProcessingResponse) => {
-    if (info.source?.kind !== "hls" || !Array.isArray(info.source.urls)) {
+    if (!["hls", "direct"].includes(info.source?.kind || "") || !Array.isArray(info.source?.urls)) {
         return;
     }
 
@@ -321,7 +321,7 @@ export const createSavePipeline = (
                         url: source,
                     },
                 });
-            } else {
+            } else if (info.source?.kind === "hls") {
                 pipeline.push({
                     worker: "hls-fetch",
                     workerId: uuid(),
@@ -329,6 +329,18 @@ export const createSavePipeline = (
                     workerArgs: {
                         url: source,
                         mimeType: getDirectSourceMimeType(info, source),
+                    },
+                });
+            } else {
+                pipeline.push({
+                    worker: "fetch",
+                    workerId: uuid(),
+                    parentId,
+                    workerArgs: {
+                        url: source,
+                        // NAVER allows CORS but does not expose Content-Range.
+                        // Stream the full MP4 instead of relying on range probes.
+                        tuning: { useRangeRequests: false },
                     },
                 });
             }

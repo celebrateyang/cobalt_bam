@@ -26,16 +26,34 @@ const youtubeResult = {
     duration: 60,
 };
 
-test("NAVER HLS uses a server MP4 remux tunnel even when local processing is forced", () => {
+test("NAVER HLS uses direct browser remux with no automatic server fallback", () => {
     for (const localProcessing of ['disabled', 'preferred', 'forced']) {
         const response = matchAction({ ...baseArgs, host: 'naver', localProcessing,
+            alwaysProxy: true,
             r: { service: 'naver', urls: 'https://cdn.example.com/720.m3u8',
-                isHLS: true, filename: 'naver_720p.mp4', duration: 16672.98 } });
-        assert.equal(response.body.status, 'tunnel');
+                isHLS: true, filename: 'naver_720p.mp4', duration: 16672.98,
+                cover:'https://phinf.pstatic.net/no-cors.jpg' } });
+        assert.equal(response.body.status, 'local-processing');
         assert.equal(response.body.type, 'remux');
         assert.equal(response.body.isHLS, true);
-        assert.equal(response.body.filename, 'naver_720p.mp4');
-        assert.match(response.body.url, /\/tunnel\?/);
+        assert.equal(response.body.output.filename, 'naver_720p.mp4');
+        assert.deepEqual(response.body.source, {kind:'hls',urls:['https://cdn.example.com/720.m3u8'],subtitles:undefined,cover:undefined});
+        assert.deepEqual(response.body.tunnel, []);
+        assert.equal(response.body.fallback, undefined);
+    }
+});
+
+test('NAVER progressive MP4, mute and audio use browser sources without proxy tunnels', () => {
+    for (const mode of ['video', 'mute', 'audio']) {
+        const response = matchAction({ ...baseArgs, host: 'naver', alwaysProxy: true,
+            isAudioOnly: mode === 'audio', isAudioMuted: mode === 'mute',
+            r: { service:'naver', urls:'https://cdn.example.com/720.mp4', filename:'naver_720p.mp4', audioFilename:'naver_audio' } });
+        assert.equal(response.body.status, 'local-processing');
+        assert.equal(response.body.source.kind, 'direct');
+        assert.deepEqual(response.body.source.urls, ['https://cdn.example.com/720.mp4']);
+        assert.deepEqual(response.body.tunnel, []);
+        assert.equal(response.body.fallback, undefined);
+        assert.equal(response.body.type, mode === 'video' ? 'proxy' : mode);
     }
 });
 

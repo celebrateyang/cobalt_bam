@@ -5,6 +5,19 @@ import { extract, normalizeURL } from './url.js';
 const enabled = new Set(['naver']);
 const mediaId = 'B78A5E6BF9601402786363ED024C0AF9FA84';
 
+test('NAVER blog Clip URLs resolve through the dedicated adapter', () => {
+    for (const host of ['m.blog.naver.com', 'blog.naver.com']) {
+        const result = extract(normalizeURL(`https://${host}/gkalwod/clip/15806609/?from=share`), enabled);
+        assert.equal(result.host, 'naver');
+        assert.deepEqual(result.patternMatch, {blogId:'gkalwod',clipId:'15806609'});
+    }
+    for (const url of ['https://m.blog.naver.com/gkalwod/12345',
+        'https://m.blog.naver.com/gkalwod/clip/not-a-number',
+        'https://untrusted.naver.com/gkalwod/clip/15806609']) {
+        assert.ok(extract(normalizeURL(url), enabled).error);
+    }
+});
+
 test('NAVER embedded and share links resolve through the dedicated adapter', () => {
     for (const input of [
         `https://m.naver.com/shorts/oembed?mediaId=${mediaId}&serviceType=NTV`,

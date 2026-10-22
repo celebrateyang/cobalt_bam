@@ -615,10 +615,12 @@ export default function({
         params.type = "proxy";
     }
 
+    const useNaverBrowserProcessing = host === "naver"
+        && new Set(["proxy", "remux", "mute", "audio"]).has(params.type);
     const canUseBrowserHlsProcessing =
-        new Set(["vimeo", "weibo"]).has(host) &&
+        new Set(["vimeo", "weibo", "naver"]).has(host) &&
         params.isHLS === true &&
-        alwaysProxy !== true &&
+        (alwaysProxy !== true || useNaverBrowserProcessing) &&
         responseType !== "picker" &&
         new Set(["merge", "remux", "mute", "audio"]).has(params.type);
 
@@ -636,10 +638,10 @@ export default function({
         const isPreferredWithExtra =
             localProcessing === "preferred" && extraProcessingTypes.has(params.type);
 
-        if (canUseBrowserHlsProcessing || localProcessing === "forced" || isPreferredWithExtra) {
+        if (useNaverBrowserProcessing || canUseBrowserHlsProcessing || localProcessing === "forced" || isPreferredWithExtra) {
             responseType = "local-processing";
-            if (canUseBrowserHlsProcessing) {
-                params.frontendProcessing = "hls";
+            if (useNaverBrowserProcessing || canUseBrowserHlsProcessing) {
+                params.frontendProcessing = params.isHLS ? "hls" : "direct";
             }
         }
     }

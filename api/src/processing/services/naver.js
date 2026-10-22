@@ -267,6 +267,30 @@ const resolveShortLink = async (shortLink) => {
     }
 };
 
+const resolveBlogClip = async (blogId, clipId) => {
+    if (!/^[A-Za-z0-9_-]{1,64}$/.test(blogId || "") || !/^\d{1,18}$/.test(clipId || "")) {
+        return { error: "link.unsupported" };
+    }
+    try {
+        const response = await fetch(`https://m.blog.naver.com/${blogId}/clip/${clipId}`, {
+            headers: defaultHeaders,
+            signal: AbortSignal.timeout(10_000),
+        });
+        if (!response.ok) return { error: "fetch.fail" };
+        const html = await response.text();
+        const state = html.match(/window\.__REACT_QUERY_STATE__\s*=\s*({[\s\S]*?});?\s*<\/script>/)?.[1];
+        if (!state) return { error: "fetch.empty" };
+        const document = JSON.parse(state).queries?.find(query =>
+            query.queryKey?.[0] === "GetClipDocument"
+            && query.queryKey?.includes(blogId)
+            && String(query.state?.data?.docNo) === clipId)?.state?.data;
+        if (!document?.videoId || document.blogId !== blogId) return { error: "content.video.unavailable" };
+        return { mediaId: document.videoId, serviceType: "MOMENT", mediaType: "VOD" };
+    } catch {
+        return { error: "fetch.fail" };
+    }
+};
+
 const fetchCard = async ({ mediaId, serviceType, mediaType }) => {
     const url = new URL(CARD_API_URL);
     url.searchParams.set("userInteraction", "true");
@@ -285,7 +309,9 @@ const fetchCard = async ({ mediaId, serviceType, mediaType }) => {
 };
 
 export default async function naver(obj) {
-    const params = obj.shortLink
+    const params = obj.blogId || obj.clipId
+        ? await resolveBlogClip(obj.blogId, obj.clipId)
+        : obj.shortLink
         ? await resolveShortLink(obj.shortLink)
         : {
             mediaId: obj.mediaId,
@@ -293,6 +319,7 @@ export default async function naver(obj) {
             mediaType: obj.mediaType,
         };
 
+    if (params?.error) return params;
     if (!params?.mediaId || !/^[0-9A-F]{16,64}$/i.test(params.mediaId)) {
         return { error: "link.unsupported" };
     }

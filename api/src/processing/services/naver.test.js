@@ -27,6 +27,38 @@ const videoResponse = () => new Response(new Uint8Array([0]), {
     status: 206, headers: { 'content-type': 'video/mp4' },
 });
 
+test('resolves a blog Clip document to its real video ID before fetching the card', async t => {
+    const videoId = '8F4CFCFE018CD586CD6DE82CA354D88CBB1D';
+    t.mock.method(globalThis, 'fetch', async url => {
+        if (url === 'https://m.blog.naver.com/gkalwod/clip/15806609') {
+            const state = {queries:[{queryKey:['GetClipDocument','guest','gkalwod',15806609],
+                state:{data:{blogId:'gkalwod',docNo:15806609,videoId}}}]};
+            return new Response(`<script>window.__REACT_QUERY_STATE__ = ${JSON.stringify(state)};</script>`);
+        }
+        if (url instanceof URL) {
+            assert.equal(url.searchParams.get('seedMediaId'), videoId);
+            assert.equal(url.searchParams.get('serviceType'), 'MOMENT');
+            return { ok:true,json:async()=>card([progressive(720,'https://cdn.example.com/720.mp4')]) };
+        }
+        return videoResponse();
+    });
+    const result = await naver({blogId:'gkalwod',clipId:'15806609',quality:'720'});
+    assert.equal(result.filenameAttributes.id,videoId);
+    assert.equal(result.filenameAttributes.qualityLabel,'720p');
+});
+
+test('does not extract another clip or execute scripts from an unavailable blog page', async t => {
+    for (const response of [new Response('',{status:404}), new Response('<html>no video</html>'),
+        new Response('<script>window.__REACT_QUERY_STATE__ = {"queries":[]};</script>'),
+        new Response('<script>window.__REACT_QUERY_STATE__ = (()=>{throw Error("never execute")})();</script>')]) {
+        let calls = 0;
+        t.mock.method(globalThis,'fetch',async()=>{calls++;return response;});
+        assert.ok((await naver({blogId:'gkalwod',clipId:'15806609'})).error);
+        assert.equal(calls,1);
+        t.mock.restoreAll();
+    }
+});
+
 test('prefers a readable MP4 over the same-resolution HLS even at a higher HLS bitrate', async t => {
     const calls = [];
     t.mock.method(globalThis, 'fetch', async url => {

@@ -1,4 +1,5 @@
 import * as Storage from "$lib/storage";
+import { createTsTransmuxer } from "@freesavevideo/amazon-direct/transmux";
 
 const TOTAL_TIMEOUT_MS = 60 * 60 * 1000;
 const STALL_TIMEOUT_MS = 90 * 1000;
@@ -60,6 +61,10 @@ const parseAttributeList = (line: string) => {
 const resolveUrl = (value: string, baseUrl: string) => new URL(value, baseUrl).toString();
 
 const parseMediaPlaylist = (playlistUrl: string, body: string) => {
+    if (!body.trimStart().startsWith("#EXTM3U")
+        || /^#EXT-X-(?:STREAM-INF|BYTERANGE):/m.test(body)) {
+        throw new Error("unsupported_hls_playlist");
+    }
     const lines = body
         .split(/\r?\n/)
         .map((line) => line.trim())
@@ -107,6 +112,7 @@ const hlsFetch = async (url: string, mimeType?: string) => {
     const startedAt = Date.now();
     let lastProgressAt = startedAt;
     let stallInterval: ReturnType<typeof setInterval> | null = null;
+    let activeStorage: Awaited<ReturnType<typeof Storage.init>> | undefined;
     const totalTimeout = setTimeout(() => controller.abort(), TOTAL_TIMEOUT_MS);
 
     const stopTimers = () => {
@@ -129,7 +135,7 @@ const hlsFetch = async (url: string, mimeType?: string) => {
         }, STALL_CHECK_INTERVAL_MS);
     };
 
-    const error = async (code: string, storage?: Awaited<ReturnType<typeof Storage.init>>) => {
+    const error = async (code: string, storage = activeStorage) => {
         stopTimers();
         if (storage) {
             await storage.destroy().catch(() => undefined);
@@ -168,11 +174,12 @@ const hlsFetch = async (url: string, mimeType?: string) => {
             ...segments.map((segment) => segment.url),
         ];
 
-        const storage = await Storage.init();
+        const storage = activeStorage = await Storage.init();
         let offset = 0;
         let downloadedBytes = 0;
         const totalParts = allUrls.length;
         let detectedMimeType = mimeType || "";
+        let transmuxer: ReturnType<typeof createTsTransmuxer> | undefined;
 
         for (let index = 0; index < allUrls.length; index += 1) {
             const segmentResponse = await fetchBinary(allUrls[index], controller.signal);
@@ -182,13 +189,20 @@ const hlsFetch = async (url: string, mimeType?: string) => {
 
             const buffer = new Uint8Array(await segmentResponse.arrayBuffer());
             markProgress();
-
-            const written = await storage.write(buffer, offset);
-            if (!Number.isFinite(written) || written <= 0) {
-                return error("queue.fetch.network_error", storage);
+            if (index === 0 && !initSegmentUrl && buffer[0] === 0x47) {
+                transmuxer = createTsTransmuxer();
+                detectedMimeType = "video/mp4";
             }
-
-            offset += written;
+            // LibAV's lightweight browser build accepts MP4, but not MPEG-TS.
+            // Convert TS incrementally before the local remux/audio pipeline.
+            const fragments = transmuxer ? transmuxer.push(buffer) : [buffer];
+            for (const fragment of fragments) {
+                const written = await storage.write(fragment, offset);
+                if (written !== fragment.byteLength || written <= 0) {
+                    return error("queue.fetch.network_error", storage);
+                }
+                offset += written;
+            }
             downloadedBytes += buffer.byteLength;
 
             self.postMessage({

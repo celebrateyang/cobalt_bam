@@ -5,6 +5,7 @@
     "type": "module",
     "exports": {
         "./hls": "./src/hls.ts",
+        "./transmux": "./src/transmux.ts",
         "./runner": "./src/runner.ts",
         "./worker": "./src/worker.ts"
     },

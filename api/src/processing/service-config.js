@@ -203,6 +203,7 @@ export const services = {
     },
     naver: {
         patterns: [
+            "_blogClip/:blogId/:clipId",
             "_shortLink/:shortLink",
             "shorts?mediaId=:mediaId",
             "shorts?mediaId=:mediaId&serviceType=:serviceType",

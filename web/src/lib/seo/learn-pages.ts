@@ -1569,6 +1569,90 @@ export const learnPages: LearnPage[] = [
             'dailymotion video downloader guide',
         ],
     },
+    {
+        slug: 'record-slide-lesson-with-webcam-teleprompter',
+        title: 'How to record a slide lesson with a webcam and teleprompter',
+        description:
+            'A practical browser workflow for teachers to record slides with camera narration and a teleprompter, then export an MP4 or WebM lesson.',
+        updatedAt: '2026-10-23',
+        readingTime: '6 min read',
+        category: 'Teaching workflow',
+        summary:
+            'FreeSaveVideo’s browser recorder combines a slide canvas, camera overlay, microphone narration, and an on-screen teleprompter. This guide helps teachers prepare a short lesson, test permissions, record, and verify the exported file.',
+        keyTakeaways: [
+            'Prepare a short slide outline and test camera and microphone permissions before the full lesson.',
+            'The teleprompter is a reading aid on the page, not text burned into the recorded video.',
+            'Export the completed recording as MP4 or WebM, then play the saved file to check sound, picture, and duration.',
+        ],
+        sections: [
+            {
+                heading: 'Plan one lesson objective before recording',
+                body: [
+                    'For a short teaching video, write one learning objective, three to five slide points, and a closing recap. Keep slide text concise so learners can follow your explanation rather than read a full script.',
+                    'Put detailed phrasing in the teleprompter. Its panel stays in the browser interface while you record; it is not part of the canvas video stream.',
+                ],
+            },
+            {
+                heading: 'Set up slides, camera, and microphone',
+                body: [
+                    'Open the browser video recorder, add your slide content, and choose whether to show your camera as an overlay. Place the camera where it will not cover diagrams or essential text.',
+                    'Grant camera and microphone access only when your browser asks for it. Record a brief test, then confirm that your voice is audible and the camera framing is useful. Browser and device permissions can prevent either input from working.',
+                ],
+            },
+            {
+                heading: 'Use the teleprompter without making the lesson feel scripted',
+                body: [
+                    'Paste short prompts rather than a dense paragraph. Adjust the scroll speed and font size until you can glance at the next idea while keeping a natural pace.',
+                    'Because the teleprompter is an interface overlay rather than an element in the video canvas, learners see the lesson content instead of your private notes. If you need captions in the final lesson, create them as a separate post-production step.',
+                ],
+            },
+            {
+                heading: 'Record, export, and check the result',
+                body: [
+                    'Record a short section first. If the test is clear, capture the full lesson and choose an available MP4 or WebM export. The exact export behavior depends on browser support and the selected recording settings.',
+                    'Open the saved file and check the first and last minute, slide changes, camera placement, audio synchronization, and total duration before sharing it with students. Keep a copy of your slide notes until verification is complete.',
+                ],
+            },
+        ],
+        table: {
+            headers: ['Before sharing', 'What to check', 'If it fails'],
+            rows: [
+                ['Camera', 'Your face is framed and does not obscure slides', 'Reposition the overlay or check browser permission'],
+                ['Microphone', 'Speech is clear in a short test file', 'Select the correct input and retry the test'],
+                ['Teleprompter', 'Prompts are readable during recording', 'Adjust speed and font size; notes are not in the export'],
+                ['Export', 'Saved MP4 or WebM plays to the end', 'Try another supported browser or export setting'],
+            ],
+        },
+        faqs: [
+            {
+                q: 'Will students see my teleprompter text?',
+                a: 'No. The teleprompter is a browser interface overlay and is not part of the recorded canvas stream.',
+            },
+            {
+                q: 'Can I record both my slides and webcam?',
+                a: 'Yes. The recorder supports slides with an optional camera overlay, subject to browser and device permissions.',
+            },
+            {
+                q: 'Which file format can I export?',
+                a: 'The recorder offers MP4 and WebM export options. Test the result in your browser before recording a long lesson because support depends on the browser and device.',
+            },
+        ],
+        relatedDownloads: [],
+        relatedGuides: [],
+        relatedTools: [
+            {
+                title: 'Open the browser video recorder',
+                description: 'Create a slide lesson with camera, microphone, and teleprompter controls.',
+                href: '/en/videorecord',
+            },
+        ],
+        keywords: [
+            'record slide lesson with webcam',
+            'online lesson recorder with teleprompter',
+            'record presentation with camera and microphone',
+            'export teaching video mp4 webm',
+        ],
+    },
 ];
 
 export const learnSlugs = learnPages.map((page) => page.slug);

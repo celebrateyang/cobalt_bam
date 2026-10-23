@@ -7,11 +7,11 @@ const PROMOTION_TYPES = Object.freeze({
     },
     post: {
         key: "post",
-        requestedPoints: 50,
+        requestedPoints: 300,
     },
     video: {
         key: "video",
-        requestedPoints: 100,
+        requestedPoints: 500,
     },
 });
 

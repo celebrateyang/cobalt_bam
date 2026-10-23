@@ -71,6 +71,7 @@ async function component(file) {
 }
 
 // Preload real nested components for this synchronous SSR module loader.
+framework['$components/learn/AlternativeArticle.svelte'] = { __esModule: true, default: await component('src/components/learn/AlternativeArticle.svelte') };
 framework['$components/save/GoogleDriveDownloadForm.svelte'] = { __esModule: true, default: await component('src/components/save/GoogleDriveDownloadForm.svelte') };
 framework['$components/save/SupportLink.svelte'] = { __esModule: true, default: await component('src/components/save/SupportLink.svelte') };
 framework['$components/youtube/YouTubeDownloadPage.svelte'] = { __esModule: true, default: await component('src/components/youtube/YouTubeDownloadPage.svelte') };
@@ -283,6 +284,44 @@ test('both root redirect implementations preserve queries and avoid shared langu
         });
         assert.equal(response.headers.get('cache-control'), 'private, no-store');
         assert.equal(serverHeaders['Cache-Control'], 'private, no-store');
+    }
+});
+
+test('alternative articles replace the combined URL with independent indexable pages', async () => {
+    const { learnSlugs, getLearnPage } = load('src/lib/seo/learn-pages.ts');
+    const { getLegacyRedirectTarget } = load('src/lib/seo/indexing.ts');
+    const route = load('src/routes/[lang]/learn/[slug]/+page.ts');
+    const legacySlug = 'cobalt-tools-savefrom-alternative';
+    assert(!learnSlugs.includes(legacySlug), 'The old article must leave the hub and sitemap');
+    assert(route.entries().some(({ slug }) => slug === legacySlug), 'Prerender the permanent redirect');
+    for (const suffix of ['', '/']) {
+        assert.equal(getLegacyRedirectTarget(`/en/learn/${legacySlug}${suffix}`), '/en/learn/cobalt-tools-alternative');
+    }
+    await assert.rejects(route.load({ params: { lang: 'en', slug: legacySlug } }), {
+        status: 308, location: '/en/learn/cobalt-tools-alternative',
+    });
+    await assert.rejects(route.load({ params: { lang: 'zh', slug: 'savefrom-alternative' } }), { status: 404 });
+    const articleComponent = await component('src/routes/[lang]/learn/[slug]/+page.svelte');
+    const sitemap = await load('src/routes/sitemap.xml/+server.ts').GET().text();
+    assert(!sitemap.includes(`/learn/${legacySlug}`));
+    for (const slug of ['cobalt-tools-alternative', 'savefrom-alternative']) {
+        const article = getLearnPage(slug);
+        assert(article);
+        assert(sitemap.includes(`/en/learn/${slug}</loc>`));
+        const result = await route.load({ params: { lang: 'en', slug } });
+        assert.equal(result.article, article);
+        const rendered = articleComponent.render({ data: result });
+        assert(rendered.html.includes(article.title));
+        const other = slug === 'cobalt-tools-alternative' ? 'savefrom-alternative' : 'cobalt-tools-alternative';
+        assert(rendered.html.includes(`href="/en/learn/${other}"`));
+        const structured = [...rendered.head.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)]
+            .map(([, json]) => JSON.parse(json));
+        assert(structured.some(item => item['@type'] === 'Article' && item.mainEntityOfPage.endsWith(`/learn/${slug}`)));
+        assert(structured.some(item => item['@type'] === 'FAQPage' && item.mainEntity.length === article.faqs.length));
+        if (slug === 'cobalt-tools-alternative') {
+            assert(rendered.html.includes('href="https://api.cobalt.tools/"'));
+            assert(rendered.html.includes('October 23, 2026'));
+        }
     }
 });
 

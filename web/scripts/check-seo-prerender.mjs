@@ -37,6 +37,24 @@ assert(
     `Sitemap must stay within the 50,000 URL protocol limit; found ${sitemapUrls.length}`,
 );
 const sitemapLocs = new Set([...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]));
+const legacyAlternativePath = '/en/learn/cobalt-tools-savefrom-alternative';
+assert(!sitemap.includes(legacyAlternativePath), 'Sitemap must exclude the retired combined article');
+assert(
+    readOutput('_redirects').includes(`${legacyAlternativePath} /en/learn/cobalt-tools-alternative 308`),
+    'The retired article must permanently redirect to the Cobalt article',
+);
+const learnHub = readOutput('en', 'learn.html');
+for (const slug of ['cobalt-tools-alternative', 'savefrom-alternative']) {
+    const path = `/en/learn/${slug}`;
+    const html = readOutput('en', 'learn', `${slug}.html`);
+    assert(sitemapLocs.has(`https://freesavevideo.online${path}`), `${slug} is missing from sitemap`);
+    assert(learnHub.includes(`href="${path}"`), `${slug} is missing from the learning hub`);
+    assert(html.includes(`rel="canonical" href="https://freesavevideo.online${path}"`), `${slug} needs its own canonical`);
+    const data = [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)]
+        .map(([, json]) => JSON.parse(json));
+    assert(data.some(item => item['@type'] === 'Article' && item.mainEntityOfPage === `https://freesavevideo.online${path}`), `${slug} has incorrect article schema`);
+    assert(data.some(item => item['@type'] === 'FAQPage'), `${slug} is missing FAQ schema`);
+}
 const sitemapAlternates = [
     ...sitemap.matchAll(/<xhtml:link[^>]+href="([^"]+)"[^>]*\/>/g),
 ].map((match) => match[1]);

@@ -3,6 +3,7 @@
     import { get } from "svelte/store";
     import { t } from "$lib/i18n/translations";
     import { copyURL, openFile } from "$lib/download";
+    import { offerReferralGift } from "$lib/state/referral-gift";
     import {
         detectFreeSaveVideoExtensionInstalled,
         isChromiumLike,
@@ -409,6 +410,7 @@
                     progress = 100;
                     status = "done";
                     statusText = tt("dialog.tiktok_download.status.extension_started");
+                    offerReferralGift("extension_handoff");
                     return;
                 }
             }
@@ -434,6 +436,7 @@
             document.body.append(anchor);
             anchor.click();
             anchor.remove();
+            offerReferralGift("browser_handoff");
             return;
         }
 

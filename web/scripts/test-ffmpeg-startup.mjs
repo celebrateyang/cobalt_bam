@@ -242,6 +242,7 @@ const queueFixture = () => {
         "$lib/api/download-outcome": { reportDownloadOutcome: async (...args) => { reports.push(args); } },
         "$lib/api/collection-memory": { markCollectionDownloadedItems: async () => true },
         "$lib/storage/auto-save": { saveFileToAutoSaveDirectory: async () => ({ directoryName: "Downloads", filename: "output" }) },
+        "$lib/state/referral-gift": { offerReferralGift() {} },
         "$lib/task-manager/save-file": { saveQueueFile: async (...args) => automaticSaves.push(args) },
     }, { setTimeout, clearTimeout, Map, DOMException });
     api.addItem({ id: "task", state: "running", pipeline: [], pipelineResults: {},

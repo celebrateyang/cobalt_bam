@@ -558,6 +558,15 @@
     {:else}
         <div class="table-wrap">
             <table class="users-table">
+                <colgroup>
+                    <col class="users-id-col" />
+                    <col />
+                    <col class="users-email-col" />
+                    <col class="users-points-col" />
+                    <col class="users-orders-col" />
+                    <col class="users-date-col" />
+                    <col class="users-date-col" />
+                </colgroup>
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -698,8 +707,9 @@
                                             : "保存"}
                                     </button>
                                 </div>
-                                <button class="btn-secondary" type="button" disabled={saving[user.id]}
-                                    on:click={() => openShareReward(user)}>Share reward +300</button>
+                                <button class="btn-secondary btn-reward" type="button" disabled={saving[user.id]}
+                                    title="Share reward +300" aria-label="Share reward +300"
+                                    on:click={() => openShareReward(user)}>+300</button>
                             </td>
                             <td>
                                 <button
@@ -710,8 +720,8 @@
                                     查看
                                 </button>
                             </td>
-                            <td>{formatDate(user.last_seen_at)}</td>
-                            <td>{formatDate(user.created_at)}</td>
+                            <td><span class="date-value" title={formatDate(user.last_seen_at)}>{formatDate(user.last_seen_at).replace(" ", "\n")}</span></td>
+                            <td><span class="date-value" title={formatDate(user.created_at)}>{formatDate(user.created_at).replace(" ", "\n")}</span></td>
                         </tr>
                     {/each}
                 </tbody>
@@ -1069,6 +1079,14 @@
         min-width: 980px;
     }
 
+    .users-table { table-layout: fixed; min-width: 1040px; }
+    .users-id-col { width: 64px; }
+    .users-email-col { width: 280px; }
+    .users-points-col { width: 160px; }
+    .users-orders-col { width: 76px; }
+    .users-date-col { width: 120px; }
+    .date-value { display: block; white-space: pre; font-variant-numeric: tabular-nums; }
+
     thead th {
         text-align: left;
         font-size: 0.8rem;
@@ -1147,7 +1165,7 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        min-width: 200px;
+        min-width: 0;
     }
 
     .avatar {
@@ -1202,7 +1220,7 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        min-width: 200px;
+        min-width: 0;
         max-width: 260px;
     }
 
@@ -1246,7 +1264,10 @@
     .btn-save {
         padding: 7px 9px;
         font-size: 0.8rem;
+        white-space: nowrap;
     }
+
+    .btn-reward { margin-top: 6px; padding: 5px 9px; font-size: 0.8rem; white-space: nowrap; }
 
     .btn-orders {
         padding: 7px 10px;

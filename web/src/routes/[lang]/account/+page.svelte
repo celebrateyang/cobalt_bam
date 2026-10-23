@@ -415,7 +415,7 @@
             if (!navigator.clipboard?.writeText) {
                 throw new Error("clipboard API unavailable");
             }
-            await navigator.clipboard.writeText(referralLink);
+            await navigator.clipboard.writeText(`${$t("invite.gift_share_text")}\n${referralLink}`);
             referralCopyState = "copied";
             trackReferralShared(source);
         } catch (error) {
@@ -430,7 +430,7 @@
     };
 
     const requestedPromotionPoints = (type: PromotionType) =>
-        type === "video" ? 100 : 50;
+        type === "video" ? 500 : 300;
 
     const submitPromotionRequest = async () => {
         if (promotionSubmitting) return;
@@ -1643,7 +1643,7 @@
         try {
             await navigator.share({
                 title: $t("auth.referral_title"),
-                text: $t("auth.referral_subtitle"),
+                text: $t("invite.gift_share_text"),
                 url: referralLink,
             });
             trackReferralShared(source);

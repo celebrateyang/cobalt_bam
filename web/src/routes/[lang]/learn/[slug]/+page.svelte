@@ -1,6 +1,8 @@
 <script lang="ts">
     import env from '$lib/env';
     import { getSeoLandingLocale, getSeoLandingPage } from '$lib/seo/landing-pages';
+    import { getLearnPage } from '$lib/seo/learn-pages';
+    import AlternativeArticle from '$components/learn/AlternativeArticle.svelte';
 
     export let data: {
         lang: string;
@@ -10,6 +12,9 @@
     const fallbackHost = env.HOST || 'freesavevideo.online';
 
     $: canonicalUrl = `https://${fallbackHost}/en/learn/${data.article.slug}`;
+    $: relatedArticles = (data.article.relatedArticles ?? [])
+        .map(getLearnPage)
+        .filter((item): item is NonNullable<typeof item> => Boolean(item));
     $: relatedDownloads = data.article.relatedDownloads
         .map((slug) => {
             const page = getSeoLandingPage(slug);
@@ -99,6 +104,9 @@
     {/each}
 </svelte:head>
 
+{#if ['cobalt-tools-alternative', 'savefrom-alternative'].includes(data.article.slug)}
+    <AlternativeArticle article={data.article} {relatedArticles} {relatedDownloads} />
+{:else}
 <main class="article-page" tabindex="-1" data-first-focus data-focus-ring-hidden>
     <nav class="crumbs" aria-label="Breadcrumb">
         <a href="/en">Home</a>
@@ -168,6 +176,18 @@
             </section>
         {/if}
 
+        {#if data.article.sources?.length}
+            <section class="content-section">
+                <h2>Sources and verification</h2>
+                {#each data.article.sources as source}
+                    <p>
+                        <a href={source.href} rel="noreferrer noopener">{source.title}</a>:
+                        {source.note}
+                    </p>
+                {/each}
+            </section>
+        {/if}
+
         <section class="content-section">
             <h2>FAQ</h2>
             <div class="faq-list">
@@ -209,6 +229,20 @@
             </section>
         {/if}
 
+        {#if relatedArticles.length}
+            <section>
+                <h2>Related articles</h2>
+                <div class="download-links">
+                    {#each relatedArticles as article}
+                        <a href={`/en/learn/${article.slug}`}>
+                            <strong>{article.title}</strong>
+                            <span>{article.description}</span>
+                        </a>
+                    {/each}
+                </div>
+            </section>
+        {/if}
+
         {#if data.article.relatedTools?.length}
             <section class="related" aria-labelledby="related-tools-title">
                 <h2 id="related-tools-title">Try the related tool</h2>
@@ -224,6 +258,7 @@
         {/if}
     </aside>
 </main>
+{/if}
 
 <style>
     .article-page {

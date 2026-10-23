@@ -6,6 +6,7 @@ import { device } from "$lib/device";
 import { t } from "$lib/i18n/translations";
 import { createDialog } from "$lib/state/dialogs";
 import { trackSave, type SaveContext, type SaveOutcome } from "$lib/analytics/saving";
+import { offerReferralGift } from "$lib/state/referral-gift";
 
 import type { DialogInfo } from "$lib/types/dialog";
 import type { CobaltFileUrlType } from "$lib/types/api";
@@ -56,6 +57,7 @@ export const openFile = (file: File) => {
     document.body.appendChild(a);
     try {
         a.click();
+        offerReferralGift("browser_handoff");
     } finally {
         a.remove();
         // Give WebKit time to consume the blob before releasing it.
@@ -119,6 +121,7 @@ export const openURL = (url: string) => {
             throw error;
         }
     }
+    offerReferralGift("browser_handoff");
     return true;
 }
 
@@ -143,6 +146,7 @@ export const saveWithFeedback = async (
             else if (url) await shareURL(url);
             else throw new Error("Missing media");
             outcome = "shared";
+            offerReferralGift("file_shared");
         } else if (method === "copy" && url) {
             await copyURL(url);
             outcome = "copied";

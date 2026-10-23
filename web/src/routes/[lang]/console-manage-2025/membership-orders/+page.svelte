@@ -277,6 +277,18 @@
     {:else}
         <div class="table-wrap">
             <table>
+                <colgroup>
+                    <col class="id-col" />
+                    <col class="user-col" />
+                    <col class="plan-col" />
+                    <col class="duration-col" />
+                    <col class="status-col" />
+                    <col class="amount-col" />
+                    <col class="provider-col" />
+                    <col class="order-col" />
+                    <col class="time-col" />
+                    <col class="time-col" />
+                </colgroup>
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -327,14 +339,16 @@
                             <td>{planLabel(item)}</td>
                             <td class="mono">{item.duration_days} 天</td>
                             <td>
+                                <div class="status-content">
                                 <span class={`status status-${item.status.toLowerCase()}`}>{item.status}</span>
                                 {#if item.provider === "buymeacoffee"}
                                     <BuyMeACoffeeFeedbackSummary feedback={item.provider_data?.bmc_feedback} />
                                 {/if}
+                                </div>
                             </td>
                             <td class="mono">{formatAmount(item.amount_fen, item.currency)}</td>
                             <td class="mono">{item.provider}</td>
-                            <td class="mono selectable">{item.out_trade_no}</td>
+                            <td class="mono selectable"><span class="order-number" title={item.out_trade_no}>{item.out_trade_no}</span></td>
                             <td class="mono">{formatDate(item.paid_at)}</td>
                             <td class="mono">{formatDate(item.created_at)}</td>
                         </tr>
@@ -364,8 +378,21 @@
     .filter select { padding: 8px 10px; border: none; border-radius: var(--border-radius); background: var(--button); color: var(--text); box-shadow: var(--button-box-shadow); }
     .meta, .sub { color: var(--subtext); font-size: 0.85rem; }
     .table-wrap { overflow-x: auto; border-radius: var(--border-radius); background: var(--popup-bg); box-shadow: 0 0 0 1.5px var(--popup-stroke) inset; }
-    table { width: 100%; min-width: 1250px; border-collapse: collapse; }
-    thead th { padding: 12px 14px; border-bottom: 1px solid var(--popup-stroke); text-align: left; color: var(--subtext); font-size: 0.8rem; font-weight: 700; }
+    table { width: 100%; min-width: 1360px; border-collapse: collapse; table-layout: fixed; }
+    .id-col { width: 52px; }
+    .user-col { width: 248px; }
+    .plan-col { width: 80px; }
+    .duration-col { width: 80px; }
+    .status-col { width: 132px; }
+    .amount-col { width: 96px; }
+    .provider-col { width: 126px; }
+    .order-col { width: 132px; }
+    .time-col { width: 165px; }
+    .status-content { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+    .status-content :global(summary) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .status-content :global(details[open] summary) { white-space: normal; }
+    .order-number { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    thead th { padding: 12px 14px; border-bottom: 1px solid var(--popup-stroke); text-align: left; color: var(--subtext); font-size: 0.8rem; font-weight: 700; white-space: nowrap; }
     tbody td { padding: 12px 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.06); text-align: left; color: var(--text); font-size: 0.9rem; white-space: nowrap; }
     tbody tr:hover td { background: rgba(255, 255, 255, 0.03); }
     .sort-trigger { all: unset; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: inherit; font: inherit; }

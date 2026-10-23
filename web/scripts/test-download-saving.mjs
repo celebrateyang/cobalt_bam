@@ -40,6 +40,7 @@ const fixture = (pref = "download", browserWindow) => {
         "$lib/i18n/translations": { t: key => key },
         "$lib/state/dialogs": { createDialog: dialog => dialogs.push(dialog) },
         "$lib/analytics/saving": { trackSave: (...args) => events.push(args) },
+        "$lib/state/referral-gift": { offerReferralGift: (...args) => events.push(["gift", ...args]) },
     };
     class MockURL extends URL {
         static createObjectURL() { dom.push("create"); return "blob:media"; }
@@ -369,4 +370,28 @@ test("tracking failure cannot block saving", () => {
         window: { gtag: () => { throw new Error("analytics unavailable"); } },
     });
     assert.doesNotThrow(() => trackSave("download", "download"));
+});
+
+test("gift invitations follow successful handoffs, never cancelled, blocked or copy-only actions", async () => {
+    const gifts = f => f.events.filter(event => event[0] === "gift").map(event => event[1]);
+    const local = fixture();
+    await local.api.downloadFile(local.params);
+    assert.deepEqual(gifts(local), ["browser_handoff"]);
+
+    const shared = fixture("share");
+    await shared.api.downloadFile(shared.params);
+    assert.deepEqual(gifts(shared), ["file_shared"]);
+
+    const cancelled = fixture("share");
+    cancelled.navigator.share = async () => { throw Object.assign(new Error("cancel"), { name: "AbortError" }); };
+    await cancelled.api.downloadFile(cancelled.params);
+    assert.deepEqual(gifts(cancelled), []);
+
+    const blocked = fixture("download", { location: { href: "https://example.com/en" }, open: () => null });
+    await blocked.api.downloadFile({ url: "https://example.com/video" });
+    assert.deepEqual(gifts(blocked), []);
+
+    const copied = fixture("copy");
+    await copied.api.downloadFile({ url: "https://example.com/video" });
+    assert.deepEqual(gifts(copied), []);
 });

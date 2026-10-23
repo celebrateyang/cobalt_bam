@@ -2,6 +2,7 @@
     import { onDestroy, onMount } from "svelte";
     import { t } from "$lib/i18n/translations";
     import { copyURL, openFile } from "$lib/download";
+    import { offerReferralGift } from "$lib/state/referral-gift";
     import AmazonWorker from "$lib/download/amazon-worker?worker";
     import { downloadAmazonMp4 } from "@freesavevideo/amazon-direct/runner";
     import {
@@ -241,6 +242,7 @@
         document.body.append(anchor);
         anchor.click();
         anchor.remove();
+        offerReferralGift("browser_handoff");
     };
 
     const downloadFromUrl = async (url: string, signal: AbortSignal) => {
@@ -407,6 +409,7 @@
                     progress = 100;
                     status = "done";
                     statusText = "Download started in Chrome.";
+                    offerReferralGift("extension_handoff");
                     return;
                 }
             }

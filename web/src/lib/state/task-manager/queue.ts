@@ -10,6 +10,7 @@ import { finalizePointsHold, releasePointsHold } from "$lib/api/points";
 import { reportDownloadOutcome } from "$lib/api/download-outcome";
 import { markCollectionDownloadedItems } from "$lib/api/collection-memory";
 import { saveFileToAutoSaveDirectory } from "$lib/storage/auto-save";
+import { offerReferralGift } from "$lib/state/referral-gift";
 
 import type { CobaltQueue, CobaltQueueItem, CobaltQueueItemRunning, UUID } from "$lib/types/queue";
 import type { CobaltFetchFailureDiagnostic } from "$lib/types/workers";
@@ -420,6 +421,7 @@ const autoSaveCompletedItem = async (id: UUID, file: File) => {
             },
         }));
         await removeFromFileStorage(file.name);
+        offerReferralGift("folder_saved");
         console.log(
             `[queue] auto-save completed id=${id} path=${savedFile.directoryName}/${savedFile.filename}`
         );

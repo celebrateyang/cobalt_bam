@@ -125,6 +125,7 @@
 
     let DialogHolderComponent: any = null;
     let ProcessingQueueComponent: any = null;
+    let ReferralGiftComponent: any = null;
     let deferredShellLoaded = false;
     let turnstileArmed = false;
     $: shouldRenderTurnstile =
@@ -134,13 +135,15 @@
         if (deferredShellLoaded) return;
         deferredShellLoaded = true;
 
-        const [dialogModule, queueModule] = await Promise.all([
+        const [dialogModule, queueModule, referralModule] = await Promise.all([
             import("$components/dialog/DialogHolder.svelte"),
             import("$components/queue/ProcessingQueue.svelte"),
+            import("$components/points/ReferralGiftCard.svelte"),
         ]);
 
         DialogHolderComponent = dialogModule.default;
         ProcessingQueueComponent = queueModule.default;
+        ReferralGiftComponent = referralModule.default;
     };
 
     const runOnIdle = (callback: () => void, timeout = 2200) => {
@@ -265,6 +268,9 @@
             {/if}
             {#if shouldRenderTurnstile}
                 <Turnstile />
+            {/if}
+            {#if ReferralGiftComponent}
+                <svelte:component this={ReferralGiftComponent} />
             {/if}
             <slot></slot>
         </div>

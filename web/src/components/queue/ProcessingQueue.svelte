@@ -20,6 +20,7 @@
     import ProcessingStatus from "$components/queue/ProcessingStatus.svelte";
     import ProcessingQueueItem from "$components/queue/ProcessingQueueItem.svelte";
     import ProcessingQueueStub from "$components/queue/ProcessingQueueStub.svelte";
+    import ReferralGiftCard from "$components/points/ReferralGiftCard.svelte";
 
     import IconDownload from "@tabler/icons-svelte/IconDownload.svelte";
     import IconAlertTriangle from "@tabler/icons-svelte/IconAlertTriangle.svelte";
@@ -251,6 +252,9 @@
         {/if}
 
         <div id="processing-list" role="list" aria-labelledby="queue-title">
+            {#if $queueVisible}
+                <div role="listitem"><ReferralGiftCard surface="queue" /></div>
+            {/if}
             {#each queue as [id, item] (id)}
                 <ProcessingQueueItem {id} info={item} />
             {/each}

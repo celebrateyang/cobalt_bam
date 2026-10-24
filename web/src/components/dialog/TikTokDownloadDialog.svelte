@@ -22,6 +22,7 @@
     import IconX from "@tabler/icons-svelte/IconX.svelte";
 
     export let id: string;
+    const giftKey = {};
     export let dismissable = true;
     export let title = "";
     export let filename: string;
@@ -410,7 +411,7 @@
                     progress = 100;
                     status = "done";
                     statusText = tt("dialog.tiktok_download.status.extension_started");
-                    offerReferralGift("extension_handoff");
+                    offerReferralGift("extension_handoff", giftKey);
                     return;
                 }
             }
@@ -422,7 +423,7 @@
     const save = () => {
         saveStarted = true;
         if (file) {
-            openFile(file);
+            openFile(file, giftKey);
             return;
         }
 
@@ -436,7 +437,7 @@
             document.body.append(anchor);
             anchor.click();
             anchor.remove();
-            offerReferralGift("browser_handoff");
+            offerReferralGift("browser_handoff", giftKey);
             return;
         }
 

@@ -22,6 +22,7 @@
     import IconX from "@tabler/icons-svelte/IconX.svelte";
 
     export let id: string;
+    const giftKey = {};
     export let dismissable = true;
     export let title = "Video preview and download";
     export let filename: string;
@@ -242,7 +243,7 @@
         document.body.append(anchor);
         anchor.click();
         anchor.remove();
-        offerReferralGift("browser_handoff");
+        offerReferralGift("browser_handoff", giftKey);
     };
 
     const downloadFromUrl = async (url: string, signal: AbortSignal) => {
@@ -366,7 +367,7 @@
         if (autoSave && !autoSaved) {
             autoSaved = true;
             saveStarted = true;
-            openFile(file);
+            openFile(file, giftKey);
         }
     };
 
@@ -409,7 +410,7 @@
                     progress = 100;
                     status = "done";
                     statusText = "Download started in Chrome.";
-                    offerReferralGift("extension_handoff");
+                    offerReferralGift("extension_handoff", giftKey);
                     return;
                 }
             }
@@ -428,7 +429,7 @@
     const save = () => {
         saveStarted = true;
         if (file) {
-            openFile(file);
+            openFile(file, giftKey);
         } else {
             const url = primaryUrl || activeUrl;
             if (url) openDirectDownload(url);

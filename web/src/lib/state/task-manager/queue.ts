@@ -421,7 +421,7 @@ const autoSaveCompletedItem = async (id: UUID, file: File) => {
             },
         }));
         await removeFromFileStorage(file.name);
-        offerReferralGift("folder_saved");
+        offerReferralGift("folder_saved", id);
         console.log(
             `[queue] auto-save completed id=${id} path=${savedFile.directoryName}/${savedFile.filename}`
         );

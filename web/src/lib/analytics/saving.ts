@@ -1,5 +1,5 @@
 export type SaveOutcome = "dialog" | "download" | "shared" | "copied" | "cancelled" | "failed";
-export type SaveContext = { source?: "queue" | "bulk" | "dialog" | "download"; repeat?: boolean };
+export type SaveContext = { source?: "queue" | "bulk" | "dialog" | "download"; repeat?: boolean; taskId?: string };
 
 // Do not include filenames, source URLs, account IDs, or error messages.
 export const trackSave = (action: string, method: string, context: SaveContext = {}) => {

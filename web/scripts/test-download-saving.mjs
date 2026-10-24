@@ -290,7 +290,7 @@ test("saving telemetry does not include filenames, links or account data", () =>
     const { trackSave } = load("src/lib/analytics/saving.ts", {}, {
         window: { gtag: (...args) => calls.push(args), clarity: (...args) => calls.push(args) },
     });
-    trackSave("cancelled", "share", { source: "queue", repeat: true });
+    trackSave("cancelled", "share", { source: "queue", repeat: true, taskId: "private-task" });
     assert.deepEqual(JSON.parse(JSON.stringify(calls[0][2])), {
         action: "cancelled", method: "share", source: "queue", repeat: true,
     });
@@ -394,4 +394,15 @@ test("gift invitations follow successful handoffs, never cancelled, blocked or c
     const copied = fixture("copy");
     await copied.api.downloadFile({ url: "https://example.com/video" });
     assert.deepEqual(gifts(copied), []);
+});
+
+test("queue saving carries one task identity through repeated file wrappers and native sharing", async () => {
+    const f = fixture();
+    for (const method of ["download", "share"]) {
+        await f.api.saveWithFeedback(method, {
+            file: new File(["media"], "video.mp4"), saveContext: { taskId: "same-task", repeat: true },
+        });
+    }
+    const identities = f.events.filter(event => event[0] === "gift").map(event => event[2]);
+    assert.deepEqual(identities, ["same-task", "same-task"]);
 });

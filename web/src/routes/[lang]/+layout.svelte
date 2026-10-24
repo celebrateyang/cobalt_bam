@@ -269,10 +269,10 @@
             {#if shouldRenderTurnstile}
                 <Turnstile />
             {/if}
+            <slot></slot>
             {#if ReferralGiftComponent}
                 <svelte:component this={ReferralGiftComponent} />
             {/if}
-            <slot></slot>
         </div>
     </div>
 </div>

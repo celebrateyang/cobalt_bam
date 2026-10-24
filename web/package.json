@@ -22,6 +22,7 @@
         "test:bmc-translations": "node ./scripts/test-bmc-translations.mjs",
         "test:bmc-checkout": "node --test ./scripts/test-bmc-checkout.mjs ./scripts/test-bmc-feedback.mjs",
         "test:saving": "node --test ./scripts/test-download-saving.mjs",
+        "test:referral-gift": "node --test ./scripts/test-referral-gift.mjs",
         "test:ffmpeg-startup": "node --test ./scripts/test-ffmpeg-startup.mjs",
         "test:fetch-startup": "node --test ./scripts/test-fetch-startup.mjs",
         "test:fetch-streaming": "node --test ./scripts/test-fetch-streaming.mjs",

@@ -26,7 +26,7 @@ export const saveQueueFile = async (id: UUID, source: "queue" | "bulk" = "queue"
         file: new File([item.resultFile], item.filename, { type: item.mimeType }),
         forceDialog: device.is.iOS,
         automatic,
-        saveContext: { source, repeat: attempts > 0 || Boolean(item.saveRequested) },
+        saveContext: { source, repeat: attempts > 0 || Boolean(item.saveRequested), taskId: id },
         onSaveResult: (outcome: SaveOutcome) => updateItem(id, current => ({
             ...current,
             saveOutcome: outcome,

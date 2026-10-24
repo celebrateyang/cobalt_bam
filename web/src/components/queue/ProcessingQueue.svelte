@@ -252,14 +252,14 @@
         {/if}
 
         <div id="processing-list" role="list" aria-labelledby="queue-title">
-            {#if $queueVisible}
-                <div role="listitem"><ReferralGiftCard surface="queue" /></div>
-            {/if}
             {#each queue as [id, item] (id)}
                 <ProcessingQueueItem {id} info={item} />
             {/each}
             {#if queue.length === 0}
                 <ProcessingQueueStub />
+            {/if}
+            {#if $queueVisible}
+                <div role="listitem"><ReferralGiftCard surface="queue" /></div>
             {/if}
         </div>
         {#if manualSaveCount > 1 && saveIndividually}

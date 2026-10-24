@@ -48,7 +48,7 @@ const openSavingDialog = ({ url, file, body, urlType, onSaveResult, saveContext 
     return "dialog" as const;
 }
 
-export const openFile = (file: File) => {
+export const openFile = (file: File, giftKey: object | string = file) => {
     const a = document.createElement("a");
     const url = URL.createObjectURL(file);
 
@@ -57,7 +57,7 @@ export const openFile = (file: File) => {
     document.body.appendChild(a);
     try {
         a.click();
-        offerReferralGift("browser_handoff");
+        offerReferralGift("browser_handoff", giftKey);
     } finally {
         a.remove();
         // Give WebKit time to consume the blob before releasing it.
@@ -78,7 +78,7 @@ export const shareFile = async (file: File) => {
     });
 }
 
-export const openURL = (url: string) => {
+export const openURL = (url: string, giftKey: object | string = url) => {
     // Some media CDNs return 403 when a foreign Referer is present.
     // Use noreferrer so the download works when opened from our UI.
     let needsNoReferrer = false;
@@ -121,7 +121,7 @@ export const openURL = (url: string) => {
             throw error;
         }
     }
-    offerReferralGift("browser_handoff");
+    offerReferralGift("browser_handoff", giftKey);
     return true;
 }
 
@@ -146,15 +146,15 @@ export const saveWithFeedback = async (
             else if (url) await shareURL(url);
             else throw new Error("Missing media");
             outcome = "shared";
-            offerReferralGift("file_shared");
+            offerReferralGift("file_shared", saveContext?.taskId || file || url);
         } else if (method === "copy" && url) {
             await copyURL(url);
             outcome = "copied";
         } else if (method === "download" && file) {
-            openFile(file);
+            openFile(file, saveContext?.taskId || file);
             outcome = "download";
         } else if (method === "download" && url) {
-            outcome = openURL(url) ? "download" : "dialog";
+            outcome = openURL(url, saveContext?.taskId || url) ? "download" : "dialog";
         } else {
             throw new Error("Unsupported saving method");
         }

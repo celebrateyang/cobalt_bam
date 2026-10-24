@@ -100,7 +100,7 @@
     "tiktok_download.status.complete": "Tải xuống hoàn tất. Xem trước video, sau đó lưu nó.",
     "tiktok_download.status.extension_fallback": "Đang thử dự phòng tiện ích mở rộng trình duyệt...",
     "tiktok_download.status.extension_started": "Tải xuống bắt đầu trong trình duyệt của bạn.",
-    "tiktok_download.status.blocked_error": "Tìm nạp trực tiếp đã bị chặn. Sử dụng liên kết tải xuống trình duyệt hoặc sao chép URL.",
+    "tiktok_download.status.blocked_error": "Không thể tải video xuống an toàn. Hãy thử lại, dùng tiện ích mở rộng hoặc sao chép liên kết.",
     "tiktok_download.preview.blocked": "Tải xuống bắt đầu trong trình duyệt của bạn. Xem trước bị chặn bởi TikTok CDN.",
     "tiktok_download.preview.unavailable": "Không có bản xem trước cho video TikTok này.",
     "tiktok_download.preview.preparing": "Đang chuẩn bị xem trước...",

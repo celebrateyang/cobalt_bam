@@ -74,7 +74,7 @@
     "tiktok_download.status.complete": "Загрузка завершена. Предварительный просмотр видео, а затем сохраните его.",
     "tiktok_download.status.extension_fallback": "Пробуем использовать резервное расширение браузера...",
     "tiktok_download.status.extension_started": "Загрузка началась в вашем браузере.",
-    "tiktok_download.status.blocked_error": "Прямая загрузка заблокирована. Используйте ссылку для загрузки в браузере или скопируйте URL-адрес.",
+    "tiktok_download.status.blocked_error": "Не удалось безопасно скачать видео. Повторите попытку, используйте расширение или скопируйте ссылку.",
     "tiktok_download.preview.blocked": "Загрузка началась в вашем браузере. Предварительный просмотр заблокирован TikTok CDN.",
     "tiktok_download.preview.unavailable": "Предварительный просмотр недоступен для этого видео TikTok.",
     "tiktok_download.preview.preparing": "Подготовка предварительного просмотра...",

@@ -100,7 +100,7 @@
     "tiktok_download.status.complete": "Téléchargement terminé. Prévisualisez la vidéo, puis enregistrez-la.",
     "tiktok_download.status.extension_fallback": "Essayer la solution de secours de l'extension de navigateur...",
     "tiktok_download.status.extension_started": "Le téléchargement a démarré dans votre navigateur.",
-    "tiktok_download.status.blocked_error": "La récupération directe a été bloquée. Utilisez le lien de téléchargement du navigateur ou copiez l'URL.",
+    "tiktok_download.status.blocked_error": "Le téléchargement sécurisé de la vidéo a échoué. Réessayez, utilisez l’extension ou copiez le lien.",
     "tiktok_download.preview.blocked": "Le téléchargement a démarré dans votre navigateur. L'aperçu est bloqué par TikTok CDN.",
     "tiktok_download.preview.unavailable": "L'aperçu n'est pas disponible pour cette vidéo TikTok.",
     "tiktok_download.preview.preparing": "Préparation de l'aperçu...",

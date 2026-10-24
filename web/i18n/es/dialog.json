@@ -100,7 +100,7 @@
     "tiktok_download.status.complete": "Descarga completada. Previsualiza el vídeo y guárdalo.",
     "tiktok_download.status.extension_fallback": "Probando la extensión del navegador...",
     "tiktok_download.status.extension_started": "La descarga comenzó en el navegador.",
-    "tiktok_download.status.blocked_error": "La descarga directa fue bloqueada. Usa el enlace del navegador o copia la URL.",
+    "tiktok_download.status.blocked_error": "No se pudo descargar el video de forma segura. Reintenta, usa la extensión o copia la URL.",
     "tiktok_download.preview.blocked": "La descarga comenzó en el navegador. TikTok CDN bloqueó la vista previa.",
     "tiktok_download.preview.unavailable": "La vista previa no está disponible para este vídeo.",
     "tiktok_download.preview.preparing": "Preparando vista previa...",

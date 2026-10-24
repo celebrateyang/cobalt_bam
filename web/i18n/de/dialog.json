@@ -100,7 +100,7 @@
     "tiktok_download.status.complete": "Download abgeschlossen. Sehen Sie sich das Video in der Vorschau an und speichern Sie es.",
     "tiktok_download.status.extension_fallback": "Versuche, einen Fallback für die Browsererweiterung durchzuführen ...",
     "tiktok_download.status.extension_started": "Der Download wurde in Ihrem Browser gestartet.",
-    "tiktok_download.status.blocked_error": "Der direkte Abruf wurde blockiert. Verwenden Sie den Browser-Download-Link oder kopieren Sie die URL.",
+    "tiktok_download.status.blocked_error": "Das Video konnte nicht sicher heruntergeladen werden. Erneut versuchen, die Erweiterung nutzen oder die URL kopieren.",
     "tiktok_download.preview.blocked": "Der Download wurde in Ihrem Browser gestartet. Die Vorschau wird durch TikTok CDN blockiert.",
     "tiktok_download.preview.unavailable": "Für dieses TikTok-Video ist keine Vorschau verfügbar.",
     "tiktok_download.preview.preparing": "Vorschau wird vorbereitet...",

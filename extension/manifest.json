@@ -53,6 +53,8 @@
         "*://*.cdninstagram.com/*",
         "*://*.tiktok.com/*",
         "*://*.tiktokcdn.com/*",
+        "*://*.tiktokcdn-us.com/*",
+        "*://*.tiktokcdn-eu.com/*",
         "*://*.tiktokv.com/*",
         "*://*.tokcdn.com/*",
         "*://*.byteoversea.com/*",

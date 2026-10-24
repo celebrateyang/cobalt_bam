@@ -229,7 +229,10 @@
         window.addEventListener("message", onMessage);
         window.postMessage({
             source: "freesavevideo-page",
-            type: "FSV_EXTENSION_DOWNLOAD",
+            // Older extensions send unverified CDN URLs to chrome.downloads.
+            // Use the verified protocol; older versions can use the external
+            // bridge below, which already validates the downloaded payload.
+            type: "FSV_EXTENSION_TIKTOK_DOWNLOAD",
             requestId,
             url,
             filename,
@@ -355,8 +358,13 @@
             throw new Error("empty_file");
         }
 
+        const prefix = new Uint8Array(await blob.slice(0, 12).arrayBuffer());
+        if (String.fromCharCode(...prefix.slice(4, 8)) !== "ftyp") {
+            throw new Error("invalid_mp4");
+        }
+
         file = new File([blob], filename, {
-            type: blob.type || "video/mp4",
+            type: "video/mp4",
         });
         if (filePreviewUrl) URL.revokeObjectURL(filePreviewUrl);
         filePreviewUrl = URL.createObjectURL(file);
@@ -421,27 +429,12 @@
     };
 
     const save = () => {
-        saveStarted = true;
         if (file) {
+            saveStarted = true;
             openFile(file, giftKey);
             return;
         }
-
-        const url = primaryUrl || activeUrl;
-        if (url) {
-            const anchor = document.createElement("a");
-            anchor.href = url;
-            anchor.download = filename;
-            anchor.target = "_blank";
-            anchor.rel = "noreferrer noopener nofollow";
-            document.body.append(anchor);
-            anchor.click();
-            anchor.remove();
-            offerReferralGift("browser_handoff", giftKey);
-            return;
-        }
-
-        progress = 0;
+        // Failed CDN responses must never be saved through an unchecked link.
         showBlockedError();
     };
 
@@ -560,9 +553,9 @@
 
         <div class="actions">
             {#if status === "error"}
-                <button type="button" class="button elevated" on:click={save}>
+                <button type="button" class="button elevated" on:click={start}>
                     <IconDownload />
-                    {$t("button.download")}
+                    {$t("button.retry")}
                 </button>
             {:else}
                 <button

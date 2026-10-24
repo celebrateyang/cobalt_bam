@@ -161,7 +161,7 @@
     "tiktok_download.status.complete": "下载完成。预览视频后即可保存。",
     "tiktok_download.status.extension_fallback": "正在尝试浏览器插件备用通道...",
     "tiktok_download.status.extension_started": "已在浏览器中开始下载。",
-    "tiktok_download.status.blocked_error": "直接获取被拦截。请使用浏览器下载链接或复制链接。",
+    "tiktok_download.status.blocked_error": "未能安全下载视频。请重试、使用扩展，或复制链接。",
     "tiktok_download.preview.blocked": "已在浏览器中开始下载。TikTok CDN 阻止了页面预览。",
     "tiktok_download.preview.unavailable": "该 TikTok 视频暂时无法预览。",
     "tiktok_download.preview.preparing": "正在准备预览...",

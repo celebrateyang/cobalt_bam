@@ -100,7 +100,7 @@
     "tiktok_download.status.complete": "ダウンロードが完了しました。動画を確認して保存してください。",
     "tiktok_download.status.extension_fallback": "ブラウザ拡張機能で再試行中...",
     "tiktok_download.status.extension_started": "ブラウザでダウンロードを開始しました。",
-    "tiktok_download.status.blocked_error": "直接取得がブロックされました。ブラウザのダウンロードリンクを開くか、URL をコピーしてください。",
+    "tiktok_download.status.blocked_error": "動画を安全にダウンロードできませんでした。再試行するか、拡張機能を使うか、リンクをコピーしてください。",
     "tiktok_download.preview.blocked": "ブラウザでダウンロードを開始しました。TikTok CDN によりプレビューはブロックされています。",
     "tiktok_download.preview.unavailable": "この TikTok 動画はプレビューできません。",
     "tiktok_download.preview.preparing": "プレビューを準備中...",

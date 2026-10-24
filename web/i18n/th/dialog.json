@@ -100,7 +100,7 @@
     "tiktok_download.status.complete": "ดาวน์โหลดเสร็จแล้ว ดูตัวอย่างวิดีโอแล้วจึงบันทึกไฟล์",
     "tiktok_download.status.extension_fallback": "กำลังลองดาวน์โหลดผ่านส่วนขยายเบราว์เซอร์...",
     "tiktok_download.status.extension_started": "เริ่มดาวน์โหลดในเบราว์เซอร์แล้ว",
-    "tiktok_download.status.blocked_error": "การดึงไฟล์โดยตรงถูกบล็อก โปรดใช้ลิงก์ดาวน์โหลดของเบราว์เซอร์หรือคัดลอก URL",
+    "tiktok_download.status.blocked_error": "ไม่สามารถดาวน์โหลดวิดีโอได้อย่างปลอดภัย โปรดลองอีกครั้ง ใช้ส่วนขยาย หรือคัดลอกลิงก์",
     "tiktok_download.preview.blocked": "เริ่มดาวน์โหลดในเบราว์เซอร์แล้ว แต่ CDN ของ TikTok บล็อกการดูตัวอย่าง",
     "tiktok_download.preview.unavailable": "วิดีโอ TikTok นี้ไม่สามารถดูตัวอย่างได้",
     "tiktok_download.preview.preparing": "กำลังเตรียมตัวอย่าง...",

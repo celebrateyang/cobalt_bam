@@ -137,7 +137,7 @@ const installFreeSaveVideoPageBridge = () => {
             return;
         }
 
-        if (data.type !== 'FSV_EXTENSION_DOWNLOAD') return;
+        if (data.type !== 'FSV_EXTENSION_DOWNLOAD' && data.type !== 'FSV_EXTENSION_TIKTOK_DOWNLOAD') return;
 
         const requestId = typeof data.requestId === 'string' ? data.requestId : '';
         const url = typeof data.url === 'string' ? data.url : '';

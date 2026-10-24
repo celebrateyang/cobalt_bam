@@ -1,6 +1,8 @@
 import { fetchXinpianchangBlob } from '../downloader/xinpianchang-fetch';
 import type { XinpianchangJob } from '../downloader/xinpianchang-job';
 import type { AmazonJob } from '../downloader/amazon-job';
+import type { TikTokJob } from '../downloader/tiktok-job';
+import { fetchTikTokBlob } from '../downloader/tiktok-fetch';
 import AmazonWorker from '../downloader/amazon-worker?worker';
 import { downloadAmazonMp4 } from '@freesavevideo/amazon-direct/runner';
 import './style.css';
@@ -35,14 +37,16 @@ window.addEventListener('pagehide', () => { controller.abort(); release(); });
 
 async function run() {
     const key = location.hash.slice(1);
-    if (!/^(?:xpc|amazon)-job-[a-f0-9-]{36}$/.test(key)) throw new Error('Invalid download task.');
+    if (!/^(?:xpc|amazon|tiktok)-job-[a-f0-9-]{36}$/.test(key)) throw new Error('Invalid download task.');
     const data = await chrome.storage.session.get(key);
     await chrome.storage.session.remove(key);
-    const job = data[key] as XinpianchangJob | AmazonJob | undefined;
+    const job = data[key] as XinpianchangJob | AmazonJob | TikTokJob | undefined;
     if (!job || Date.now() - job.createdAt > 300000) throw new Error('This download task expired. Start it again from the extension.');
     document.querySelector('#filename')!.textContent = job.filename.split('/').pop() || 'Video';
     status.textContent = 'Downloading video...';
-    const blob = key.startsWith('amazon-job-')
+    const blob = key.startsWith('tiktok-job-')
+        ? await fetchTikTokBlob(job.url, controller.signal)
+        : key.startsWith('amazon-job-')
         ? await downloadAmazonMp4(() => new AmazonWorker(), job.url, controller.signal, state => {
             status.textContent = state.stage === 'remuxing' ? 'Preparing MP4 file...' : `Downloading video: ${(state.bytes / 1048576).toFixed(1)} MB`;
             progress.max = 100; progress.value = state.percent;

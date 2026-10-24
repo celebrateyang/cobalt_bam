@@ -432,6 +432,11 @@ const downloadTikTokExternalInTab = async (tabId: number, url: string, filename?
                 throw new Error('Downloaded payload is not a video file.');
             }
 
+            const prefix = new Uint8Array(await blob.slice(0, 12).arrayBuffer());
+            if (String.fromCharCode(...prefix.slice(4, 8)) !== 'ftyp') {
+                throw new Error('TikTok CDN returned an invalid MP4 file.');
+            }
+
             const objectUrl = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = objectUrl;

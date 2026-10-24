@@ -8,6 +8,14 @@ export const fetchUserPoints = async (token: string): Promise<Response> => {
     }), token);
 };
 
+export const startDownloadProtection = async (token: string): Promise<Response> => {
+    return fetchWithUserSync(retryToken => fetch(`${currentApiURL()}/user/download-protection/start`, {
+        method: "POST",
+        signal: AbortSignal.timeout(15000),
+        headers: { Authorization: `Bearer ${retryToken}` },
+    }), token);
+};
+
 // Retry only a response proving that the original request did not mutate points.
 export const fetchWithUserSync = async (
     request: (token: string) => Promise<Response>,

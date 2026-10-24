@@ -39,6 +39,7 @@ const mapClerkUser = (user) => ({
     primaryEmail: user.emailAddresses?.find((item) => item.id === user.primaryEmailAddressId)?.emailAddress || user.emailAddresses?.[0]?.emailAddress || null,
     fullName: [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username || null,
     avatarUrl: user.imageUrl || null,
+    clerkCreatedAt: user.createdAt,
 });
 
 const config = () => ({

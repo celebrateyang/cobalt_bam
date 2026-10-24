@@ -157,6 +157,38 @@ Clients must use `platformRequest.eligible`, not error-message text, to decide w
 
 Only the registrable domain and generated `https://<domain>/` homepage are stored. Original video paths, query parameters, fragments, credentials, and ports are discarded.
 
+## internal new-user download protection
+
+Normal accounts registered with Clerk after the first protection schema rollout receive one
+30-minute points-free window. Existing local users and older Clerk accounts first synchronized
+after rollout remain ineligible. The rollout timestamp is persisted and is not reset on restart.
+
+The web client calls Clerk-authenticated `POST /user/download-protection/start` on an explicit
+download action, before balance prechecks or collection expansion. No request body is required.
+The response has the same balance/membership shape as `GET /user/points`, including the internal
+`data.user.download_protection_active` boolean and the real points balance. The POST atomically
+sets the start once; GET balance reads, automatic previews and YouTube searches never activate it.
+The download endpoint also activates before link validation/extraction, including failed attempts.
+Activation commits separately and is not rolled back when the download fails.
+
+Each download's points policy is determined at authenticated admission. Tasks admitted within
+the window stay free even when extraction or finalization finishes later. Queue-id claims persist
+that policy for retries; normal replay, ownership, expiry and rate-limit rules still apply.
+Protected queue holds store `points=0`, the original `required_points`, and
+`charge_policy=new_user_protection`. Membership quotas and non-download consumption (including
+Discover viewing) are unchanged. No protection notice or countdown is added to the web interface.
+
+First-download grace is no longer granted. Historical grace data is retained, and pre-existing
+valid holds settle at their recorded amount. Before serving the new API code, run
+`pnpm -C api init-users` (or `node init-users.js` from the API directory in the production image)
+against the intended database. Normal API startup does not call `initUserDatabase` automatically.
+The migration is repeatable. Deploy the API before the web client that calls the new POST endpoint.
+
+Run `pnpm -C api test:download-protection` and `pnpm -C web test:download-protection`.
+The API SQL integration test uses an optional isolated PGlite installation outside the repository:
+set `DOWNLOAD_PROTECTION_TEST_PGLITE` to that installation's absolute `dist/index.js` path.
+Without that variable only the SQL integration suite is skipped; no production database is used.
+
 ## points hold flow (browser-queued downloads)
 when `batch=true` or the response is handled by the browser processing queue, the api creates a points hold per item. the hold is finalized only after the item completes successfully.
 
@@ -164,7 +196,7 @@ the web client sends a stable `queueId` (1-120 ASCII letters, numbers, `_`, or `
 
 the api claims a queue id before contacting the source platform. concurrent duplicates are rejected, and completed responses are replayed without another extraction. queued responses are replayed only while their hold remains active; finalized queue ids cannot be reused for a new extraction.
 
-direct bridge responses normally do not create holds because they do not enter the browser processing queue. WeChat article batch redirects are the exception: the web app fetches those CDN URLs through its processing queue, so they use a hold and charge only after the file completes. other direct bridge responses commit their immediate points charge and cached idempotent response in the same database transaction, so a lost response can be retried without another charge. first-download grace is reserved on a queue hold and consumed only when that hold is finalized.
+direct bridge responses normally do not create holds because they do not enter the browser processing queue. WeChat article batch redirects are the exception: the web app fetches those CDN URLs through its processing queue, so they use a hold and charge only after the file completes. other direct bridge responses commit their immediate points charge and cached idempotent response in the same database transaction, so a lost response can be retried without another charge. protected downloads follow the same lifecycle with a zero charge.
 
 ### success path (hold -> finalize)
 1) client sends `POST /` with a stable `queueId`

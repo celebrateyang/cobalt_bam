@@ -217,6 +217,7 @@ const mapClerkUser = (clerkUser) => {
         primaryEmail,
         fullName,
         avatarUrl: clerkUser.imageUrl,
+        clerkCreatedAt: clerkUser.createdAt,
     };
 };
 

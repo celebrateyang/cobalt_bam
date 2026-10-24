@@ -178,6 +178,7 @@ export type CobaltPointsInfo = {
     after?: number | null;
     holdId?: string | null;
     holdExpiresAt?: number | null;
+    chargePolicy?: "standard" | "new_user_protection";
 };
 
 export type CobaltAPIResponse = (CobaltErrorResponse

@@ -2,13 +2,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createUserPointsHandler } from "./user-points.js";
 
-const fixture = ({ userId = "clerk_user", user = null } = {}) => {
+const fixture = ({ userId = "clerk_user", user = null, startDownloadProtection } = {}) => {
     const reads = [];
     const membership = { active: true };
     const handler = createUserPointsHandler({
         getAuth: () => ({ userId }),
         getUserByClerkId: async id => { reads.push(id); return user; },
         getActiveMembershipForUser: async id => { reads.push(id); return membership; },
+        startDownloadProtection,
     });
     const res = {
         statusCode: 200, headers: {},
@@ -28,6 +29,34 @@ test("reads current balance for authenticated identity without changing the user
     assert.equal(f.res.body.data.user.membership, f.membership);
     assert.equal(f.res.body.data.user.referral_code, "abc");
     assert.equal(f.res.headers["Cache-Control"], "no-store");
+});
+
+test("explicit download action activates before reading membership and returns real zero balance", async () => {
+    let calls = 0;
+    const f = fixture({ user: { id: 17, points: 0 }, startDownloadProtection: async user => {
+        calls++;
+        return { ...user, download_protection_eligible: true, download_protection_started_at: Date.now() };
+    } });
+    await f.handler({ body: { userId: "other", startedAt: 1 } }, f.res);
+    assert.equal(calls, 1);
+    assert.equal(f.res.body.data.user.points, 0);
+    assert.equal(f.res.body.data.user.download_protection_active, true);
+});
+
+test("disabled download action cannot activate protection", async () => {
+    const f = fixture({ user: { id: 17, is_disabled: true }, startDownloadProtection: () => assert.fail('must not activate') });
+    await f.handler({}, f.res);
+    assert.equal(f.res.statusCode, 403);
+});
+
+test("activation failure cannot become a successful or free response", async () => {
+    const f = fixture({ user: { id: 17 }, startDownloadProtection: async () => { throw new Error('offline'); } });
+    const original = console.error;
+    console.error = () => {};
+    try { await f.handler({}, f.res); } finally { console.error = original; }
+    assert.equal(f.res.statusCode, 500);
+    assert.equal(f.res.body.status, 'error');
+    assert.deepEqual(f.reads, ['clerk_user']);
 });
 
 test("rejects unauthenticated queries without DB reads", async () => {

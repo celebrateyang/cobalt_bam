@@ -43,6 +43,7 @@ export const createVideoAgentRouter = ({ authenticate, operations = {} } = {}) =
                 if (!user) {
                     const profile = await clerkClient.users.getUser(auth.userId);
                     user = await upsertUserFromClerk({ clerkUserId: profile.id,
+                        clerkCreatedAt: profile.createdAt,
                         primaryEmail: profile.emailAddresses?.find((item) => item.id === profile.primaryEmailAddressId)?.emailAddress || profile.emailAddresses?.[0]?.emailAddress || null,
                         fullName: [profile.firstName, profile.lastName].filter(Boolean).join(" ") || profile.username || null, avatarUrl: profile.imageUrl || null });
                 }

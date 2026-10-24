@@ -48,6 +48,7 @@ const mapClerkUser = (clerkUser) => ({
         || clerkUser.username
         || null,
     avatarUrl: clerkUser.imageUrl,
+    clerkCreatedAt: clerkUser.createdAt,
 });
 
 const requireLocalUser = async (req, res) => {

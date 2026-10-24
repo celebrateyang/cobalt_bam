@@ -22,7 +22,6 @@ import { uuid } from "$lib/util";
 import { redditPhotoHandoff } from "$lib/api/reddit-photo-handoff";
 import {
     fetchCurrentUserPointsProfile,
-    isFirstDownloadGraceEligible,
     showSingleDownloadOffer,
     showPointsInsufficientDialog,
 } from "$lib/points/ui";
@@ -41,6 +40,7 @@ import type { CobaltQueueItemCollectionMemory } from "$lib/types/queue";
 export type SavingStage = 'authenticating' | 'confirming' | 'resolving' | 'starting';
 
 type SavingHandlerArgs = {
+    pointsProfile?: Awaited<ReturnType<typeof fetchCurrentUserPointsProfile>>;
     url?: string,
     request?: CobaltSaveRequestBody,
     oldTaskId?: string,
@@ -408,15 +408,16 @@ const estimatePointsForUrl = async (
     }
 };
 
-const confirmPointsPreview = async (url: string) => {
+const confirmPointsPreview = async (
+    url: string,
+    pointsProfile: Awaited<ReturnType<typeof fetchCurrentUserPointsProfile>>,
+) => {
+    if (pointsProfile?.downloadProtectionActive) return true;
     // The dedicated YouTube entry starts downloads directly. The API still
     // validates the balance and reserves points for the actual request.
     if (isYouTubeDownloadPageRoute()) return true;
 
-    const [{ points, hasEstimate }, pointsProfile] = await Promise.all([
-        estimatePointsForUrl(url),
-        fetchCurrentUserPointsProfile(),
-    ]);
+    const { points, hasEstimate } = await estimatePointsForUrl(url);
 
     if (pointsProfile?.membershipActive) {
         return true;
@@ -429,8 +430,6 @@ const confirmPointsPreview = async (url: string) => {
         estimatedPoints !== null && currentPoints !== null
             ? Math.max(0, estimatedPoints - currentPoints)
             : null;
-    const graceEligible =
-        gap !== null && isFirstDownloadGraceEligible(pointsProfile, gap);
 
     // Home page: when points cannot be estimated, skip the extra confirmation
     // and continue with the normal download flow.
@@ -451,11 +450,6 @@ const confirmPointsPreview = async (url: string) => {
             }
         );
 
-        if (graceEligible && gap > 0) {
-            bodyText += `\n${get(t)("dialog.points_preview.first_grace", {
-                required: gap,
-            })}`;
-        }
     } else if (estimatedPoints !== null) {
         bodyText = get(t)("dialog.points_preview.body", {
             required: estimatedPoints,
@@ -490,6 +484,7 @@ export const savingHandler = async ({
     oldTaskId,
     response: preFetchedResponse,
     skipPoints,
+    pointsProfile,
     queueMeta,
     suppressErrors,
     onStage,
@@ -563,12 +558,6 @@ export const savingHandler = async ({
             sourceUrl: selectedRequest.url, confirmedPhotos, errorText });
     };
 
-    if (!preFetchedResponse && redditPhotoHandoff(selectedRequest.url) === 'confirmed') {
-        downloadButtonState.set('idle');
-        await showRedditPhotoHandoff(true);
-        return null;
-    }
-
     if (clerkEnabled) {
         onStage?.('authenticating');
         const signedIn = await requireDownloadAuth();
@@ -578,9 +567,24 @@ export const savingHandler = async ({
         }
     }
 
+    if (!preFetchedResponse && !skipPoints && clerkEnabled) {
+        pointsProfile ??= await fetchCurrentUserPointsProfile(true);
+        if (!pointsProfile) {
+            downloadButtonState.set("error");
+            showError(get(t)("error.api.points.unavailable"), "error.api.points.unavailable");
+            return null;
+        }
+    }
+
+    if (!preFetchedResponse && redditPhotoHandoff(selectedRequest.url) === 'confirmed') {
+        downloadButtonState.set('idle');
+        await showRedditPhotoHandoff(true);
+        return null;
+    }
+
     if (!preFetchedResponse && !skipPoints && clerkEnabled && selectedRequest?.url) {
         onStage?.('confirming');
-        const approved = await confirmPointsPreview(selectedRequest.url);
+        const approved = await confirmPointsPreview(selectedRequest.url, pointsProfile ?? null);
         if (!approved) {
             downloadButtonState.set("idle");
             return null;

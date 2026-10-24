@@ -24,6 +24,7 @@ const authenticateOwner = async req => {
     if (!user) {
         const profile = await clerkClient.users.getUser(payload.sub);
         user = await upsertUserFromClerk({ clerkUserId: profile.id,
+            clerkCreatedAt: profile.createdAt,
             primaryEmail: profile.emailAddresses?.find(email => email.id === profile.primaryEmailAddressId)?.emailAddress || null,
             fullName: profile.username || null, avatarUrl: profile.imageUrl || null });
     }

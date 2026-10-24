@@ -3,14 +3,12 @@ import { page } from "$app/stores";
 
 import { get } from "svelte/store";
 
-import { fetchUserPoints } from "$lib/api/user-points";
+import { fetchUserPoints, startDownloadProtection } from "$lib/api/user-points";
 import { trackTopupPrompt } from "$lib/analytics/commerce";
 import { t } from "$lib/i18n/translations";
 import { getClerkToken } from "$lib/state/clerk";
 import { createDialog } from "$lib/state/dialogs";
 import { WHATSAPP_CONTACT_URL } from "./contact";
-
-export const FIRST_DOWNLOAD_GRACE_MAX_GAP = 800;
 
 export type PointsHelpSection =
   | "membership"
@@ -35,8 +33,7 @@ export type CurrentUserPointsProfile = {
     limitExceeded?: boolean;
   } | null;
   downloadSuccessCount: number;
-  firstDownloadGraceEligible: boolean;
-  firstDownloadGraceUsed: boolean;
+  downloadProtectionActive: boolean;
 };
 
 const normalizeRedirectPath = (redirectPath?: string | null) => {
@@ -118,11 +115,11 @@ const navigateToAccountSection = async (
 };
 
 export const fetchCurrentUserPointsProfile =
-  async (): Promise<CurrentUserPointsProfile | null> => {
+  async (downloadAction = false): Promise<CurrentUserPointsProfile | null> => {
     const token = await getClerkToken();
     if (!token) return null;
 
-    const res = await fetchUserPoints(token).catch(() => null);
+    const res = await (downloadAction ? startDownloadProtection(token) : fetchUserPoints(token)).catch(() => null);
 
     if (!res?.ok) return null;
 
@@ -134,21 +131,9 @@ export const fetchCurrentUserPointsProfile =
       membershipActive: user?.membership?.active === true,
       membership: user?.membership ?? null,
       downloadSuccessCount: Number(user?.download_success_count ?? 0) || 0,
-      firstDownloadGraceEligible: user?.first_download_grace_eligible === true,
-      firstDownloadGraceUsed: user?.first_download_grace_used === true,
+      downloadProtectionActive: user?.download_protection_active === true,
     };
   };
-
-export const isFirstDownloadGraceEligible = (
-  profile: CurrentUserPointsProfile | null,
-  gap: number,
-) =>
-  !!profile &&
-  profile.firstDownloadGraceEligible &&
-  profile.downloadSuccessCount === 0 &&
-  !profile.firstDownloadGraceUsed &&
-  gap > 0 &&
-  gap <= FIRST_DOWNLOAD_GRACE_MAX_GAP;
 
 export const showPointsInsufficientDialog = (
   currentPoints: number,

@@ -45,7 +45,7 @@ import { requireAuth as requireAdminAuth } from "../middleware/admin-auth.js";
 import * as APIKeys from "../security/api-keys.js";
 import * as Cookies from "../processing/cookie/manager.js";
 import * as YouTubeSession from "../processing/helpers/youtube-session.js";
-import { verifyToken } from "@clerk/express";
+import { verifyToken, clerkClient } from "@clerk/express";
 import {
     consumeUserPoints,
     claimDownloadRequest,
@@ -53,7 +53,8 @@ import {
     createPointsHold,
     completeMemberDownloadUsage,
     failDownloadRequest,
-    FIRST_DOWNLOAD_GRACE_MAX_POINTS,
+    startDownloadProtection,
+    isDownloadProtected,
     getUserByClerkId,
     reserveMemberDownloadUsage,
     upsertUserFromClerk,
@@ -975,23 +976,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
     const handleDownload = async (req, res) => {
         const request = req.body;
 
-        if (!request.url) {
-            return fail(res, "error.api.link.missing");
-        }
-
-        const normalized = await normalizeRequest(request);
-        if (!normalized.success) {
-            const requestType = request === null ? "null" : typeof request;
-            const requestKeys = request && typeof request === "object" && !Array.isArray(request)
-                ? Object.keys(request).slice(0, 32).join(",")
-                : "n/a";
-            const debug = normalized?.debug ? JSON.stringify(normalized.debug) : "n/a";
-            console.warn(
-                `[REQUEST INVALID_BODY] path=/ reason=schema_reject request_type=${requestType} keys=${requestKeys} debug=${debug}`,
-            );
-            return fail(res, "error.api.invalid_body");
-        }
-        const normalizedRequest = normalized.data;
+        let normalizedRequest = request ?? {};
         let email = resolveDownloadLogEmail({ req });
         const requestId = req.traceId || randomUUID();
         const requestTime = new Date().toISOString();
@@ -1063,9 +1048,12 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                         req.header("X-Clerk-Email"),
                         256,
                     );
+                    const clerkUser = await clerkClient.users.getUser(auth.clerkUserId);
                     pointsUser = await upsertUserFromClerk({
                         clerkUserId: auth.clerkUserId,
-                        primaryEmail: fallbackPrimaryEmail,
+                        clerkCreatedAt: clerkUser.createdAt,
+                        primaryEmail: clerkUser.emailAddresses?.find(e => e.id === clerkUser.primaryEmailAddressId)?.emailAddress
+                            ?? clerkUser.emailAddresses?.[0]?.emailAddress ?? fallbackPrimaryEmail,
                         fullName: null,
                         avatarUrl: null,
                     });
@@ -1086,6 +1074,49 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 return fail(res, "error.api.points.unavailable");
             }
         }
+        const isWechatArticleCollectionPreview = (() => {
+            try {
+                const sourceUrl = new URL(normalizedRequest.url);
+                return (
+                    sourceUrl.hostname === "mp.weixin.qq.com" &&
+                    /^\/s\/[^/]+$/.test(sourceUrl.pathname) &&
+                    !sourceUrl.searchParams.has("fsv_item")
+                );
+            } catch {
+                return false;
+            }
+        })();
+
+        let protectedDownload = false;
+        if (pointsUser && !isWechatArticleCollectionPreview) {
+            try {
+                if (req.personalAgent) pointsUser = await getUserByClerkId(clerkUserId);
+                pointsUser = await startDownloadProtection(pointsUser);
+                if (!pointsUser || pointsUser.is_disabled) return fail(res, "error.api.user.disabled");
+                // Take admission after activation so the first request is included.
+                protectedDownload = isDownloadProtected(pointsUser, Date.now());
+            } catch (error) {
+                console.error("Failed to activate download protection:", error);
+                return fail(res, "error.api.points.unavailable");
+            }
+        }
+        if (!request?.url) {
+            return fail(res, "error.api.link.missing");
+        }
+
+        const normalized = await normalizeRequest(request);
+        if (!normalized.success) {
+            const requestType = request === null ? "null" : typeof request;
+            const requestKeys = request && typeof request === "object" && !Array.isArray(request)
+                ? Object.keys(request).slice(0, 32).join(",")
+                : "n/a";
+            const debug = normalized?.debug ? JSON.stringify(normalized.debug) : "n/a";
+            console.warn(
+                `[REQUEST INVALID_BODY] path=/ reason=schema_reject request_type=${requestType} keys=${requestKeys} debug=${debug}`,
+            );
+            return fail(res, "error.api.invalid_body");
+        }
+        normalizedRequest = normalized.data;
         let membershipReservation = null;
         const requestClientIp = String(
             req.header("x-fsv-client-ip")
@@ -1168,6 +1199,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                     userId: pointsUser.id,
                     queueId: normalizedRequest.queueId,
                     sourceUrl: normalizedRequest.url,
+                    protectedDownload,
                 });
                 if (claim.status === "replay") {
                     const completedAt = Date.now();
@@ -1211,6 +1243,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                     });
                 }
                 if (claim.status === "claimed") {
+                    protectedDownload = claim.protectedDownload;
                     downloadRequestClaim = {
                         userId: pointsUser.id,
                         queueId: normalizedRequest.queueId,
@@ -1260,19 +1293,6 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 // fail open if dedupe storage is unavailable
             }
         }
-        const isWechatArticleCollectionPreview = (() => {
-            try {
-                const sourceUrl = new URL(normalizedRequest.url);
-                return (
-                    sourceUrl.hostname === "mp.weixin.qq.com" &&
-                    /^\/s\/[^/]+$/.test(sourceUrl.pathname) &&
-                    !sourceUrl.searchParams.has("fsv_item")
-                );
-            } catch {
-                return false;
-            }
-        })();
-
         if (pointsUser && !isWechatArticleCollectionPreview &&
             (!req.personalAgent || req.personalAgent.grant.allow_membership)) {
             try {
@@ -1499,8 +1519,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                                 : "queued_download",
                             sourceUrl: normalizedRequest.url,
                             queueId: normalizedRequest.queueId ?? null,
-                            allowFirstDownloadGrace: true,
-                            maxGracePoints: FIRST_DOWNLOAD_GRACE_MAX_POINTS,
+                            protectedDownload,
                             idempotencyOwnerToken:
                                 downloadRequestClaim?.ownerToken ?? null,
                             responseStatus: result.status,
@@ -1567,8 +1586,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                             pointsUser.id,
                             pointsRequired,
                             {
-                                allowFirstDownloadGrace: !req.personalAgent,
-                                maxGracePoints: FIRST_DOWNLOAD_GRACE_MAX_POINTS,
+                                protectedDownload,
                                 markDownloadSuccess: true,
                                 queueId: normalizedRequest.queueId ?? null,
                                 idempotencyOwnerToken:
@@ -1596,9 +1614,8 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                         }
 
                         const chargeMeta = updated.chargeMeta ?? {};
-                        pointsOutcome = chargeMeta.usedFirstDownloadGrace
-                            ? "consumed_with_grace"
-                            : "consumed";
+                        pointsOutcome = chargeMeta.chargePolicy === "new_user_protection"
+                            ? "new_user_protection" : "consumed";
                         pointsBefore = chargeMeta.pointsBefore ?? pointsBefore;
                         pointsAfter = chargeMeta.pointsAfter ?? updated.points;
                     } catch (error) {
@@ -1654,6 +1671,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                         membershipUsage: membershipLimit,
                         isBatch: isBatchRequest,
                         isBrowserQueued: isBrowserQueuedRequest,
+                        chargePolicy: protectedDownload ? "new_user_protection" : "standard",
                         queueId: normalizedRequest?.queueId ?? null,
                     },
                 },
@@ -1667,6 +1685,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                     after: pointsAfter,
                     holdId: pointsHoldId,
                     holdExpiresAt: pointsHoldExpiresAt,
+                    chargePolicy: protectedDownload ? "new_user_protection" : "standard",
                 };
             }
 

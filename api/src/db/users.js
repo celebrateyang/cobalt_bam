@@ -11,50 +11,15 @@ import { initCuriousCatDatabase } from "./curious-cat.js";
 import { nanoid } from "nanoid";
 import { generateClipboardPersonalCode } from "../core/clipboard-personal.js";
 import { evaluateMembershipFeatureEligibility } from "../core/membership-features.js";
+import { createDownloadProtectionStarter, calculateDownloadCharge } from "../core/download-protection.js";
 
 const generateReferralCode = () => nanoid(10);
 const isUniqueViolation = (error) =>
     error && typeof error === "object" && error.code === "23505";
-export const FIRST_DOWNLOAD_GRACE_MAX_POINTS = 800;
+export { isDownloadProtected } from "../core/download-protection.js";
+export const startDownloadProtection = createDownloadProtectionStarter(query);
 const DOWNLOAD_REQUEST_LEASE_MS = 5 * 60 * 1000;
 const DOWNLOAD_REQUEST_REPLAY_MS = 60 * 60 * 1000;
-
-export const calculateFirstDownloadGraceCharge = ({
-    requiredPoints,
-    availablePoints,
-    allowFirstDownloadGrace = false,
-    maxGracePoints = FIRST_DOWNLOAD_GRACE_MAX_POINTS,
-    firstDownloadGraceEligible = false,
-    firstDownloadGraceUsed = false,
-    downloadSuccessCount = 0,
-    activeHoldCount = 0,
-} = {}) => {
-    const required = Math.max(0, Number(requiredPoints) || 0);
-    const available = Number(availablePoints);
-    const graceLimit = Math.max(0, Number(maxGracePoints) || 0);
-    const gracePoints = Math.max(0, required - available);
-    const useFirstDownloadGrace =
-        Number.isFinite(available) &&
-        allowFirstDownloadGrace &&
-        firstDownloadGraceEligible &&
-        !firstDownloadGraceUsed &&
-        Number(downloadSuccessCount || 0) === 0 &&
-        Number(activeHoldCount || 0) === 0 &&
-        gracePoints > 0 &&
-        gracePoints <= graceLimit;
-    const allowed =
-        Number.isFinite(available) &&
-        (available >= required || useFirstDownloadGrace);
-
-    return {
-        allowed,
-        useFirstDownloadGrace,
-        chargedPoints: useFirstDownloadGrace
-            ? Math.max(0, Math.min(required, available))
-            : required,
-        gracePoints: useFirstDownloadGrace ? gracePoints : 0,
-    };
-};
 
 const normalizeDownloadSourceUrl = (value) => {
     if (value instanceof URL) return value.toString();
@@ -217,7 +182,7 @@ export const initUserDatabase = async () => {
             last_seen_at BIGINT,
             points INTEGER NOT NULL DEFAULT 20,
             download_success_count INTEGER NOT NULL DEFAULT 0,
-            first_download_grace_eligible BOOLEAN NOT NULL DEFAULT true,
+            first_download_grace_eligible BOOLEAN NOT NULL DEFAULT false,
             first_download_grace_used BOOLEAN NOT NULL DEFAULT false,
             first_download_grace_used_at BIGINT,
             first_download_grace_extra_points INTEGER NOT NULL DEFAULT 0,
@@ -259,7 +224,7 @@ export const initUserDatabase = async () => {
             ADD COLUMN IF NOT EXISTS first_download_grace_eligible BOOLEAN NOT NULL DEFAULT false;`,
     );
     await query(
-        `ALTER TABLE users ALTER COLUMN first_download_grace_eligible SET DEFAULT true;`,
+        `ALTER TABLE users ALTER COLUMN first_download_grace_eligible SET DEFAULT false;`,
     );
     await query(
         `ALTER TABLE users
@@ -282,6 +247,18 @@ export const initUserDatabase = async () => {
     await query(
         `ALTER TABLE users ALTER COLUMN first_download_grace_extra_points SET DEFAULT 0;`,
     );
+
+    // Existing users stay ineligible; only verified new Clerk registrations opt in.
+    await query(`ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS download_protection_eligible BOOLEAN NOT NULL DEFAULT FALSE,
+        ADD COLUMN IF NOT EXISTS download_protection_started_at BIGINT;`);
+    await query(`CREATE TABLE IF NOT EXISTS download_protection_rollout (
+        singleton BOOLEAN PRIMARY KEY DEFAULT TRUE CHECK (singleton),
+        started_at BIGINT NOT NULL
+    );`);
+    await query(`INSERT INTO download_protection_rollout (singleton, started_at)
+        VALUES (TRUE, FLOOR(EXTRACT(EPOCH FROM clock_timestamp()) * 1000)::bigint)
+        ON CONFLICT (singleton) DO NOTHING;`);
 
     // Migration: referral codes (invite links)
     await query(
@@ -402,6 +379,8 @@ export const initUserDatabase = async () => {
         );
     `);
 
+    await query(`ALTER TABLE user_points_holds
+        ADD COLUMN IF NOT EXISTS charge_policy TEXT NOT NULL DEFAULT 'standard';`);
     await query(
         `ALTER TABLE user_points_holds
             ADD COLUMN IF NOT EXISTS queue_id TEXT;`,
@@ -448,6 +427,8 @@ export const initUserDatabase = async () => {
         );
     `);
 
+    await query(`ALTER TABLE user_download_requests
+        ADD COLUMN IF NOT EXISTS charge_policy TEXT NOT NULL DEFAULT 'standard';`);
     await query(
         `CREATE INDEX IF NOT EXISTS idx_user_download_requests_expiry
          ON user_download_requests(lease_expires_at, replay_expires_at);`,
@@ -697,6 +678,7 @@ export const upsertUserFromClerk = async ({
     primaryEmail,
     fullName,
     avatarUrl,
+    clerkCreatedAt = null,
 }) => {
     const client = await getClient();
     const now = Date.now();
@@ -798,8 +780,11 @@ export const upsertUserFromClerk = async ({
                 signup_block_reason,
                 signup_blocked_at,
                 created_at,
-                updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                updated_at,
+                download_protection_eligible
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
+                NOT $9 AND $14::bigint IS NOT NULL AND
+                $14::bigint >= (SELECT started_at FROM download_protection_rollout WHERE singleton = TRUE))
             RETURNING *;
         `;
 
@@ -822,6 +807,8 @@ export const upsertUserFromClerk = async ({
                     blockDuplicateSignup ? now : null,
                     now,
                     now,
+                    Number.isFinite(Number(clerkCreatedAt)) && clerkCreatedAt != null
+                        ? Number(clerkCreatedAt) : null,
                 ]);
 
                 await client.query("COMMIT");
@@ -1190,21 +1177,6 @@ const getActiveHoldPoints = async (client, userId, now) => {
     return Number.isFinite(held) ? held : 0;
 };
 
-const getActiveHoldCount = async (client, userId, now) => {
-    const result = await client.query(
-        `
-        SELECT COUNT(*) AS count
-        FROM user_points_holds
-        WHERE user_id = $1
-          AND status = 'held'
-          AND expires_at > $2;
-        `,
-        [userId, now],
-    );
-    const count = Number.parseInt(result.rows?.[0]?.count ?? "0", 10);
-    return Number.isFinite(count) ? count : 0;
-};
-
 const lockDownloadRequestClaim = async (client, {
     userId,
     queueId,
@@ -1268,6 +1240,7 @@ export const claimDownloadRequest = async ({
     userId,
     queueId,
     sourceUrl,
+    protectedDownload = false,
 } = {}) => {
     if (!userId || !queueId || !sourceUrl) {
         return { ok: true, status: "skipped" };
@@ -1305,12 +1278,13 @@ export const claimDownloadRequest = async ({
                 owner_token,
                 lease_expires_at,
                 created_at,
-                updated_at
-            ) VALUES ($1, $2, $3, 'processing', $4, $5, $6, $6)
+                updated_at,
+                charge_policy
+            ) VALUES ($1, $2, $3, 'processing', $4, $5, $6, $6, $7)
             ON CONFLICT (user_id, queue_id) DO NOTHING
             RETURNING *;
             `,
-            [userId, queueId, normalizedSourceUrl, ownerToken, leaseExpiresAt, now],
+            [userId, queueId, normalizedSourceUrl, ownerToken, leaseExpiresAt, now, protectedDownload ? 'new_user_protection' : 'standard'],
         );
 
         if (inserted.rowCount) {
@@ -1335,7 +1309,7 @@ export const claimDownloadRequest = async ({
                 return { ok: false, code: "IDEMPOTENCY_IN_PROGRESS" };
             }
             await client.query("COMMIT");
-            return { ok: true, status: "claimed", ownerToken };
+            return { ok: true, status: "claimed", ownerToken, protectedDownload };
         }
 
         const existingRes = await client.query(
@@ -1391,7 +1365,8 @@ export const claimDownloadRequest = async ({
             [userId, queueId, ownerToken, leaseExpiresAt, now],
         );
         await client.query("COMMIT");
-        return { ok: true, status: "claimed", ownerToken };
+        return { ok: true, status: "claimed", ownerToken,
+            protectedDownload: existing.charge_policy === 'new_user_protection' };
     } catch (error) {
         try {
             await client.query("ROLLBACK");
@@ -1457,8 +1432,7 @@ export const createPointsHold = async ({
     reason = null,
     sourceUrl = null,
     queueId = null,
-    allowFirstDownloadGrace = false,
-    maxGracePoints = FIRST_DOWNLOAD_GRACE_MAX_POINTS,
+    protectedDownload = false,
     idempotencyOwnerToken = null,
     responseStatus = null,
     responseBody = null,
@@ -1473,9 +1447,7 @@ export const createPointsHold = async ({
         const userRes = await client.query(
             `SELECT
                 points,
-                download_success_count,
-                first_download_grace_eligible,
-                first_download_grace_used
+                download_success_count
              FROM users
              WHERE id = $1
              FOR UPDATE;`,
@@ -1513,6 +1485,7 @@ export const createPointsHold = async ({
                         after: userPoints,
                         holdId: hold.hold_id,
                         holdExpiresAt: hold.expires_at,
+                        chargePolicy: hold.charge_policy ?? "standard",
                     },
                 },
                 now,
@@ -1575,33 +1548,15 @@ export const createPointsHold = async ({
             }
         }
 
-        const heldPoints = await getActiveHoldPoints(client, userId, now);
-        const activeHoldCount = await getActiveHoldCount(client, userId, now);
+        const heldPoints = protectedDownload ? 0 : await getActiveHoldPoints(client, userId, now);
         const available = userPoints - heldPoints;
         const requiredPoints = existingHold?.required_points ?? points;
-        const graceCharge = calculateFirstDownloadGraceCharge({
-            requiredPoints,
-            availablePoints: available,
-            allowFirstDownloadGrace,
-            maxGracePoints,
-            firstDownloadGraceEligible:
-                userRes.rows[0]?.first_download_grace_eligible === true,
-            firstDownloadGraceUsed:
-                userRes.rows[0]?.first_download_grace_used === true,
-            downloadSuccessCount:
-                userRes.rows[0]?.download_success_count ?? 0,
-            activeHoldCount,
-        });
-        const holdPoints = graceCharge.chargedPoints;
+        const charge = calculateDownloadCharge({ requiredPoints, availablePoints: available, protectedDownload });
+        const holdPoints = charge.chargedPoints;
 
-        if (!graceCharge.allowed) {
+        if (!charge.allowed) {
             await client.query("ROLLBACK");
-            return {
-                ok: false,
-                code: "INSUFFICIENT_POINTS",
-                current: Number.isFinite(available) ? available : userPoints,
-                required: requiredPoints,
-            };
+            return { ok: false, code: "INSUFFICIENT_POINTS", current: available, required: requiredPoints };
         }
 
         if (existingHold) {
@@ -1612,6 +1567,7 @@ export const createPointsHold = async ({
                     points = $2,
                     required_points = $3,
                     grace_points = $4,
+                    charge_policy = $9,
                     reason = COALESCE($5, reason),
                     source_url = COALESCE(source_url, $6),
                     updated_at = $7,
@@ -1625,11 +1581,12 @@ export const createPointsHold = async ({
                     existingHold.id,
                     holdPoints,
                     requiredPoints,
-                    graceCharge.gracePoints,
+                    0,
                     reason,
                     sourceUrl,
                     now,
                     expiresAt,
+                    charge.chargePolicy,
                 ],
             );
             if (!await completeQueuedRequest(reactivated.rows[0])) {
@@ -1663,10 +1620,11 @@ export const createPointsHold = async ({
                 queue_id,
                 required_points,
                 grace_points,
+                charge_policy,
                 created_at,
                 updated_at,
                 expires_at
-            ) VALUES ($1, $2, $3, 'held', $4, $5, $6, $7, $8, $9, $9, $10);
+            ) VALUES ($1, $2, $3, 'held', $4, $5, $6, $7, $8, $11, $9, $9, $10);
             `,
             [
                 holdId,
@@ -1676,9 +1634,10 @@ export const createPointsHold = async ({
                 sourceUrl,
                 queueId,
                 requiredPoints,
-                graceCharge.gracePoints,
+                0,
                 now,
                 expiresAt,
+                charge.chargePolicy,
             ],
         );
 
@@ -1687,6 +1646,7 @@ export const createPointsHold = async ({
             points: holdPoints,
             required_points: requiredPoints,
             expires_at: expiresAt,
+            charge_policy: charge.chargePolicy,
         };
         if (!await completeQueuedRequest(insertedHold)) {
             await client.query("ROLLBACK");
@@ -1939,8 +1899,7 @@ export const consumeUserPoints = async (
     id,
     points,
     {
-        allowFirstDownloadGrace = false,
-        maxGracePoints = FIRST_DOWNLOAD_GRACE_MAX_POINTS,
+        protectedDownload = false,
         markDownloadSuccess = false,
         queueId = null,
         idempotencyOwnerToken = null,
@@ -1959,9 +1918,7 @@ export const consumeUserPoints = async (
             `
             SELECT
                 points,
-                download_success_count,
-                first_download_grace_eligible,
-                first_download_grace_used
+                download_success_count
             FROM users
             WHERE id = $1
             FOR UPDATE;
@@ -1974,33 +1931,12 @@ export const consumeUserPoints = async (
         }
 
         const userPoints = Number(userRes.rows?.[0]?.points ?? 0);
-        const downloadSuccessCount = Number(
-            userRes.rows?.[0]?.download_success_count ?? 0,
-        );
-        const firstDownloadGraceUsed =
-            userRes.rows?.[0]?.first_download_grace_used === true;
-        const firstDownloadGraceEligible =
-            userRes.rows?.[0]?.first_download_grace_eligible === true;
-        const heldPoints = await getActiveHoldPoints(client, id, now);
-        const activeHoldCount = await getActiveHoldCount(client, id, now);
+        const heldPoints = protectedDownload ? 0 : await getActiveHoldPoints(client, id, now);
         const available = userPoints - heldPoints;
-        const graceCharge = calculateFirstDownloadGraceCharge({
-            requiredPoints: points,
-            availablePoints: available,
-            allowFirstDownloadGrace,
-            maxGracePoints,
-            firstDownloadGraceEligible,
-            firstDownloadGraceUsed,
-            downloadSuccessCount,
-            activeHoldCount,
+        const { allowed, chargedPoints, chargePolicy } = calculateDownloadCharge({
+            requiredPoints: points, availablePoints: available, protectedDownload,
         });
-        const {
-            useFirstDownloadGrace,
-            chargedPoints,
-            gracePoints,
-        } = graceCharge;
-
-        if (!graceCharge.allowed) {
+        if (!allowed) {
             await client.query("ROLLBACK");
             return null;
         }
@@ -2015,34 +1951,13 @@ export const consumeUserPoints = async (
             return null;
         }
 
-        const result = await client.query(
-            `
+        const result = await client.query(`
             UPDATE users
-            SET points = points - $2,
-                updated_at = $3,
+            SET points = points - $2, updated_at = $3,
                 download_success_count = COALESCE(download_success_count, 0) +
-                    CASE WHEN $4 THEN 1 ELSE 0 END,
-                first_download_grace_used = CASE
-                    WHEN $5 THEN true
-                    ELSE first_download_grace_used
-                END,
-                first_download_grace_used_at = CASE
-                    WHEN $5 THEN $3
-                    ELSE first_download_grace_used_at
-                END,
-                first_download_grace_extra_points = COALESCE(first_download_grace_extra_points, 0) + $6
-            WHERE id = $1
-            RETURNING *;
-            `,
-            [
-                id,
-                chargedPoints,
-                now,
-                markDownloadSuccess,
-                useFirstDownloadGrace,
-                useFirstDownloadGrace ? gracePoints : 0,
-            ],
-        );
+                    CASE WHEN $4 THEN 1 ELSE 0 END
+            WHERE id = $1 RETURNING *;
+        `, [id, chargedPoints, now, markDownloadSuccess]);
 
         if (idempotencyOwnerToken) {
             const completed = await completeDownloadRequestWithClient(client, {
@@ -2066,10 +1981,9 @@ export const consumeUserPoints = async (
 
         updatedUser.chargeMeta = {
             chargedPoints,
-            gracePoints: useFirstDownloadGrace ? gracePoints : 0,
+            chargePolicy,
             pointsBefore: userPoints,
             pointsAfter: updatedUser.points ?? null,
-            usedFirstDownloadGrace: useFirstDownloadGrace,
         };
         return updatedUser;
     } catch (error) {

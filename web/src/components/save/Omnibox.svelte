@@ -14,6 +14,7 @@
     import { updateSetting } from "$lib/state/settings";
     import { turnstileSolved } from "$lib/state/turnstile";
     import { buildSaveRequest, savingHandler } from "$lib/api/saving-handler";
+    import { fetchCurrentUserPointsProfile } from "$lib/points/ui";
     import { requireDownloadAuth } from "$lib/auth/download-auth";
     import API from "$lib/api/api";
     import { clerkEnabled, isSignedIn } from "$lib/state/clerk";
@@ -232,9 +233,9 @@
         }
     };
 
-    const saveCurrentVideo = (url: string) => {
+    const saveCurrentVideo = (url: string, pointsProfile?: Awaited<ReturnType<typeof fetchCurrentUserPointsProfile>>) => {
         if (!isBilibiliVideoPage(url)) {
-            return savingHandler({ url });
+            return savingHandler({ url, pointsProfile });
         }
 
         const request = buildSaveRequest(url);
@@ -242,13 +243,13 @@
             request.downloadMode === "audio" ||
             request.downloadMode === "mute"
         ) {
-            return savingHandler({ url });
+            return savingHandler({ url, pointsProfile });
         }
 
         request.localProcessing = "disabled";
         request.alwaysProxy = false;
         request.bilibiliDirectBridge = true;
-        return savingHandler({ request });
+        return savingHandler({ request, pointsProfile });
     };
 
     const isDouyinVideoPage = (url: string) => {
@@ -588,15 +589,10 @@
 
         submitInFlight = true;
         let handedOffToSavingHandler = false;
+        let pointsProfile: Awaited<ReturnType<typeof fetchCurrentUserPointsProfile>> = null;
         downloadButtonState.set("think");
 
         try {
-            const blockedDouyinGuideUrl = detectedUrls.find((url) => getDouyinGuideReason(url));
-            if (blockedDouyinGuideUrl) {
-                showDouyinGuideDialog(getDouyinGuideReason(blockedDouyinGuideUrl) || "browse");
-                return;
-            }
-
             // Authenticate on the user's download click, before collection
             // detection makes a potentially slow /expand request. The saving
             // handler keeps its own check as a guard for other entry points.
@@ -606,7 +602,22 @@
                 });
                 if (!signedIn) return;
 
+                pointsProfile = await fetchCurrentUserPointsProfile(true);
+                if (!pointsProfile) {
+                    createDialog({
+                        id: "download-points-error", type: "small", meowbalt: "error",
+                        bodyText: $t("error.api.points.unavailable"),
+                        buttons: [{ text: $t("button.gotit"), main: true, action: () => {} }],
+                    });
+                    return;
+                }
                 clearRememberedLink();
+            }
+
+            const blockedDouyinGuideUrl = detectedUrls.find((url) => getDouyinGuideReason(url));
+            if (blockedDouyinGuideUrl) {
+                showDouyinGuideDialog(getDouyinGuideReason(blockedDouyinGuideUrl) || "browse");
+                return;
             }
 
             // Multiple links => batch dialog immediately (platform-agnostic).
@@ -652,7 +663,7 @@
                 !isPodcastFeedCandidateUrl(url)
             ) {
                 handedOffToSavingHandler = true;
-                return savingHandler({ url });
+                return savingHandler({ url, pointsProfile });
             }
 
             let expanded: Optional<CobaltExpandResponse>;
@@ -664,7 +675,7 @@
                     return;
                 }
                 handedOffToSavingHandler = true;
-                return saveCurrentVideo(url);
+                return saveCurrentVideo(url, pointsProfile);
             }
             if (expanded?.status === "error") {
                 await loadTranslations($page.params.lang || "en", "error");
@@ -692,7 +703,7 @@
                     return;
                 }
                 handedOffToSavingHandler = true;
-                return saveCurrentVideo(url);
+                return saveCurrentVideo(url, pointsProfile);
             }
 
             const items = expanded.items ?? [];
@@ -704,7 +715,7 @@
                     return;
                 }
                 handedOffToSavingHandler = true;
-                return saveCurrentVideo(url);
+                return saveCurrentVideo(url, pointsProfile);
             }
 
         const batchItems: DialogBatchItem[] = items.map((item) => ({

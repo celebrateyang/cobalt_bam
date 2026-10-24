@@ -21,8 +21,19 @@ const fixture = (responses, waitForSync = async () => "fresh-token") => {
         },
         fetch: async (url, options) => { calls.push({ url, options }); return responses.shift(); },
     });
-    return { fetch: exports.fetchUserPoints, recover: exports.fetchWithUserSync, calls, get waits() { return waits; } };
+    return { fetch: exports.fetchUserPoints, start: exports.startDownloadProtection, recover: exports.fetchWithUserSync, calls, get waits() { return waits; } };
 };
+
+test("download action uses an authenticated POST, while balance reads stay GET", async () => {
+    const f = fixture([new Response('{}'), new Response('{}')]);
+    await f.fetch('token');
+    await f.start('token');
+    assert.equal(f.calls[0].options.method, undefined);
+    assert.equal(f.calls[1].url, 'https://api.test/user/download-protection/start');
+    assert.equal(f.calls[1].options.method, 'POST');
+    assert.equal(f.calls[1].options.headers.Authorization, 'Bearer token');
+    assert.equal(f.calls[1].options.body, undefined);
+});
 
 test("existing user's points return without waiting for a stalled profile sync", async () => {
     const response = new Response('{"status":"success"}');

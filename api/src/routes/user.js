@@ -5,6 +5,7 @@ import { awardShareReward, isShareRewardRequest, listShareRewards } from "../db/
 
 import {
     consumeUserPoints,
+    startDownloadProtection,
     getOrCreateClipboardPersonalProfile,
     getActiveMembershipForUser,
     getMembershipFeatureEligibility,
@@ -117,6 +118,7 @@ const mapClerkUser = (clerkUser) => {
         primaryEmail,
         fullName,
         avatarUrl: clerkUser.imageUrl,
+        clerkCreatedAt: clerkUser.createdAt,
     };
 };
 
@@ -1441,6 +1443,10 @@ if (!isClerkApiConfigured) {
 
         router.get("/points", createUserPointsHandler({
             getAuth, getUserByClerkId, getActiveMembershipForUser,
+        }));
+
+        router.post("/download-protection/start", createUserPointsHandler({
+            getAuth, getUserByClerkId, getActiveMembershipForUser, startDownloadProtection,
         }));
 
         router.get("/me", async (req, res) => {

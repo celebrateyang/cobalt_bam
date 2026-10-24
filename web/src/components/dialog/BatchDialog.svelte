@@ -316,8 +316,8 @@
         });
     };
 
-    const fetchUserPointsProfile = async () => {
-        const profile = await fetchCurrentUserPointsProfile();
+    const fetchUserPointsProfile = async (downloadAction = false) => {
+        const profile = await fetchCurrentUserPointsProfile(downloadAction);
         if (!profile) {
             throw new Error("failed to load points");
         }
@@ -670,18 +670,17 @@
         const selectedItems = items.filter((_, i) => selected[i]);
         if (!selectedItems.length) return;
 
-        const saveMode = await confirmBatchDownloadReadiness();
-        if (!saveMode) return;
-
         const requiredPoints = clerkEnabled ? pointsPreviewRequired : 0;
 
         let currentPoints = 0;
-        if (requiredPoints > 0) {
+        if (clerkEnabled) {
             pointsCheckLoading = true;
             let membershipActive = false;
+            let protectionActive = false;
             try {
-                const profile = await fetchUserPointsProfile();
+                const profile = await fetchUserPointsProfile(true);
                 membershipActive = profile.membershipActive;
+                protectionActive = profile.downloadProtectionActive;
                 currentPoints = Number(profile.points ?? 0);
             } catch {
                 pointsCheckLoading = false;
@@ -689,7 +688,7 @@
                 return;
             }
 
-            if (!membershipActive && currentPoints < requiredPoints) {
+            if (!membershipActive && !protectionActive && currentPoints < requiredPoints) {
                 pointsCheckLoading = false;
                 showPointsInsufficient(currentPoints, requiredPoints);
                 return;
@@ -697,6 +696,9 @@
 
             pointsCheckLoading = false;
         }
+
+        const saveMode = await confirmBatchDownloadReadiness();
+        if (!saveMode) return;
 
         running = true;
         clearPendingBatchIntent();

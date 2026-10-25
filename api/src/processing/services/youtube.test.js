@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import createFilename from "../create-filename.js";
-import { buildYoutubeResult } from "./youtube.js";
+import { buildYoutubeResult, parseYtDlpError } from "./youtube.js";
 import { env } from "../../config.js";
 
 const mediaUrl = (itag) =>
@@ -10,6 +10,34 @@ const mediaUrl = (itag) =>
 
 const hlsUrl = (itag) =>
     `https://manifest.googlevideo.com/api/manifest/hls_playlist/itag/${itag}/playlist/index.m3u8`;
+
+test("recognizes explicit YouTube regional restrictions before generic unavailability", () => {
+    for (const message of [
+        "ERROR: [youtube] trSabcA4How: The uploader has not made this video available in your country\nThis video is available in Turkey.",
+        "ERROR: Video unavailable. This video is not available in your country",
+        "Video unavailable. This video is blocked in your region",
+        "This video is geo-restricted",
+        "This video is region locked",
+    ]) {
+        assert.equal(parseYtDlpError(message), "content.video.region");
+    }
+});
+
+test("does not guess regional restrictions from ambiguous YouTube failures", () => {
+    for (const [message, expected] of [
+        ["Video unavailable", "content.video.unavailable"],
+        ["This video is unavailable", "content.video.unavailable"],
+        ["Private video", "content.video.private"],
+        ["Sign in to confirm your age", "content.video.age"],
+        ["Sign in to confirm you're not a bot", "youtube.login"],
+        ["HTTP Error 403: Forbidden", "fetch.fail"],
+        ["Unable to download webpage: timeout", "fetch.fail"],
+        ["This video is not available", "fetch.fail"],
+        ["", "fetch.fail"],
+    ]) {
+        assert.equal(parseYtDlpError(message), expected);
+    }
+});
 
 const buildResult = (formats, overrides = {}, targetQuality = 1080) => buildYoutubeResult({
     info: {

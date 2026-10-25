@@ -220,8 +220,15 @@ export const resolveYtDlpCommand = async () => {
     return ytDlpCommandPromise;
 };
 
-const parseYtDlpError = (stderrText = "") => {
+export const parseYtDlpError = (stderrText = "") => {
     const stderr = String(stderrText).toLowerCase();
+
+    // YouTube/yt-dlp may prefix the specific reason with "Video unavailable".
+    // Only explicit geographic restrictions qualify; a generic 403 or
+    // unavailable response does not establish a regional restriction.
+    if (/\b(?:not made (?:this|the) video available in your country|(?:this video is |video is |content is )?(?:not available|unavailable|blocked) in your (?:country|region)|(?:geo|region)[ -](?:restricted|blocked|locked))\b/.test(stderr)) {
+        return "content.video.region";
+    }
 
     if (stderr.includes("private video")) return "content.video.private";
     if (stderr.includes("sign in to confirm your age") || stderr.includes("age-restricted")) {

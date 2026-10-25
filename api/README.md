@@ -14,6 +14,8 @@ you can read [the api documentation here](/docs/api.md).
 ## supported services
 Aparat supports public `/v/` videos, `/shorts/` videos and playlists of up to 500 entries. `/expand` returns ordered video page URLs, not signed media URLs; resolve each item when its download starts. Video requests return `redirect` with `service: "aparat"`, `directUrl` and no `tunnelUrl`. Audio and mute requests return browser-only `local-processing` with an empty `tunnel` array and no server fallback, even when `alwaysProxy` is enabled. Failed direct MP4 verification returns an error. The API reads only metadata, small manifests and a bounded MP4 signature probe; it never relays Aparat video files.
 
+Production GKE connections to Aparat time out, so the API first requests extraction JSON from the configured domestic/home upstream pool. These upstreams must run the same Aparat adapter and be restarted after updating code. Only validated Aparat CDN redirects, browser-only processing responses, and playlist page references are accepted; upstream media tunnels are rejected. This metadata route does not proxy video downloads. Player URLs with a `playlist` query parameter also expand their collection.
+
 this list is not final and keeps expanding over time!
 if the desired service isn't supported yet, feel free to create an appropriate issue (or a pull request 👀).
 

@@ -265,8 +265,10 @@ export const resolveRegionPlan = ({ service, targetHost, path }) => {
     const routeToken = `${serviceToken} ${hostToken} ${normalizeRouteToken(path)}`;
 
     // SOOP and WeChat sessions live on the domestic home upstream.
-    // Keep extraction and media access on that node; do not use a global node.
+    // Aparat metadata is reachable from home while GKE connections time out.
     if (
+        serviceToken === "aparat" ||
+        includesAny(hostToken, ["aparat.com"]) ||
         serviceToken === "sooplive" ||
         includesAny(hostToken, ["sooplive.com", "sooplive.co.kr", "afreecatv.com"]) ||
         serviceToken === "wechat_channels" ||

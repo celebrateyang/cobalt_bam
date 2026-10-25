@@ -93,6 +93,15 @@ test("playlist accepts the list-shaped pagination response", async () => {
     assert.equal(result.items.length, 2);
 });
 
+test("Aparat player links with a playlist parameter expand the collection", async () => {
+    const result = await expandAparat("https://www.aparat.com/v/7R9YB?playlist=531891", async url => {
+        assert.ok(url.endsWith("/playlist_id/531891"));
+        return json(page(["first"], 1));
+    });
+    assert.equal(result.kind, "aparat-playlist");
+    assert.equal(result.currentUrl, "https://www.aparat.com/playlist/531891");
+});
+
 test("blocked, private and missing direct media fail without an HLS or yt-dlp fallback", async () => {
     for (const video of [{ title: "Private", isHidden: true }, { title: "Paid", cost_type: { type: "paid" } },
         { title: "Disabled", can_download: false }, { title: "No file", file_link: "https://evil.test/video.mp4" }]) {

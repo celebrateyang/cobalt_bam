@@ -10,6 +10,7 @@ import { buildPodcastExpandResult } from "./podcast.js";
 import { sliceCollectionFromItemKey } from "./collection-window.js";
 import { normalizeTikTokShortLinkAlias } from "./tiktok-short-link.js";
 import { expandAparat } from "./services/aparat.js";
+import { requestAparatUpstream } from "./aparat-upstream.js";
 
 const DEFAULT_TIMEOUT_MS = 15000;
 const DEFAULT_YTDLP_TIMEOUT_MS = 35000;
@@ -1842,6 +1843,11 @@ export const expandURL = async (url) => {
     }
 
     if (["aparat.com", "www.aparat.com", "shorts.aparat.com"].includes(parsed.hostname)) {
+        if (/^\/playlist\/\d{1,20}\/?$/.test(parsed.pathname)
+            || (/^\/v\/[a-zA-Z0-9]{1,32}\/?$/.test(parsed.pathname) && /^\d{1,20}$/.test(parsed.searchParams.get("playlist") || ""))) {
+            const upstream = await requestAparatUpstream({ url: input }, { expand: true });
+            if (upstream) return upstream.body;
+        }
         return expandAparat(input);
     }
 

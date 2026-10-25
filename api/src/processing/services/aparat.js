@@ -28,11 +28,19 @@ const readText = async (response, limit) => {
     } finally { await reader.cancel().catch(() => {}); }
 };
 
-const request = (fetcher, url, headers = {}) => fetcher(url, {
-    headers: { "user-agent": "Mozilla/5.0", ...headers },
-    redirect: "error",
-    signal: AbortSignal.timeout(15000),
-});
+const request = async (fetcher, url, headers = {}) => {
+    try {
+        return await fetcher(url, {
+            headers: { "user-agent": "Mozilla/5.0", ...headers },
+            redirect: "error",
+            signal: AbortSignal.timeout(15000),
+        });
+    } catch (error) {
+        // Do not log signed CDN URLs or source titles.
+        console.warn(`[aparat] request_failed host=${new URL(url).hostname} code=${error?.cause?.code || error?.name || "unknown"}`);
+        throw error;
+    }
+};
 
 const json = async (fetcher, url) => JSON.parse(await readText(await request(fetcher, url), 4 * 1024 * 1024));
 
@@ -129,7 +137,9 @@ export default async function aparat({ id, shortId, quality = "max" }, fetcher =
 
 export const expandAparat = async (input, fetcher = fetch) => {
     const url = new URL(input);
-    const id = url.pathname.match(/^\/playlist\/(\d{1,20})\/?$/)?.[1];
+    const id = url.pathname.match(/^\/playlist\/(\d{1,20})\/?$/)?.[1]
+        || (/^\/v\/[a-zA-Z0-9]{1,32}\/?$/.test(url.pathname)
+            ? url.searchParams.get("playlist")?.match(/^\d{1,20}$/)?.[0] : undefined);
     if (!id) return { service: "aparat", kind: "single", items: [{ url: input }] };
     try {
         let next = `${API_ORIGIN}/api/fa/v1/video/playlist/one/playlist_id/${id}`;

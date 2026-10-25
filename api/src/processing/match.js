@@ -36,6 +36,7 @@ import rutube from "./services/rutube.js";
 import dailymotion from "./services/dailymotion.js";
 import deeplearningai from "./services/deeplearningai.js";
 import aparat from "./services/aparat.js";
+import { requestAparatUpstream } from "./aparat-upstream.js";
 import magnific from "./services/magnific.js";
 import xinpianchang from "./services/xinpianchang.js";
 import snapchat from "./services/snapchat.js";
@@ -664,6 +665,10 @@ export default async function({ host, patternMatch, params, authType }) {
                 break;
 
             case "aparat":
+                if (!isUpstreamServer) {
+                    const direct = await requestAparatUpstream(params);
+                    if (direct) return direct;
+                }
                 r = await aparat({ ...patternMatch, quality: params.videoQuality });
                 break;
 

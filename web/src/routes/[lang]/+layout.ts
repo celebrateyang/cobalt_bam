@@ -9,7 +9,7 @@ export const load: LayoutLoad = async ({ params, url, data }) => {
     const { pathname } = url;
 
     // Load translations for the current language
-    await loadTranslations(lang, pathname);
+    await loadTranslations(lang === 'fa' ? 'en' : lang, pathname);
 
     return {
         ...data,

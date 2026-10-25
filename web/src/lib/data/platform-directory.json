@@ -137,6 +137,12 @@
       "imageSource": "https://res.sooplive.com/images/mobile/afreeca_mobile.png"
     },
     {
+      "id": "aparat",
+      "name": "Aparat",
+      "logo": "aparat",
+      "color": "#ED145B"
+    },
+    {
       "id": "niconico",
       "name": "Niconico",
       "logo": "niconico",
@@ -265,12 +271,6 @@
       "name": "Animal Planet",
       "logo": "animalplanet",
       "color": "#0073FF"
-    },
-    {
-      "id": "aparat",
-      "name": "Aparat",
-      "logo": "aparat",
-      "color": "#ED145B"
     },
     {
       "id": "audioboom",

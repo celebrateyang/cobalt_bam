@@ -14,6 +14,7 @@
 
     import SupportedServices from '$components/save/SupportedServices.svelte';
     import GoogleDriveDownloadForm from '$components/save/GoogleDriveDownloadForm.svelte';
+    import AparatDownloadPage from '$components/aparat/AparatDownloadPage.svelte';
     import YouTubeDownloadPage from '$components/youtube/YouTubeDownloadPage.svelte';
     import RedditDownloadPage from '$components/social/RedditDownloadPage.svelte';
     import PinterestDownloadPage from '$components/social/PinterestDownloadPage.svelte';
@@ -76,8 +77,9 @@
     $: isTiktok = isTiktokLanding(data.slug);
     $: isEnglishVimeo = data.lang === 'en' && data.slug === 'vimeo-video-download';
     $: isGoogleDrive = data.slug === 'google-drive-video-downloader';
+    $: isAparat = data.slug === 'aparat-video-downloader';
     $: usesFocusedPriorityContent =
-        isGoogleDrive ||
+        isGoogleDrive || isAparat ||
         isTiktok ||
         Boolean(socialPlatform) ||
         isEnglishVimeo ||
@@ -220,7 +222,7 @@
               },
           }
         : null;
-    $: structuredData = [webPageJsonLd, faqJsonLd, breadcrumbJsonLd, howToJsonLd].filter(Boolean);
+    $: structuredData = isAparat ? [] : [webPageJsonLd, faqJsonLd, breadcrumbJsonLd, howToJsonLd].filter(Boolean);
 
     let copiedExampleTitle = '';
     let OmniboxComponent: typeof import('$components/save/Omnibox.svelte').default | null = null;
@@ -228,7 +230,7 @@
     let loadingOmnibox = false;
 
     onMount(() => { mounted = true; });
-    $: if (mounted && data.slug !== 'youtube-download' && !isGoogleDrive && !socialPlatform && !OmniboxComponent && !loadingOmnibox) {
+    $: if (mounted && data.slug !== 'youtube-download' && !isGoogleDrive && !isAparat && !socialPlatform && !OmniboxComponent && !loadingOmnibox) {
         loadingOmnibox = true;
         void import('$components/save/Omnibox.svelte')
             .then((module) => {
@@ -261,7 +263,7 @@
     <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={pageDesc} />
     <meta name="twitter:image" content={`https://${fallbackHost}/og.png`} />
-    <meta name="twitter:image:alt" content={socialPlatform || data.slug === 'dailymotion-video-downloader' ? localeContent.h1 : 'FreeSaveVideo video downloader preview'} />
+    <meta name="twitter:image:alt" content={isAparat || socialPlatform || data.slug === 'dailymotion-video-downloader' ? localeContent.h1 : 'FreeSaveVideo video downloader preview'} />
     {#if structuredData.length}
         {#each structuredData as ld}
             {@html `<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>`}
@@ -269,7 +271,9 @@
     {/if}
 </svelte:head>
 
-{#if data.slug === 'youtube-download'}
+{#if isAparat}
+    <AparatDownloadPage lang={data.lang} content={localeContent} />
+{:else if data.slug === 'youtube-download'}
     <YouTubeDownloadPage lang={data.lang} content={{ ...localeContent, faqs: mergedFaqs }} guideSlug={data.guideSlug} />
 {:else if socialPlatform === 'reddit'}
     <RedditDownloadPage lang={data.lang} content={localeContent} guideSlug={data.guideSlug} />

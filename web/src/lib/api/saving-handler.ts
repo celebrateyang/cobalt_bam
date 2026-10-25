@@ -126,6 +126,7 @@ const isPreviewDownloadResponse = (response: CobaltAPIResponse) => (
     "service" in response &&
     (
         response.service === "amazon" ||
+        response.service === "aparat" ||
         response.service === "deeplearningai" ||
         response.service === "magnific" ||
         response.service === "bilibili" ||
@@ -680,6 +681,16 @@ export const savingHandler = async ({
 
     if (response.status === "redirect") {
         const redirectUrl = normalizeTunnelUrl(response.url) || response.url;
+
+        if (response.service === "aparat" && selectedRequest.batch === true) {
+            const candidates = [response.directUrl || "", ...(response.directUrlCandidates || [])]
+                .filter((url) => /^https:\/\/(?:[a-z0-9-]+\.)*cdn\.asset\.aparat\.(?:com|cloud)\/aparat-(?:video|short)\/[^/?]+\.(?:mp4|apt)(?:\?|$)/i.test(url));
+            downloadButtonState.set("done");
+            createDirectCdnPipeline(candidates, response.filename, "video/mp4", selectedRequest, effectiveTaskId,
+                { useRangeRequests: false });
+            applyQueueMeta(effectiveTaskId, response, queueMeta);
+            return response;
+        }
 
         if (isSoundCloudDownloadResponse(response)) {
             const directCandidates = [

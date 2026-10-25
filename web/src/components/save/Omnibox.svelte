@@ -776,6 +776,7 @@
             expanded.kind === "bilibili-ugc-season-pages" ||
             expanded.kind === "douyin-mix" ||
             expanded.kind === "tiktok-playlist" ||
+            expanded.kind === "aparat-playlist" ||
             expanded.kind === "youtube-playlist";
         const promptBody =
             isCollection

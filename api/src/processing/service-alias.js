@@ -11,6 +11,7 @@ const friendlyNames = {
     kuaishou: "Kuaishou",
     magnific: "Magnific",
     kugou: "Kugou Music",
+    aparat: "Aparat",
     naver: "Naver",
     niconico: "NicoNico",
     podcast: "Podcast",

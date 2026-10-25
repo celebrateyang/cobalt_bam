@@ -29,7 +29,10 @@ const normalizeInputUrl = (value) => {
 
 export const canAttemptGenericURL = (value) => {
     const normalized = normalizeInputUrl(value);
-    return Boolean(normalized && parseSafeGenericURL(normalized));
+    const parsed = normalized && parseSafeGenericURL(normalized);
+    // Aparat is direct-only; generic/upstream fallback could create a tunnel.
+    if (parsed && /(^|\.)aparat\.com$/i.test(parsed.hostname)) return false;
+    return Boolean(parsed);
 };
 
 export const getGenericServiceHost = (value) => {

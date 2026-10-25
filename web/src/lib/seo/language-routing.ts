@@ -1,3 +1,5 @@
+import { isPersianAparatPath } from './scoped-locales';
+
 export const supportedLanguages = ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de', 'id'] as const;
 
 export type SupportedLanguage = (typeof supportedLanguages)[number];
@@ -37,7 +39,7 @@ export const isSupportedLanguage = (value: string | null | undefined): value is 
     typeof value === 'string' && supportedLanguageSet.has(value);
 
 export const isLangPrefixedPath = (pathname: string) =>
-    supportedLanguages.some((lang) => pathname === `/${lang}` || pathname.startsWith(`/${lang}/`));
+    isPersianAparatPath(pathname) || supportedLanguages.some((lang) => pathname === `/${lang}` || pathname.startsWith(`/${lang}/`));
 
 export const getCookieLanguage = (cookieHeader: string | null | undefined): SupportedLanguage | null => {
     if (!cookieHeader) return null;

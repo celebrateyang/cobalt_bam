@@ -73,6 +73,8 @@ async function component(file) {
 // Preload real nested components for this synchronous SSR module loader.
 framework['$components/learn/AlternativeArticle.svelte'] = { __esModule: true, default: await component('src/components/learn/AlternativeArticle.svelte') };
 framework['$components/save/GoogleDriveDownloadForm.svelte'] = { __esModule: true, default: await component('src/components/save/GoogleDriveDownloadForm.svelte') };
+framework['$components/save/AparatDownloadForm.svelte'] = { __esModule: true, default: await component('src/components/save/AparatDownloadForm.svelte') };
+framework['$components/aparat/AparatDownloadPage.svelte'] = { __esModule: true, default: await component('src/components/aparat/AparatDownloadPage.svelte') };
 framework['$components/save/SupportLink.svelte'] = { __esModule: true, default: await component('src/components/save/SupportLink.svelte') };
 framework['$components/youtube/YouTubeDownloadPage.svelte'] = { __esModule: true, default: await component('src/components/youtube/YouTubeDownloadPage.svelte') };
 for (const name of ['SourceDownloadForm', 'RedditDownloadPage', 'PinterestDownloadPage']) {
@@ -100,6 +102,56 @@ const routes = load('src/lib/seo/route-locales.ts');
 const links = load('src/lib/seo/internal-links.ts');
 const { supportedLanguages } = load('src/lib/seo/language-routing.ts');
 const { seoLandingSlugs, getSeoLandingPage, getSeoLandingLocale } = load('src/lib/seo/landing-pages.ts');
+
+test('Aparat has real English and Persian pages without inventing Persian app routes', () => {
+    const slug = 'aparat-video-downloader';
+    assert.deepEqual(routes.getDownloadSeoLanguages(slug), ['en', 'fa']);
+    assert.equal(links.isDownloadAvailableInLanguage(slug, 'zh'), false);
+    assert.equal(links.isDownloadAvailableInLanguage('youtube-download', 'fa'), false);
+    const routing = load('src/lib/seo/language-routing.ts');
+    const indexing = load('src/lib/seo/indexing.ts');
+    const path = '/fa/download/aparat-video-downloader';
+    assert.equal(routing.isLangPrefixedPath(path), true);
+    assert.deepEqual(indexing.getLocalizedRoute(path), { lang: 'fa', path: '/download/aparat-video-downloader' });
+    assert.equal(indexing.getLocalizedRoute('/fa/download/youtube-download'), null);
+    assert.equal(indexing.shouldNoindexLocalizedPath('/download/aparat-video-downloader', 'fa'), false);
+});
+
+test('Aparat input accepts page links while rejecting lookalikes, credentials and media URLs', () => {
+    const { parseAparatInput: parse } = load('src/lib/seo/aparat-input.ts');
+    assert.equal(parse('https://www.aparat.com/shorts/2112380547795222528?ref=share').url, 'https://www.aparat.com/shorts/2112380547795222528');
+    assert.equal(parse('https://www.aparat.com/playlist/531891').playlist, true);
+    for (const input of ['https://aparat.com.evil.test/v/test', 'https://user:pass@aparat.com/v/test',
+        'https://aparat.com:9000/v/test', 'https://aparat.com/channel', 'https://cdn.asset.aparat.com/test.mp4', 'https://aparat.com/shorts/not-a-number']) {
+        assert.equal(parse(input), null, input);
+    }
+});
+
+test('Aparat SSR localizes the whole landing and exposes honest matching machine-readable facts', async () => {
+    const detail = await component('src/routes/[lang]/download/[slug]/+page.svelte');
+    const landing = getSeoLandingPage('aparat-video-downloader');
+    for (const lang of ['en', 'fa']) {
+        setTestLocale(lang, 'download/aparat-video-downloader');
+        const content = getSeoLandingLocale(landing, lang);
+        const rendered = detail.render({ data: { lang, slug: landing.slug, landing, guideSlug: null, relatedPages: [], relatedLearnPages: [] } });
+        assert.ok(rendered.html.includes(escapeText(content.h1)));
+        assert.equal((rendered.html.match(/<h1\b/g) || []).length, 1);
+        assert.ok(rendered.html.includes(`dir="${lang === 'fa' ? 'rtl' : 'ltr'}"`));
+        assert.ok(rendered.html.includes('id="aparat-url"'));
+        assert.ok(rendered.html.includes('dir="ltr"'));
+        assert.ok(rendered.html.includes('/fa/download/aparat-video-downloader'));
+        for (const faq of content.faqs) assert.ok(rendered.html.includes(escapeText(faq.a)));
+        const data = [...rendered.head.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)].map(([, text]) => JSON.parse(text));
+        assert.equal(data.length, 1);
+        const graph = data[0]['@graph'];
+        assert.equal(graph.find(item => item['@type'] === 'WebPage').inLanguage, lang);
+        assert.equal(graph.find(item => item['@type'] === 'WebPage').dateModified, '2026-10-25');
+        assert.deepEqual(graph.find(item => item['@type'] === 'FAQPage').mainEntity.map(item => item.acceptedAnswer.text), content.faqs.map(item => item.a));
+        assert.equal(graph.find(item => item['@type'] === 'WebApplication').offers, undefined);
+        assert.equal(graph.find(item => item['@type'] === 'WebApplication').aggregateRating, undefined);
+        assert.ok(!rendered.head.includes('"totalTime"'));
+    }
+});
 
 test('social source inputs reject unrelated sites, feeds, resource URLs and batches', () => {
     const { parseSocialDownloadInput: parse } = load('src/lib/seo/social-download-input.ts');
@@ -442,6 +494,11 @@ test('every advertised download and guide detail renders localized shared labels
                 const platform = params.slug.startsWith('reddit') ? 'reddit' : 'pinterest';
                 assert(html.includes(`id="${platform}-source-url"`), context);
                 assert(!html.includes('class="omnibox'), context);
+            } else if (kind === 'download' && params.slug === 'aparat-video-downloader') {
+                const ui = load('src/lib/seo/aparat-landing.ts').aparatUi[params.lang];
+                assert(html.includes(escapeText(ui.label)), context);
+                assert(html.includes('id="aparat-url"'), context);
+                assert(!html.includes('class="omnibox'), context);
             } else if (kind === 'download') {
                 const focused = params.slug === 'dailymotion-video-downloader'
                     || params.slug === 'google-drive-video-downloader'
@@ -464,7 +521,7 @@ test('every advertised download and guide detail renders localized shared labels
             renderedCount++;
         }
     }
-    assert.deepEqual([...seenLanguages].sort(), [...supportedLanguages].sort());
+    assert.deepEqual([...seenLanguages].sort(), [...supportedLanguages, 'fa'].sort());
     t.diagnostic(`Verified localized shared labels on ${renderedCount} detail pages across ${seenLanguages.size} languages`);
 });
 

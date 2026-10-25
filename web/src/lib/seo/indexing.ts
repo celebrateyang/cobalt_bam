@@ -1,4 +1,5 @@
 import { publicNoindexPaths, supportedSeoLanguages } from '$lib/seo/site';
+import { isPersianAparatPath } from './scoped-locales';
 
 const supportedLanguageSet = new Set<string>(supportedSeoLanguages);
 
@@ -50,7 +51,7 @@ export const getLocalizedRoute = (
 ): { lang: string; path: string } | null => {
     const normalizedPathname = normalizePath(pathname);
     const match = normalizedPathname.match(/^\/([^/]+)(\/.*)?$/);
-    if (!match || !supportedLanguageSet.has(match[1])) return null;
+    if (!match || (!supportedLanguageSet.has(match[1]) && !isPersianAparatPath(pathname))) return null;
 
     return {
         lang: match[1],

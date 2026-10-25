@@ -18,6 +18,7 @@ type CrossLinkEntry = {
 export type LinkAudience = 'all' | 'international';
 
 const crossLinkEntries: CrossLinkEntry[] = [
+    { platform: 'Aparat', downloadSlug: 'aparat-video-downloader', homeKey: 'aparat' },
     { platform: 'Google Drive', downloadSlug: 'google-drive-video-downloader' },
     {
         platform: 'Dailymotion',
@@ -201,6 +202,7 @@ const entryByDownloadSlug = new Map(
 );
 
 const strategicDownloadOrder = [
+    'aparat-video-downloader',
     'dailymotion-video-downloader',
     'youtube-download',
     'youtube-playlist-downloader',
@@ -238,6 +240,7 @@ const strategicDownloadOrder = [
 ] as const;
 
 const internationalDownloadSlugs = new Set([
+    'aparat-video-downloader',
     'google-drive-video-downloader',
     'dailymotion-video-downloader',
     'magnific-download',
@@ -319,6 +322,8 @@ const matchesAudience = (slug: string, audience: LinkAudience): boolean =>
 // Keep links and route generation on the same language policy. Do not advertise
 // translated URLs merely because an English fallback can render their content.
 export const isDownloadAvailableInLanguage = (slug: string, lang: string): boolean => {
+    if (slug === 'aparat-video-downloader') return lang === 'en' || lang === 'fa';
+    if (lang === 'fa') return false;
     if (slug === 'dailymotion-video-downloader') return ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de', 'id'].includes(lang);
     if (slug === 'sooplive-video-download') return ['en', 'ko', 'ja', 'th'].includes(lang);
     if (slug === 'xinpianchang-video-download') return lang === 'en' || lang === 'zh';
@@ -328,6 +333,7 @@ export const isDownloadAvailableInLanguage = (slug: string, lang: string): boole
 };
 
 export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
+    'aparat-video-downloader': ['dailymotion-video-downloader', 'playlist-downloader', 'vimeo-video-download'],
     'google-drive-video-downloader': ['vimeo-video-download', 'dailymotion-video-downloader', 'youtube-download'],
     'dailymotion-video-downloader': ['vimeo-video-download', 'youtube-download', 'batch-video-downloader', 'playlist-downloader'],
     'magnific-download': [

@@ -35,6 +35,7 @@ import twitch from "./services/twitch.js";
 import rutube from "./services/rutube.js";
 import dailymotion from "./services/dailymotion.js";
 import deeplearningai from "./services/deeplearningai.js";
+import aparat from "./services/aparat.js";
 import magnific from "./services/magnific.js";
 import xinpianchang from "./services/xinpianchang.js";
 import snapchat from "./services/snapchat.js";
@@ -660,6 +661,10 @@ export default async function({ host, patternMatch, params, authType }) {
 
             case "dailymotion":
                 r = await dailymotion(patternMatch);
+                break;
+
+            case "aparat":
+                r = await aparat({ ...patternMatch, quality: params.videoQuality });
                 break;
 
             case "deeplearningai":

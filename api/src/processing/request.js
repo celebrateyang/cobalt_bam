@@ -216,7 +216,7 @@ export function createResponse(responseType, responseData) {
                         responseData?.frontendProcessing === "hls" &&
                         responseData?.isHLS === true
                     );
-                const browserOnly = responseData?.service === "naver" && shouldExposeDirectSource;
+                const browserOnly = ["naver", "aparat"].includes(responseData?.service) && shouldExposeDirectSource;
                 // NAVER media allows CORS, but its thumbnail CDN does not.
                 // An optional cover must not block a direct media download.
                 const processingCover = browserOnly ? undefined : responseData?.cover;

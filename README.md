@@ -26,10 +26,13 @@ cobalt is a media downloader that doesn't piss you off. it's fast, friendly, and
 paste the link, get the file, move on. it's that simple. just how it should be.
 
 ### supported services
+Aparat supports public `/v/` videos, `/shorts/` videos and playlists of up to 500 entries. Video files use Direct Bridge to the Aparat CDN; the API only fetches metadata, small manifests and a bounded MP4 signature probe. Audio extraction and mute mode run in the browser. Failed direct downloads offer extension/browser handoff without a server tunnel fallback. Direct video downloads preserve source metadata rather than rewriting it.
+
 this list is not final and keeps expanding over time. if support for a service you want is missing, create an issue (or a pull request 👀).
 
 | service           | video + audio | only audio | only video | metadata | rich file names |
 | :--------         | :-----------: | :--------: | :--------: | :------: | :-------------: |
+| aparat            | yes           | browser    | browser    | source   | yes             |
 | amazon live       | ✅            | ✅         | ✅         | ✅         | ✅              |
 | bilibili          | ✅            | ✅         | ✅         | ➖         | ➖              |
 | bluesky           | ✅            | ✅         | ✅         | ➖         | ➖              |

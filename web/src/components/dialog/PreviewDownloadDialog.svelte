@@ -31,6 +31,7 @@
     export let mediaType: "video" | "audio" | "image" = "video";
     export let autoSave = true;
     export let amazonHls = false;
+    export let skipDirectFetch = false;
     export let noticeText = "";
     export let extensionPromptTitleKey = "";
     export let extensionPromptBodyKey = "";
@@ -386,7 +387,7 @@
         status = "downloading";
         statusText = "Preparing download...";
 
-        const candidates = uniqueUrls();
+        const candidates = skipDirectFetch ? [] : uniqueUrls();
         for (const candidate of candidates) {
             try {
                 await downloadFromUrl(candidate, signal);

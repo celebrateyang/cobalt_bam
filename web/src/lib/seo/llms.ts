@@ -117,6 +117,15 @@ ${lineList([...siteCapabilities.primaryPages])}
 Download landing pages:
 ${landingLines.join('\n')}
 
+Aparat (public videos, Shorts and playlists):
+- English: ${serviceUrl('aparat-video-downloader')}
+- Persian / fa, RTL landing page: ${serviceUrl('aparat-video-downloader', 'fa')}
+- Save compatible source MP4 with audio; select playlist entries and save them separately. Playlist parser limit: 500 entries; account and batch limits may be lower.
+- Quality depends on available source files. No upscaling, source-watermark removal or guaranteed original upload. Sign-in and credits may be required; see the confirmation shown before download.
+- The Persian landing page and input form are localized. Shared account and download-management dialogs currently use English. Other Persian site routes are not offered.
+- Checked on 2026-10-25: one public Shorts sample downloaded and decoded in full; one public playlist expanded to 97 entries, with MP4 availability checked for three entries. These are sample checks, not an all-video success claim.
+- Unavailable, private, paid, download-disabled and DRM-protected content is excluded. Do not present this as an Aparat-affiliated service.
+
 Step-by-step guides:
 ${guideLines.join('\n')}
 

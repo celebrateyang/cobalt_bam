@@ -60,11 +60,12 @@
 
     // Set locale based on URL parameter instead of localStorage
     $: if (data.lang) {
-        setLocale(data.lang);
+        setLocale(data.lang === 'fa' ? 'en' : data.lang);
     }
 
     $: if (browser) {
         document.documentElement.lang = data.lang || $INTERNAL_locale || "en";
+        document.documentElement.dir = data.lang === 'fa' ? 'rtl' : 'ltr';
     }
 
     // Get current path without language prefix
@@ -256,14 +257,14 @@
         {#if DialogHolderComponent}
             <svelte:component this={DialogHolderComponent} />
         {/if}
-        <Sidebar />
+        {#if data.lang !== 'fa'}<Sidebar />{/if}
         {#if ProcessingQueueComponent}
             <svelte:component this={ProcessingQueueComponent} />
         {/if}
-        <CuriousCat />
+        {#if data.lang !== 'fa'}<CuriousCat />{/if}
         <div id="content">
-            <LanguageSuggestion currentLang={data.lang} />
-            {#if !app.is.installed}
+            {#if data.lang !== 'fa'}<LanguageSuggestion currentLang={data.lang} />{/if}
+            {#if !app.is.installed && data.lang !== 'fa'}
                 <PwaInstallBanner />
             {/if}
             {#if shouldRenderTurnstile}

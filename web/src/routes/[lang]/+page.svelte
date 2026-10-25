@@ -116,6 +116,7 @@
         "amazon",
         "naver",
         "niconico",
+        "aparat",
         "xiaohongshu",
         "instagram",
         "threads",

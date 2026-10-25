@@ -134,7 +134,7 @@ function generateSitemap(): string {
             urls.push(
                 urlEntry(
                     `${site}${path}`,
-                    isTiktokLanding(slug)
+                    slug === 'aparat-video-downloader' ? '2026-10-25' : isTiktokLanding(slug)
                         ? tiktokContentUpdatedAt
                         : slug === 'dailymotion-video-downloader'
                         ? '2026-10-11'

@@ -1,4 +1,7 @@
 export const testers = {
+    aparat: pattern => pattern.shortId
+        ? /^\d{1,24}$/.test(pattern.shortId)
+        : /^[a-zA-Z0-9]{1,32}$/.test(pattern.id || ""),
     xinpianchang: pattern => /^\d{1,16}$/.test(pattern.id || ''),
     "amazon": pattern =>
         /^[0-9a-f]{32}$/i.test(pattern.id || ""),

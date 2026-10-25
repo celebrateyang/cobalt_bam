@@ -12,11 +12,14 @@ we recommend [deploying your own instance](/docs/run-an-instance.md) if you wish
 you can read [the api documentation here](/docs/api.md).
 
 ## supported services
+Aparat supports public `/v/` videos, `/shorts/` videos and playlists of up to 500 entries. `/expand` returns ordered video page URLs, not signed media URLs; resolve each item when its download starts. Video requests return `redirect` with `service: "aparat"`, `directUrl` and no `tunnelUrl`. Audio and mute requests return browser-only `local-processing` with an empty `tunnel` array and no server fallback, even when `alwaysProxy` is enabled. Failed direct MP4 verification returns an error. The API reads only metadata, small manifests and a bounded MP4 signature probe; it never relays Aparat video files.
+
 this list is not final and keeps expanding over time!
 if the desired service isn't supported yet, feel free to create an appropriate issue (or a pull request 👀).
 
 | service           | video + audio | only audio | only video | metadata | rich file names |
 | :--------         | :-----------: | :--------: | :--------: | :------: | :-------------: |
+| aparat            | yes           | browser    | browser    | source   | yes             |
 | amazon live       | ✅            | ✅         | ✅         | ✅         | ✅              |
 | bilibili          | ✅            | ✅         | ✅         | ➖         | ➖              |
 | bluesky           | ✅            | ✅         | ✅         | ➖         | ➖              |

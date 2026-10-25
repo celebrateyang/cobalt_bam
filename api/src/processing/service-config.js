@@ -4,6 +4,10 @@ export const audioIgnore = new Set(["vk", "ok", "loom", "sooplive"]);
 export const hlsExceptions = new Set(["amazon", "dailymotion", "naver", "vimeo", "rutube", "bsky", "youtube", "cctv", "bjnews", "niconico", "weibo", "sooplive"]);
 
 export const services = {
+    aparat: {
+        patterns: ["v/:id", "shorts/:shortId", "video/video/embed/videohash/:id", "video/video/embed/videohash/:id/vt/frame"],
+        subdomains: ["shorts"],
+    },
     xinpianchang: {
         patterns: ['a:id'],
     },

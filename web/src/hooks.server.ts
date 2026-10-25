@@ -51,7 +51,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 
     const response = await resolve(event, {
         transformPageChunk: ({ html }) =>
-            html.replace('__FSV_DOCUMENT_LANGUAGE__', documentLanguage),
+            html.replace('__FSV_DOCUMENT_LANGUAGE__', documentLanguage)
+                .replace('__FSV_DOCUMENT_DIRECTION__', documentLanguage === 'fa' ? 'rtl' : 'ltr'),
     });
     if (
         localizedRoute &&

@@ -6,6 +6,7 @@ import { soopliveLanding } from '$lib/seo/sooplive-landing';
 import { magnificLanding } from '$lib/seo/magnific-landing';
 import { dailymotionLanding } from '$lib/seo/dailymotion-landing';
 import { googleDriveLanding } from '$lib/seo/google-drive-landing';
+import { aparatLanding } from '$lib/seo/aparat-landing';
 import { getSocialDownloadContent, socialPlatformForSlug } from '$lib/seo/social-download-content';
 import { getTiktokLandingContent, isTiktokLanding } from '$lib/seo/tiktok-content';
 
@@ -862,6 +863,7 @@ const buildGenericWorkflowLocales = (
 
 const landingPages: SeoLandingPage[] = [
     googleDriveLanding,
+    aparatLanding,
     dailymotionLanding,
     magnificLanding,
     soopliveLanding,

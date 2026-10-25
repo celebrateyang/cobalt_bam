@@ -9,6 +9,7 @@ import { getCookie } from "./cookie/manager.js";
 import { buildPodcastExpandResult } from "./podcast.js";
 import { sliceCollectionFromItemKey } from "./collection-window.js";
 import { normalizeTikTokShortLinkAlias } from "./tiktok-short-link.js";
+import { expandAparat } from "./services/aparat.js";
 
 const DEFAULT_TIMEOUT_MS = 15000;
 const DEFAULT_YTDLP_TIMEOUT_MS = 35000;
@@ -1838,6 +1839,10 @@ export const expandURL = async (url) => {
     if (isPodcastFeedCandidate(parsed)) {
         const podcast = await buildPodcastExpandResult(input).catch(() => null);
         if (podcast) return podcast;
+    }
+
+    if (["aparat.com", "www.aparat.com", "shorts.aparat.com"].includes(parsed.hostname)) {
+        return expandAparat(input);
     }
 
     if (isBilibiliHost(parsed.hostname)) {

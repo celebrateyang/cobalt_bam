@@ -26,6 +26,30 @@ const youtubeResult = {
     duration: 60,
 };
 
+test("Aparat never creates tunnels, including forced proxy, batch, audio and mute requests", () => {
+    const url = "https://edge.cdn.asset.aparat.com/aparat-video/test.apt?sig=test";
+    for (const mode of ["video", "audio", "mute"]) {
+        const response = matchAction({ ...baseArgs, host: "aparat", alwaysProxy: true, localProcessing: "forced", isBatchRequest: true,
+            isAudioOnly: mode === "audio", isAudioMuted: mode === "mute",
+            r: { service: "aparat", urls: url, directClientDownload: true,
+                filenameAttributes: { service: "aparat", id: "test", title: "Test", extension: "mp4" } } });
+        assert.equal(response.status, 200);
+        assert.equal(response.body.tunnelUrl, undefined);
+        assert.equal(response.body.fallback, undefined);
+        if (mode === "video") {
+            assert.equal(response.body.status, "redirect");
+            assert.equal(response.body.directUrl, url);
+        } else {
+            assert.equal(response.body.status, "local-processing");
+            assert.deepEqual(response.body.tunnel, []);
+            assert.deepEqual(response.body.source.urls, [url]);
+            assert.equal(response.body.type, mode);
+        }
+    }
+    const invalid = matchAction({ ...baseArgs, host: "aparat", r: { urls: "https://evil.test/video.mp4", directClientDownload: true, filename: "test.mp4" } });
+    assert.equal(invalid.body.status, "error");
+});
+
 test("NAVER HLS uses direct browser remux with no automatic server fallback", () => {
     for (const localProcessing of ['disabled', 'preferred', 'forced']) {
         const response = matchAction({ ...baseArgs, host: 'naver', localProcessing,

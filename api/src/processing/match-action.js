@@ -5,6 +5,7 @@ import { audioIgnore } from "./service-config.js";
 import { createStream } from "../stream/manage.js";
 import { splitFilenameExtension } from "../misc/utils.js";
 import { convertLanguageCode } from "../misc/language-codes.js";
+import { isAparatMediaURL } from "./services/aparat.js";
 
 const extraProcessingTypes = new Set(["merge", "remux", "mute", "audio", "gif"]);
 
@@ -93,6 +94,18 @@ export default function({
         host === "douyin" && isBatchRequest === true;
     const shouldQueueForcedYouTube =
         host === "youtube" && alwaysProxy === true;
+
+    if (host === "aparat") {
+        if (!r.directClientDownload || !isAparatMediaURL(r.urls) || r.isHLS) {
+            return createResponse("error", { code: "error.api.fetch.empty" });
+        }
+        if (!isAudioOnly && !isAudioMuted) {
+            return createResponse("redirect", {
+                url: r.urls, directUrl: r.urls, directUrlCandidates: [r.urls],
+                filename: defaultParams.filename, duration: defaultParams.duration, service: "aparat",
+            });
+        }
+    }
 
     if (host === "amazon" && !isAudioOnly && !isAudioMuted && typeof r.urls === "string") {
         return createResponse("redirect", {
@@ -573,6 +586,13 @@ export default function({
 
     if (defaultParams.filename && (action === "picker" || action === "audio")) {
         defaultParams.filename += `.${audioFormat}`;
+    }
+
+    // Aparat never creates tunnels, even for forced proxy or conversion requests.
+    if (host === "aparat") {
+        return createResponse("local-processing", {
+            ...defaultParams, ...params, service: "aparat", frontendProcessing: "direct",
+        });
     }
 
     // alwaysProxy is set to true in match.js if localProcessing is forced

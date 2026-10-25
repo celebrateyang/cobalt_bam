@@ -7,6 +7,7 @@ import { supportedLanguages } from '$lib/seo/language-routing';
 
 export const getDownloadSeoLanguages = (slug: string): string[] => {
     if (!getSeoLandingPage(slug)) return [];
+    if (slug === 'aparat-video-downloader') return ['en', 'fa'];
     return supportedLanguages.filter((lang) => isDownloadAvailableInLanguage(slug, lang));
 };
 

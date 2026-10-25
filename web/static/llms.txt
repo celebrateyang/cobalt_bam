@@ -28,6 +28,7 @@
 - Well-known alias: https://freesavevideo.online/.well-known/llms.txt
 
 ## What FreeSaveVideo Does
+- Aparat: English landing https://freesavevideo.online/en/download/aparat-video-downloader and Persian RTL landing https://freesavevideo.online/fa/download/aparat-video-downloader. Supports public videos, Shorts and playlist selection, saving available MP4 with source audio directly from Aparat CDN. Parser limit: 500 playlist entries; account/batch limits can be lower. Sign-in and credits may be required. Quality is source-dependent; no upscaling or source-watermark removal is promised. The Persian landing and form are localized; shared account/download dialogs currently use English. Other Persian app routes are not offered. Sample validation dated 2026-10-25 is documented on the landing page, with its scope and limitations.
 - Downloads publicly accessible online videos and media links when supported by the source platform.
 - Supports batch downloads, collection/playlist parsing, audio-only mode, and mute mode for supported services.
 - Supports public WeChat Channels share links and detects multiple embedded videos in public WeChat Official Account articles for selectable batch downloads.

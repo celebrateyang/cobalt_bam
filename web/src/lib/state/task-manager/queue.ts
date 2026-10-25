@@ -349,6 +349,20 @@ export function itemError(
         return;
     }
     maybeShowQueueRefreshHint(error);
+    const failed = get(queue)[id];
+    // An Aparat batch failure can be handed to the extension/browser, never a proxy.
+    if (failed?.originalRequest?.batch && failed.pipeline.length === 1 &&
+        !["audio", "mute"].includes(failed.originalRequest.downloadMode || "auto") &&
+        /^https:\/\/(?:www\.|shorts\.)?aparat\.com\//i.test(failed.originalRequest.url)) {
+        const worker = failed.pipeline.find(worker => worker.workerId === workerId);
+        if (worker?.worker === "fetch" && /^https:\/\/(?:[a-z0-9-]+\.)*cdn\.asset\.aparat\.(?:com|cloud)\//i.test(worker.workerArgs.url)) {
+            const urls = [worker.workerArgs.url, ...(worker.workerArgs.urlCandidates || [])];
+            createDialog({
+                id: `aparat-handoff-${id}`, type: "preview-download", filename: failed.filename,
+                urls, extensionUrls: urls, skipDirectFetch: true, autoSave: false,
+            });
+        }
+    }
     void reportDownloadOutcome(get(queue)[id]?.downloadRequestId, "failed", error, failureDiagnostic);
     console.log(`[queue] itemError: calling releaseQueueHold id=${id}`);
     const pendingRelease = releaseQueueHold(id, "queue_error", error, failureDiagnostic);

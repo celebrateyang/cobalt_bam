@@ -17,6 +17,7 @@
     import { fetchCurrentUserPointsProfile } from "$lib/points/ui";
     import { requireDownloadAuth } from "$lib/auth/download-auth";
     import API from "$lib/api/api";
+    import { parseAparatInput } from "$lib/seo/aparat-input";
     import { clerkEnabled, isSignedIn } from "$lib/state/clerk";
     import {
         clearPendingLaunchIntent,
@@ -659,6 +660,7 @@
                 !isBilibiliUrl(url) &&
                 !isDouyinUrl(url) &&
                 !isTikTokUrl(url) &&
+                !parseAparatInput(url)?.playlist &&
                 !isYouTubePlaylistCandidateUrl(url) &&
                 !isPodcastFeedCandidateUrl(url)
             ) {

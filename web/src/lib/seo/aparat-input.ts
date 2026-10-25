@@ -4,6 +4,10 @@ export const parseAparatInput = (input: string): { url: string; playlist: boolea
         if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.port ||
             !['aparat.com', 'www.aparat.com', 'shorts.aparat.com'].includes(url.hostname)) return null;
         if (!/^\/(?:v\/[a-zA-Z0-9]{1,32}|shorts\/\d{1,24}|playlist\/\d{1,20})\/?$/.test(url.pathname)) return null;
+        const playlistId = url.searchParams.get('playlist');
+        if (/^\/v\//.test(url.pathname) && /^\d{1,20}$/.test(playlistId || '')) {
+            return { url: `https://www.aparat.com/playlist/${playlistId}`, playlist: true };
+        }
         return { url: `https://www.aparat.com${url.pathname.replace(/\/$/, '')}`, playlist: url.pathname.startsWith('/playlist/') };
     } catch { return null; }
 };

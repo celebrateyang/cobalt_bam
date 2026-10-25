@@ -121,10 +121,28 @@ test('Aparat input accepts page links while rejecting lookalikes, credentials an
     const { parseAparatInput: parse } = load('src/lib/seo/aparat-input.ts');
     assert.equal(parse('https://www.aparat.com/shorts/2112380547795222528?ref=share').url, 'https://www.aparat.com/shorts/2112380547795222528');
     assert.equal(parse('https://www.aparat.com/playlist/531891').playlist, true);
+    assert.deepEqual(parse('https://www.aparat.com/v/7R9YB?playlist=531891'), {
+        url: 'https://www.aparat.com/playlist/531891', playlist: true,
+    });
     for (const input of ['https://aparat.com.evil.test/v/test', 'https://user:pass@aparat.com/v/test',
         'https://aparat.com:9000/v/test', 'https://aparat.com/channel', 'https://cdn.asset.aparat.com/test.mp4', 'https://aparat.com/shorts/not-a-number']) {
         assert.equal(parse(input), null, input);
     }
+});
+
+test('homepage sends Aparat playlist links to expansion before the single-video handler', () => {
+    const { parseAparatInput } = load('src/lib/seo/aparat-input.ts');
+    const source = readFileSync(resolve(root, 'src/components/save/Omnibox.svelte'), 'utf8');
+    const gate = source.match(/\/\/ Only expand for services[^\n]*\n\s*if\s*\(([\s\S]*?)\)\s*\{/)[1];
+    const bypassExpansion = new Function('url', 'parseAparatInput',
+        'isBilibiliUrl', 'isDouyinUrl', 'isTikTokUrl', 'isYouTubePlaylistCandidateUrl', 'isPodcastFeedCandidateUrl',
+        `return (${gate});`);
+    const bypass = url => bypassExpansion(url, parseAparatInput, ...Array(5).fill(() => false));
+    assert.equal(bypass('https://www.aparat.com/playlist/531891'), false);
+    assert.equal(bypass('https://www.aparat.com/v/7R9YB?playlist=531891'), false);
+    assert.equal(bypass('https://www.aparat.com/v/7R9YB'), true);
+    assert.equal(bypass('https://www.aparat.com/shorts/2112380547795222528'), true);
+    assert.equal(bypass('https://aparat.com.evil.test/playlist/531891'), true);
 });
 
 test('Aparat SSR localizes the whole landing and exposes honest matching machine-readable facts', async () => {

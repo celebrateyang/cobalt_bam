@@ -1,4 +1,6 @@
 {
+    "file_transfer.large_file_hint": "Le transfert prend en charge jusqu’à 2 Go par fichier. Les fichiers volumineux nécessitent assez d’espace de stockage dans le navigateur. Gardez les deux pages ouvertes et l’écran du téléphone allumé.",
+    "messages.large_transfer_failed": "Échec du transfert du fichier volumineux. Gardez les deux pages ouvertes, vérifiez l’espace disponible et actualisez les deux pages avant de réessayer. Le navigateur ne prend peut-être pas en charge le stockage de fichiers volumineux.",
     "title": "Partage du presse-papiers",
     "description": "Partagez du texte et des fichiers en toute sécurité entre appareils",
     "description_subtitle": "Les fichiers et le texte sont transmis avec un chiffrement de bout en bout sans passer par des serveurs.",

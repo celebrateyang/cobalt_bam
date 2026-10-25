@@ -12,6 +12,7 @@
     import MembershipUpgradeDialog from "$components/dialog/MembershipUpgradeDialog.svelte";
     import XinpianchangDownloadDialog from './XinpianchangDownloadDialog.svelte';
     import RedditPhotosDialog from './RedditPhotosDialog.svelte';
+    import MobileLargeDownloadDialog from './MobileLargeDownloadDialog.svelte';
 
     $: backdropVisible = $dialogs.length > 0;
 </script>
@@ -44,6 +45,8 @@
             <XinpianchangDownloadDialog {...dialog} />
         {:else if dialog.type === 'reddit-photos'}
             <RedditPhotosDialog {...dialog} />
+        {:else if dialog.type === 'mobile-large-download'}
+            <MobileLargeDownloadDialog {...dialog} />
         {/if}
     {/each}
     <div id="dialog-backdrop" class:visible={backdropVisible}></div>

@@ -297,6 +297,9 @@ export function createResponse(responseType, responseData) {
             body: {
                 status: responseType,
                 ...response,
+                ...(Number.isSafeInteger(responseData?.estimatedSizeBytes) && responseData.estimatedSizeBytes > 0
+                    ? { estimatedSizeBytes: responseData.estimatedSizeBytes, estimatedSizeSource: responseData.estimatedSizeSource }
+                    : {}),
                 ...(duration != null ? { duration } : {})
             }
         }

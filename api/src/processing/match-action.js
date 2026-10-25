@@ -76,6 +76,8 @@ export default function({
             cover: !disableMetadata ? r.cover : false,
             cropCover: !disableMetadata ? r.cropCover : false,
             duration: r.duration,
+            estimatedSizeBytes: r.estimatedSizeBytes,
+            estimatedSizeSource: r.estimatedSizeSource,
             hlsAudioCodec: r.hlsAudioCodec,
             iqiyiTsConcat: r.iqiyiTsConcat === true,
             genericDownload: host === "generic" ? r.genericDownload : undefined,
@@ -168,6 +170,9 @@ export default function({
                 url,
                 filename: defaultParams.filename,
                 duration: defaultParams.duration,
+                service: defaultParams.service,
+                estimatedSizeBytes: defaultParams.estimatedSizeBytes,
+                estimatedSizeSource: defaultParams.estimatedSizeSource,
             });
         }
     }

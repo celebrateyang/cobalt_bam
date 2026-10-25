@@ -18,6 +18,7 @@
         "test:seo": "pnpm build && pnpm check:seo-prerender",
         "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
         "test:clipboard": "node ./scripts/test-clipboard-ephemeral.mjs",
+        "test:large-download": "node --test ./scripts/test-mobile-large-download.mjs ./scripts/test-large-file-transfer.mjs ./scripts/test-download-saving.mjs",
         "test:collection-selection": "node --test ./scripts/test-collection-selection.mjs",
         "test:bmc-translations": "node ./scripts/test-bmc-translations.mjs",
         "test:bmc-checkout": "node --test ./scripts/test-bmc-checkout.mjs ./scripts/test-bmc-feedback.mjs",

@@ -15,7 +15,9 @@ import { queue, updateItem } from "$lib/state/task-manager/queue";
 import { hasFetchResumeStateForTask } from "$lib/state/task-manager/fetch-resume";
 import { addToHistory } from "$lib/history";
 import { currentApiURL } from "$lib/api/api-url";
-import { finalizePointsHold } from "$lib/api/points";
+import { finalizePointsHold, releasePointsHold } from "$lib/api/points";
+import { device } from "$lib/device";
+import { needsMobileLargeDownloadWarning } from "$lib/api/mobile-large-download";
 import { markCollectionDownloadedItems } from "$lib/api/collection-memory";
 import { savePendingLaunchIntent } from "$lib/pwa/launch-intent";
 import { uuid } from "$lib/util";
@@ -38,6 +40,8 @@ import type { CobaltAPIResponse, CobaltSaveRequestBody } from "$lib/types/api";
 import type { CobaltQueueItemCollectionMemory } from "$lib/types/queue";
 
 export type SavingStage = 'authenticating' | 'confirming' | 'resolving' | 'starting';
+
+const mobileLargeDownloadApprovals = new Set<string>();
 
 type SavingHandlerArgs = {
     pointsProfile?: Awaited<ReturnType<typeof fetchCurrentUserPointsProfile>>;
@@ -599,6 +603,36 @@ export const savingHandler = async ({
         downloadButtonState.set("error");
         showError(get(t)("error.api.unreachable"), "error.api.unreachable");
         return null;
+    }
+
+    const warningKey = `${effectiveTaskId}:${selectedRequest.url}`;
+    if (response.status !== "error" && needsMobileLargeDownloadWarning(device.is.mobile, response, selectedRequest.url)
+        && !mobileLargeDownloadApprovals.has(warningKey)) {
+        const lang = get(page)?.params?.lang || "en";
+        await loadTranslations(lang, "dialog");
+        onStage?.("confirming");
+        const size = new Intl.NumberFormat(lang, { maximumFractionDigits: 0 })
+            .format(response.estimatedSizeBytes! / (1024 * 1024)) + " MB";
+        const proceed = await new Promise<boolean>((resolve) => createDialog({
+            id: `mobile-large-${effectiveTaskId}`,
+            type: "mobile-large-download",
+            sourceUrl: selectedRequest.url.replace(/^"|"$/g, ""),
+            size,
+            transferPath: `/${lang}/clipboard`,
+            onDecision: resolve,
+        }));
+        if (!proceed) {
+            if (response.points?.holdId) {
+                await releasePointsHold(response.points.holdId, "mobile_large_download_cancelled", {
+                    queueId: effectiveTaskId, itemId: effectiveTaskId,
+                }).catch(() => false);
+            }
+            downloadButtonState.set("idle");
+            return null;
+        }
+        if (mobileLargeDownloadApprovals.size >= 100) mobileLargeDownloadApprovals.clear();
+        mobileLargeDownloadApprovals.add(warningKey);
+        onStage?.("starting");
     }
 
     if (response.status !== "error") {

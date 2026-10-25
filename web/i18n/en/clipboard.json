@@ -1,4 +1,6 @@
 {
+    "file_transfer.large_file_hint": "File Transfer supports up to 2 GB per file. Large files require enough browser storage. Keep both transfer pages open and the phone screen on.",
+    "messages.large_transfer_failed": "Large file transfer failed. Keep both pages open, check available storage, and update both pages before retrying. Your browser may not support storage for large files.",
     "title": "File Transfer & Temporary Chat",
     "description": "Connect your devices or another person to share files, send text and talk privately.",
     "description_subtitle": "No chat app to install. Optional disappearing texts and encrypted file sharing; both browsers must stay online.",

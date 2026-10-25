@@ -1,4 +1,6 @@
 {
+    "file_transfer.large_file_hint": "Transfer File mendukung hingga 2 GB per file. File besar memerlukan ruang penyimpanan browser yang cukup. Biarkan kedua halaman transfer terbuka dan layar ponsel menyala.",
+    "messages.large_transfer_failed": "Transfer file besar gagal. Biarkan kedua halaman terbuka, periksa ruang penyimpanan, dan muat ulang kedua halaman sebelum mencoba lagi. Browser mungkin tidak mendukung penyimpanan file besar.",
     "title": "Bagikan Papan Klip",
     "description": "Bagikan teks dan file dengan aman antar perangkat",
     "description_subtitle": "File dan teks ditransmisikan menggunakan enkripsi ujung ke ujung tanpa melalui server.",

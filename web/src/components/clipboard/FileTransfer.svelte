@@ -3,6 +3,7 @@
     import { t } from '$lib/i18n/translations';
     import SettingsCategory from '$components/settings/SettingsCategory.svelte';
     import ActionButton from '$components/buttons/ActionButton.svelte';
+    import { MAX_TRANSFER_FILE_SIZE } from '$lib/clipboard/large-file-transfer';
     
     const dispatch = createEventDispatcher();
     
@@ -42,7 +43,7 @@
         previousReceivedCount = receivedFiles.length;
     }
     
-    const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB file size limit
+    const MAX_FILE_SIZE = MAX_TRANSFER_FILE_SIZE;
     const RECEIVED_FILES_SCROLL_GUARD_COUNT = 200; // Desktop-only safety cap for very large lists
 
     function addSelectedFiles(candidateFiles: File[]): void {
@@ -50,7 +51,7 @@
         if (oversizedFiles.length > 0) {
             const maxSizeMB = Math.round(MAX_FILE_SIZE / (1024 * 1024));
             const oversizedNames = oversizedFiles.map(f => `${f.name} (${formatFileSize(f.size)})`).join(', ');
-            alert(`Some files exceed ${maxSizeMB}MB and cannot be sent:\\n${oversizedNames}`);
+            alert($t('clipboard.messages.files_too_large').replace('{maxSize}', String(maxSizeMB)).replace('{fileNames}', oversizedNames));
         }
 
         const validFiles = candidateFiles.filter(file => file.size <= MAX_FILE_SIZE);
@@ -169,6 +170,7 @@
 </script>
 
 <SettingsCategory title={$t("clipboard.file_transfer.title")} sectionId="file-transfer">
+    <p class="large-file-hint">{$t("clipboard.file_transfer.large_file_hint")}</p>
     <!-- 新文件接收通知 -->
     {#if showReceivedNotification}
         <div class="received-notification">
@@ -337,6 +339,7 @@
 </SettingsCategory>
 
 <style>
+    .large-file-hint { font-size: 0.85rem; line-height: 1.5; opacity: 0.8; }
     .file-transfer-section {
         display: flex;
         flex-direction: column;

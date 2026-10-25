@@ -1,4 +1,6 @@
 {
+    "file_transfer.large_file_hint": "Hỗ trợ tối đa 2 GB mỗi tệp. Tệp lớn cần đủ dung lượng lưu trữ của trình duyệt. Giữ cả hai trang truyền tệp mở và màn hình điện thoại bật.",
+    "messages.large_transfer_failed": "Truyền tệp lớn thất bại. Giữ cả hai trang mở, kiểm tra dung lượng trống và tải lại cả hai trang trước khi thử lại. Trình duyệt có thể không hỗ trợ lưu tệp lớn.",
     "title": "Chia Sẻ Clipboard",
     "description": "Chia sẻ văn bản và file một cách an toàn giữa các thiết bị",
     "description_subtitle": "File và văn bản được truyền bằng mã hóa end-to-end mà không qua máy chủ.",

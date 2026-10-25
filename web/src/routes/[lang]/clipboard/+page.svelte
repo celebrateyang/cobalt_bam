@@ -269,10 +269,13 @@
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        // Leave time for the browser download manager to open the disk-backed file.
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
     }
 
     function handleRemoveReceivedFile(event: CustomEvent) {
+        const removed = receivedFiles[event.detail.index];
+        void removed?.release?.().catch(() => {});
         clipboardState.update(state => ({
             ...state,
             receivedFiles: state.receivedFiles.filter((_, i) => i !== event.detail.index)

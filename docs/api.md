@@ -73,6 +73,25 @@ the response will always be a JSON object containing the `status` key, which wil
 | `url`        | `string` | url for the cobalt tunnel, or redirect to an external link  |
 | `filename`   | `string` | cobalt-generated filename for the file being downloaded     |
 
+YouTube `redirect`, `tunnel`, and `local-processing` responses may also include
+`estimatedSizeBytes` (a positive integer) and `estimatedSizeSource` (`metadata`,
+`approximate`, or `bitrate`). The estimate covers the selected media streams;
+separate video and audio sizes are summed. It is not a guaranteed final output
+length. Unknown sizes and playlist inputs omit these fields. Upstream instances
+must run an extractor version that emits them; the main API preserves the fields.
+
+On mobile devices, the web client asks before starting YouTube downloads estimated
+at 500 MiB or larger. Users can continue the existing download or copy the video
+link for downloading on a computer, then transfer the file at `/<lang>/clipboard`.
+File transfer accepts files up to 2 GiB. Files over 200 MiB use a versioned protocol
+with browser temporary storage and acknowledgements after each window of disk
+writes. Both devices must load the updated web client. Receiving requires browser
+support for OPFS writable files and sufficient storage; failure does not fall back
+to buffering the whole large file in memory. Keep both pages open during transfer.
+Completed temporary files are removed when dismissed or the transfer page is
+disposed; interrupted files older than 24 hours are cleaned on the next large
+transfer. This transfer protocol does not provide reconnect/resume across pages.
+
 ### douyin upstream relay (large files)
 for large douyin files, the main server can use an upstream instance as a relay so the cdn sees the upstream IP, while the browser still downloads from the main domain.
 

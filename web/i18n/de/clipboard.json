@@ -1,4 +1,6 @@
 {
+    "file_transfer.large_file_hint": "Die Dateiübertragung unterstützt bis zu 2 GB pro Datei. Große Dateien benötigen genügend Browserspeicher. Beide Übertragungsseiten geöffnet und den Handybildschirm eingeschaltet lassen.",
+    "messages.large_transfer_failed": "Übertragung der großen Datei fehlgeschlagen. Beide Seiten geöffnet lassen, freien Speicher prüfen und beide Seiten vor einem erneuten Versuch aktualisieren. Der Browser unterstützt möglicherweise keinen Speicher für große Dateien.",
     "title": "Zwischenablage-Freigabe",
     "description": "Text und Dateien sicher zwischen Geräten teilen",
     "description_subtitle": "Dateien und Text werden mit Ende-zu-Ende-Verschlüsselung übertragen, ohne über Server zu gehen.",

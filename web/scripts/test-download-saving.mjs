@@ -60,8 +60,9 @@ const fixture = (pref = "download", browserWindow) => {
     return { api, params, device, navigator, dialogs, callbacks, timers, dom, events };
 };
 
-const tunnelFixture = () => {
+const tunnelFixture = (mobile = false) => {
     const pipelines = [], downloads = [], states = [], dialogs = [];
+    const releases = [];
     let probes = 0;
     const source = readFileSync(new URL('src/lib/api/saving-handler.ts', root), 'utf8');
     const compiled = ts.transpileModule(source, {
@@ -69,6 +70,11 @@ const tunnelFixture = () => {
     }).outputText;
     const exports = {};
     const dependencies = {
+        '$lib/device': { device: { is: { mobile } } },
+        '$lib/api/mobile-large-download': load('src/lib/api/mobile-large-download.ts', {}, { URL }),
+        '$app/stores': { page: { params: { lang: 'en' } } },
+        '$lib/i18n/translations': { t: key => key, loadTranslations: async () => {} },
+        '$lib/api/points': { releasePointsHold: async (...args) => releases.push(args) },
         'svelte/store': { get: value => value },
         '$lib/state/clerk': { clerkEnabled: false },
         '$lib/state/omnibox': { downloadButtonState: { set: state => states.push(state) } },
@@ -86,8 +92,48 @@ const tunnelFixture = () => {
         window: { location: { origin: 'https://example.com' } },
         require: name => dependencies[name] || {},
     });
-    return { savingHandler: exports.savingHandler, pipelines, downloads, states, dialogs, probes: () => probes };
+    return { savingHandler: exports.savingHandler, pipelines, downloads, states, dialogs, releases, probes: () => probes };
 };
+
+const mobileLargeArgs = {
+    request: { url: 'https://youtube.com/watch?v=HB8CZzDnKHI', queueId: 'large-test', localProcessing: 'disabled' },
+    response: { status: 'tunnel', type: 'merge', service: 'youtube', url: 'https://api.example.com/tunnel?id=large', filename: 'large.mp4',
+        estimatedSizeBytes: 780700000, points: { holdId: 'hold-large' } },
+};
+
+test('large mobile downloads wait for confirmation, then keep the same server pipeline and skip repeat prompts', async () => {
+    const f = tunnelFixture(true);
+    const pending = f.savingHandler(mobileLargeArgs);
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(f.pipelines.length, 0);
+    assert.equal(f.dialogs[0].type, 'mobile-large-download');
+    assert.equal(f.dialogs[0].transferPath, '/en/clipboard');
+    f.dialogs[0].onDecision(true);
+    await pending;
+    assert.equal(f.pipelines.length, 1);
+    assert.equal(f.releases.length, 0);
+    await f.savingHandler(mobileLargeArgs);
+    assert.equal(f.dialogs.length, 1);
+});
+
+test('declining large mobile download releases its hold and starts no download', async () => {
+    const f = tunnelFixture(true);
+    const pending = f.savingHandler(mobileLargeArgs);
+    await new Promise(resolve => setImmediate(resolve));
+    f.dialogs[0].onDecision(false);
+    assert.equal(await pending, null);
+    assert.equal(f.pipelines.length, 0);
+    assert.equal(f.downloads.length, 0);
+    assert.equal(f.releases[0][0], 'hold-large');
+    assert.equal(f.states.at(-1), 'idle');
+});
+
+test('desktop large downloads do not show a warning', async () => {
+    const f = tunnelFixture(false);
+    await f.savingHandler(mobileLargeArgs);
+    assert.equal(f.dialogs.length, 0);
+    assert.equal(f.pipelines.length, 1);
+});
 
 test('Amazon Direct Bridge opens a download dialog without a queue task', async () => {
     const f = tunnelFixture();

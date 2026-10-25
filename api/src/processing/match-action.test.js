@@ -26,6 +26,24 @@ const youtubeResult = {
     duration: 60,
 };
 
+test("preserves YouTube size estimates across redirect, tunnel and local processing", () => {
+    const estimatedSizeBytes = 780700000;
+    for (const localProcessing of ["disabled", "preferred"]) {
+        const response = matchAction({ ...baseArgs, localProcessing,
+            r: { ...youtubeResult, type: "merge", forceRedirect: false,
+                urls: ["https://video.example/video.mp4", "https://video.example/audio.m4a"],
+                estimatedSizeBytes, estimatedSizeSource: "metadata" } });
+        assert.equal(response.status, 200);
+        assert.equal(response.body.status, localProcessing === "disabled" ? "tunnel" : "local-processing");
+        assert.equal(response.body.estimatedSizeBytes, estimatedSizeBytes);
+        assert.equal(response.body.estimatedSizeSource, "metadata");
+    }
+    const redirect = matchAction({ ...baseArgs, r: { ...youtubeResult, estimatedSizeBytes, estimatedSizeSource: "approximate" } });
+    assert.equal(redirect.body.status, "redirect");
+    assert.equal(redirect.body.service, "youtube");
+    assert.equal(redirect.body.estimatedSizeBytes, estimatedSizeBytes);
+});
+
 test("Aparat never creates tunnels, including forced proxy, batch, audio and mute requests", () => {
     const url = "https://edge.cdn.asset.aparat.com/aparat-video/test.apt?sig=test";
     for (const mode of ["video", "audio", "mute"]) {

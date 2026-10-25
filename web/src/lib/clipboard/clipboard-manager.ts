@@ -3,6 +3,7 @@ import { writable } from 'svelte/store';
 import { currentApiURL } from '$lib/api/api-url';
 import QRCode from 'qrcode';
 import { t } from '$lib/i18n/translations';
+import { LargeFileTransfer, MEMORY_FILE_LIMIT, MAX_TRANSFER_FILE_SIZE } from './large-file-transfer';
 import {
     enterClipboardPersonalSession,
     getClipboardPersonalSessionStatus,
@@ -19,6 +20,7 @@ export interface FileItem {
     size: number;
     type: string;
     blob: Blob;
+    release?: () => Promise<void>;
 }
 
 export type ClipboardMessageStatus = 'sending' | 'delivered' | 'unconfirmed' | 'failed';
@@ -56,7 +58,7 @@ interface ReceivingFile {
 
 // Constants
 const CHUNK_SIZE = 32 * 1024; // 32KB chunks for file transfer (smaller chunks improve reliability)
-const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB file size limit
+const MAX_FILE_SIZE = MAX_TRANSFER_FILE_SIZE;
 const MAX_BUFFER_SIZE = 512 * 1024; // 512KB buffer threshold to reduce congestion
 const BUFFERED_AMOUNT_LOW_THRESHOLD = 256 * 1024; // Resume sending once buffered amount drops below 256KB
 const BUFFER_CHECK_INTERVAL = 10; // 10ms buffer check interval
@@ -111,6 +113,34 @@ export const clipboardState = writable({
 });
 
 export class ClipboardManager {
+    private largeFiles = new LargeFileTransfer({
+        send: message => {
+            if (this.dataChannel?.readyState !== 'open') throw new Error('Data channel closed');
+            this.dataChannel.send(JSON.stringify(message));
+        },
+        sendChunk: async (id, index, total, bytes) => {
+            await this.smartFlowControl(0);
+            const encrypted = await this.encryptBinaryData(bytes);
+            if (this.dataChannel?.readyState !== 'open') throw new Error('Data channel closed');
+            this.dataChannel.send(this.createBinaryChunkMessage(id, index, total, encrypted));
+        },
+        decrypt: bytes => this.decryptBinaryData(bytes.buffer as ArrayBuffer),
+        progress: (progress, receiving) => {
+            if (receiving && progress === 0) void this.acquireMobilePowerProtection('receiving');
+            clipboardState.update(state => ({ ...state, transferProgress: progress,
+                ...(receiving ? { receivingFiles: true, isTransferring: true, activeTab: 'files' } : {}) }));
+        },
+        received: (file, name, release) => {
+            this.releaseMobilePowerProtection('receiving');
+            clipboardState.update(state => ({ ...state, receivingFiles: false, isTransferring: false, transferProgress: 100,
+                receivedFiles: [...state.receivedFiles, { name, size: file.size, type: file.type, blob: file, release }] }));
+        },
+        failed: () => {
+            this.releaseMobilePowerProtection('receiving');
+            clipboardState.update(state => ({ ...state, receivingFiles: false, isTransferring: false,
+                errorMessage: t.get('clipboard.messages.large_transfer_failed'), showError: true }));
+        },
+    });
     private ws: WebSocket | null = null;
     private peerConnection: RTCPeerConnection | null = null;
     private dataChannel: RTCDataChannel | null = null;
@@ -906,6 +936,7 @@ export class ClipboardManager {
 
     // 取消发送文件
     async cancelSending(): Promise<void> {
+        this.largeFiles.cancel();
         if (!this.isSendingFiles && !this.currentSendingFileId) {
             console.log('🚫 没有正在发送的文件，无需取消');
             return;
@@ -939,6 +970,12 @@ export class ClipboardManager {
 
     // 取消接收文件
     async cancelReceiving(): Promise<void> {
+        const receivingLargeFile = this.largeFiles.isReceiving;
+        this.largeFiles.cancel();
+        if (receivingLargeFile) {
+            this.cleanupReceivingState(t.get('clipboard.messages.file_receiving_cancelled'));
+            return;
+        }
         if (!this.currentReceivingFile) {
             console.log('🚫 没有正在接收的文件，无需取消');
             return;
@@ -970,6 +1007,7 @@ export class ClipboardManager {
 
     // 处理对端取消信号
     private handleFileCancellation(message: any): void {
+        this.largeFiles.cancel(false);
         console.log('🚫 处理对端取消信号:', message);
 
         // 如果正在接收文件，清理状态
@@ -1042,6 +1080,7 @@ export class ClipboardManager {
 
     // 清理接收状态
     private cleanupReceivingState(errorMessage: string = t.get('clipboard.messages.file_receiving_cancelled')): void {
+        this.largeFiles.cancel();
         if (this.currentReceivingFile?.retryTimer) {
             clearTimeout(this.currentReceivingFile.retryTimer);
         }
@@ -1456,6 +1495,7 @@ export class ClipboardManager {
         }));
 
         this.sharedKey = null;
+        this.largeFiles.cancel(false);
         this.remotePublicKey = null;
         this.currentReceivingFile = null;
         this.isSendingFiles = false; // 重置发送锁
@@ -1586,6 +1626,8 @@ export class ClipboardManager {
     }
 
     private closePeerTransport(clearKeys = true): void {
+        this.largeFiles.cancel(false);
+        this.releaseMobilePowerProtection('receiving');
         this.purgeEphemeralMessages(true);
         this.ephemeralMessageIds.clear();
         clipboardState.update(state => ({ ...state, peerSupportsEphemeral: false }));
@@ -1618,6 +1660,9 @@ export class ClipboardManager {
     }
 
     dispose(): void {
+        const files = this.getCurrentState().receivedFiles;
+        for (const file of files) void file.release?.().catch(() => {});
+        clipboardState.update(state => ({ ...state, receivedFiles: [] }));
         this.cleanup(true, true);
     }
 
@@ -2746,6 +2791,9 @@ export class ClipboardManager {
 
         channel.onclose = () => {
             if (this.dataChannel !== channel) return;
+            this.largeFiles.cancel(false);
+            this.releaseMobilePowerProtection('receiving');
+            clipboardState.update(state => ({ ...state, receivingFiles: false, isTransferring: false }));
             this.purgeEphemeralMessages();
             clipboardState.update(state => ({ ...state, peerSupportsEphemeral: false }));
             this.dataChannelForceConnected = false;
@@ -2777,6 +2825,9 @@ export class ClipboardManager {
 
         channel.onerror = (error) => {
             if (this.dataChannel !== channel) return;
+            this.largeFiles.cancel(false);
+            this.releaseMobilePowerProtection('receiving');
+            clipboardState.update(state => ({ ...state, receivingFiles: false, isTransferring: false }));
             this.purgeEphemeralMessages(true);
             console.error('Data channel error:', error);
             this.markPendingTextMessagesUnconfirmed();
@@ -2877,6 +2928,12 @@ export class ClipboardManager {
         // 处理JSON消息（file_start, file_end, text等）
         try {
             const message = typeof data === 'string' ? JSON.parse(data) : data;
+            if (message.type === 'large_file_start_v1' && (this.currentReceivingFile || this.isSendingFiles)) {
+                this.dataChannel?.send(JSON.stringify({ type: 'large_file_error_v1', fileId: message.fileId }));
+                return;
+            }
+            if (typeof message.type === 'string' && message.type.startsWith('large_file_')
+                && await this.largeFiles.control(message)) return;
 
             switch (message.type) {
                 case 'text_features':
@@ -3065,8 +3122,8 @@ export class ClipboardManager {
         }
 
         // 检查文件大小是否超出限制
-        if (data.size > MAX_FILE_SIZE) {
-            const maxSizeMB = Math.round(MAX_FILE_SIZE / (1024 * 1024));
+        if (data.size > MEMORY_FILE_LIMIT) {
+            const maxSizeMB = Math.round(MEMORY_FILE_LIMIT / (1024 * 1024));
             const fileSizeMB = Math.round(data.size / (1024 * 1024) * 100) / 100;
 
             clipboardState.update(state => ({
@@ -3108,6 +3165,7 @@ export class ClipboardManager {
     }
 
     private async handleFileChunkOptimized(fileId: string, chunkIndex: number, totalChunks: number, encryptedChunkData: Uint8Array): Promise<void> {
+        if (this.largeFiles.chunk(fileId, chunkIndex, totalChunks, encryptedChunkData)) return;
         const receivingFile = this.currentReceivingFile;
 
         if (!receivingFile) {
@@ -3724,6 +3782,11 @@ export class ClipboardManager {
     }
 
     private async sendSingleFile(file: File): Promise<void> {
+        if (file.size > MEMORY_FILE_LIMIT) {
+            try { await this.largeFiles.sendFile(file); }
+            catch { throw new Error(t.get('clipboard.messages.large_transfer_failed')); }
+            return;
+        }
         // 🚫 检查传输是否已被取消
         if (this.cancelTransmission) {
             console.log('🚫 单文件发送被取消:', file.name);
@@ -4042,7 +4105,10 @@ export class ClipboardManager {
             const maxSizeMB = Math.round(MAX_FILE_SIZE / (1024 * 1024));
             return {
                 valid: false,
-                error: `文件 "${file.name}" 大小超过 ${maxSizeMB}MB 限制`
+                error: t.get('clipboard.messages.file_too_large')
+                    .replace('{fileName}', file.name)
+                    .replace('{fileSize}', String(Math.round(file.size / (1024 * 1024))))
+                    .replace('{maxSize}', String(maxSizeMB))
             };
         }
         return { valid: true };

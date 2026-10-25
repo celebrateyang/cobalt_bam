@@ -57,6 +57,14 @@ type DownloadOfferDialog = Dialog & {
     redirectPath?: string | null,
 };
 
+type MobileLargeDownloadDialog = Dialog & {
+    type: "mobile-large-download";
+    sourceUrl: string;
+    size: string;
+    transferPath: string;
+    onDecision: (proceed: boolean) => void;
+};
+
 type PickerDialog = Dialog & {
     type: "picker",
     items?: DialogPickerItem[],
@@ -137,4 +145,4 @@ type MembershipUpgradeDialog = Dialog & {
     returnPath?: string | null,
 };
 
-export type DialogInfo = DownloadOfferDialog | SmallDialog | PickerDialog | SavingDialog | TikTokDownloadDialog | PreviewDownloadDialog | BatchDialog | FeedbackDialog | MembershipUpgradeDialog | XinpianchangDownloadDialog | RedditPhotosDialog;
+export type DialogInfo = MobileLargeDownloadDialog | DownloadOfferDialog | SmallDialog | PickerDialog | SavingDialog | TikTokDownloadDialog | PreviewDownloadDialog | BatchDialog | FeedbackDialog | MembershipUpgradeDialog | XinpianchangDownloadDialog | RedditPhotosDialog;

@@ -190,4 +190,6 @@ export type CobaltAPIResponse = (CobaltErrorResponse
                                   downloadRequestId?: string;
                                   mediaImportToken?: string;
                                   mediaImportExpiresAt?: number;
+                                  estimatedSizeBytes?: number;
+                                  estimatedSizeSource?: "metadata" | "approximate" | "bitrate";
                               };

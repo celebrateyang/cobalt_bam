@@ -1,4 +1,6 @@
 {
+    "file_transfer.large_file_hint": "La transferencia admite hasta 2 GB por archivo. Los archivos grandes requieren suficiente almacenamiento del navegador. Mantén ambas páginas abiertas y la pantalla del móvil encendida.",
+    "messages.large_transfer_failed": "Falló la transferencia del archivo grande. Mantén ambas páginas abiertas, comprueba el almacenamiento y actualiza ambas páginas antes de reintentar. Es posible que el navegador no admita almacenamiento para archivos grandes.",
     "title": "Compartir Portapapeles",
     "description": "Comparte texto y archivos de forma segura entre dispositivos",
     "description_subtitle": "Los archivos y texto se transmiten usando encriptación de extremo a extremo sin pasar por servidores.",

@@ -58,6 +58,15 @@ const buildResult = (formats, overrides = {}, targetQuality = 1080) => buildYout
     targetQuality,
 });
 
+test("exposes the selected audio size before downloading", () => {
+    const result = buildResult([{
+        format_id: "140", ext: "m4a", vcodec: "none", acodec: "mp4a.40.2",
+        filesize: 157100000, url: mediaUrl("140"),
+    }], { isAudioOnly: true });
+    assert.equal(result.estimatedSizeBytes, 157100000);
+    assert.equal(result.estimatedSizeSource, "metadata");
+});
+
 test("rejects over-limit YouTube media before selecting formats, including audio and mute", () => {
     for (const mode of [{}, { isAudioOnly: true }, { isAudioMuted: true }]) {
         const result = buildYoutubeResult({

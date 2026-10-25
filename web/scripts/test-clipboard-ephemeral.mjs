@@ -8,6 +8,10 @@ import ts from 'typescript';
 // Exercise the real manager in two isolated browser contexts, with real AES-GCM,
 // deterministic time and an in-memory transport. No browser or API is contacted.
 const source = readFileSync(new URL('../src/lib/clipboard/clipboard-manager.ts', import.meta.url), 'utf8');
+const largeSource = readFileSync(new URL('../src/lib/clipboard/large-file-transfer.ts', import.meta.url), 'utf8');
+const largeCompiled = ts.transpileModule(largeSource, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+}).outputText;
 const compiled = ts.transpileModule(source, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
@@ -69,6 +73,8 @@ function client(time) {
     const document = { ...events(), visibilityState: 'visible' };
     const window = { ...events(), crypto: webcrypto };
     const exports = {};
+    const largeExports = {};
+    runInNewContext(largeCompiled, { exports: largeExports, ...time });
     const errors = [];
     const writable = initial => {
         let value = initial;
@@ -84,6 +90,7 @@ function client(time) {
         ArrayBuffer, Uint8Array, TextEncoder, TextDecoder, ...time,
         console: { log() {}, warn() {}, error: (...args) => errors.push(args) },
         require(name) {
+            if (name === './large-file-transfer') return largeExports;
             if (name === 'svelte/store') return { writable };
             if (name === '$lib/i18n/translations') return { t: { get: key => key } };
             if (name === 'qrcode' || name === '$lib/api/clipboard-personal') return {};
@@ -137,6 +144,18 @@ async function pair() {
     await flush();
     return { a, b, time, flush, sent, queue };
 }
+
+test('cancelling a disk-backed receive clears progress and unlocks file selection', async () => {
+    const receiver = client(clock());
+    let cancelled = 0;
+    receiver.manager.largeFiles = { isReceiving: true, cancel: () => cancelled++ };
+    receiver.store.update(state => ({ ...state, receivingFiles: true, isTransferring: true, transferProgress: 47 }));
+    await receiver.manager.cancelReceiving();
+    assert.ok(cancelled > 0);
+    assert.equal(receiver.state().receivingFiles, false);
+    assert.equal(receiver.state().isTransferring, false);
+    assert.equal(receiver.state().transferProgress, 0);
+});
 
 test('ordinary text still persists and acknowledges delivery', async () => {
     const { a, b, flush } = await pair();

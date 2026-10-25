@@ -6,6 +6,7 @@ import { mkdtemp, writeFile, rm } from "node:fs/promises";
 import { getCookie } from "../cookie/manager.js";
 import { sanitizeString } from "../create-filename.js";
 import { exceedsYoutubeDurationLimit } from "../youtube-duration.js";
+import { estimateYoutubeSize } from "../youtube-size.js";
 import { waitForYoutubeMedia } from "../youtube-availability.js";
 
 const DEFAULT_TIMEOUT_MS = 45000;
@@ -907,6 +908,7 @@ export const buildYoutubeResult = ({
             audioFilename: sanitizeString(title),
             fileMetadata,
             bestAudio,
+            ...estimateYoutubeSize([selected], duration),
             subtitles,
             originalRequest: {
                 ...o,
@@ -931,6 +933,7 @@ export const buildYoutubeResult = ({
             type: "proxy",
             forceRedirect: true,
             urls: selected.url,
+            ...estimateYoutubeSize([selected], duration),
             subtitles,
             filenameAttributes: buildFilenameAttributes({
                 id: o.id,
@@ -959,6 +962,7 @@ export const buildYoutubeResult = ({
         return {
             type: "merge",
             urls: [mergePair.videoCandidate.url, mergePair.audioCandidate.url],
+            ...estimateYoutubeSize([mergePair.videoCandidate, mergePair.audioCandidate], duration),
             subtitles,
             filenameAttributes: buildFilenameAttributes({
                 id: o.id,
@@ -989,6 +993,7 @@ export const buildYoutubeResult = ({
             return {
                 type: "merge",
                 urls: [mergePair.videoCandidate.url, mergePair.audioCandidate.url],
+                ...estimateYoutubeSize([mergePair.videoCandidate, mergePair.audioCandidate], duration),
                 subtitles,
                 filenameAttributes: buildFilenameAttributes({
                     id: o.id,
@@ -1021,6 +1026,7 @@ export const buildYoutubeResult = ({
         type: "proxy",
         forceRedirect: true,
         urls: selected.url,
+        ...estimateYoutubeSize([selected], duration),
         subtitles,
         filenameAttributes: buildFilenameAttributes({
             id: o.id,

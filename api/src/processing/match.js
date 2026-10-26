@@ -4,6 +4,7 @@ import { env } from "../config.js";
 import { createResponse } from "../processing/request.js";
 import { createStream } from "../stream/manage.js";
 import { requestUpstream } from "./upstream/request.js";
+import { requestYoutubeUpstream } from "./upstream/youtube.js";
 import { getYoutubeUpstreamDurationError } from "./youtube-duration.js";
 
 import { testers } from "./service-patterns.js";
@@ -176,7 +177,8 @@ const requestUpstreamCobalt = async (payload, options = {}) => {
             : 12000;
     const timeoutMs = options.timeoutMs || configuredTimeoutMs;
 
-    const upstream = await requestUpstream({
+    const request = isYouTubeHost(getRequestHost(payload)) ? requestYoutubeUpstream : requestUpstream;
+    const upstream = await request({
         payload,
         service: getRequestHost(payload) || "download",
         timeoutMs: isYouTubeHost(getRequestHost(payload))

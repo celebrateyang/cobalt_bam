@@ -12,6 +12,7 @@
     "mobile_large.transfer": "파일 전송 열기",
     "mobile_large.transfer_limit": "파일 전송은 파일당 최대 2 GB를 지원합니다. 대용량 파일에는 충분한 브라우저 저장 공간이 필요합니다. 두 전송 페이지를 열어 두고 휴대폰 화면을 켜 두세요.",
     "offer.opening": "여는 중…",
+    "offer.scroll_more": "스크롤하여 더 보기",
     "offer.all_plans": "모든 요금제 보기",
     "offer.title": "다운로드 계속하기",
     "offer.balance": "이번 다운로드에 {{ required }}포인트가 필요합니다. 잔액은 {{ current }}포인트이며 {{ gap }}포인트가 부족합니다.",

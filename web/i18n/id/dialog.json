@@ -12,6 +12,7 @@
     "mobile_large.transfer": "Buka Transfer File",
     "mobile_large.transfer_limit": "Transfer File mendukung hingga 2 GB per file. File besar memerlukan ruang penyimpanan browser yang cukup. Biarkan kedua halaman transfer terbuka dan layar ponsel menyala.",
     "offer.opening": "Membuka…",
+    "offer.scroll_more": "Gulir untuk melihat lebih banyak",
     "offer.all_plans": "Lihat semua paket",
     "offer.title": "Lanjutkan unduhan Anda",
     "offer.balance": "Unduhan ini memerlukan {{ required }} poin. Anda memiliki {{ current }}; kurang {{ gap }} lagi.",

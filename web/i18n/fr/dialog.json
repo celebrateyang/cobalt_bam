@@ -12,6 +12,7 @@
     "mobile_large.transfer": "Ouvrir le transfert de fichiers",
     "mobile_large.transfer_limit": "Le transfert prend en charge jusqu’à 2 Go par fichier. Les fichiers volumineux nécessitent assez d’espace de stockage dans le navigateur. Gardez les deux pages ouvertes et l’écran du téléphone allumé.",
     "offer.opening": "Ouverture…",
+    "offer.scroll_more": "Faites défiler pour voir la suite",
     "offer.all_plans": "Voir toutes les offres",
     "offer.title": "Continuez votre téléchargement",
     "offer.balance": "Ce téléchargement nécessite {{ required }} points. Vous en avez {{ current }} ; il en manque {{ gap }}.",

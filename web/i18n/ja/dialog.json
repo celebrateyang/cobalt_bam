@@ -12,6 +12,7 @@
     "mobile_large.transfer": "ファイル転送を開く",
     "mobile_large.transfer_limit": "ファイル転送は1ファイル最大2 GBに対応しています。大容量ファイルには十分なブラウザの保存容量が必要です。両方の転送ページを開いたままにし、スマートフォンの画面を点灯させてください。",
     "offer.opening": "開いています…",
+    "offer.scroll_more": "スクロールして続きを見る",
     "offer.all_plans": "すべてのプランを見る",
     "offer.title": "ダウンロードを続ける",
     "offer.balance": "今回必要なポイント：{{ required }}。残高：{{ current }}。あと {{ gap }} ポイント必要です。",

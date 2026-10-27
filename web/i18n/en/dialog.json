@@ -12,6 +12,7 @@
     "mobile_large.transfer": "Open File Transfer",
     "mobile_large.transfer_limit": "File Transfer supports up to 2 GB per file. Large files require enough browser storage. Keep both transfer pages open and the phone screen on.",
     "offer.opening": "Opening…",
+    "offer.scroll_more": "Scroll to see more",
     "offer.all_plans": "View all plans",
     "offer.title": "Continue your download",
     "offer.balance": "This download needs {{ required }} points. You have {{ current }}; {{ gap }} more needed.",

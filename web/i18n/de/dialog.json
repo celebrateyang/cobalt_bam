@@ -12,6 +12,7 @@
     "mobile_large.transfer": "Dateiübertragung öffnen",
     "mobile_large.transfer_limit": "Die Dateiübertragung unterstützt bis zu 2 GB pro Datei. Große Dateien benötigen genügend Browserspeicher. Beide Übertragungsseiten geöffnet und den Handybildschirm eingeschaltet lassen.",
     "offer.opening": "Wird geöffnet…",
+    "offer.scroll_more": "Scrollen, um mehr zu sehen",
     "offer.all_plans": "Alle Angebote ansehen",
     "offer.title": "Setze deinen Download fort",
     "offer.balance": "Dieser Download benötigt {{ required }} Punkte. Du hast {{ current }}; es fehlen {{ gap }}.",

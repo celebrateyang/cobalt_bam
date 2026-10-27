@@ -12,6 +12,7 @@
     "mobile_large.transfer": "Abrir transferencia de archivos",
     "mobile_large.transfer_limit": "La transferencia admite hasta 2 GB por archivo. Los archivos grandes requieren suficiente almacenamiento del navegador. Mantén ambas páginas abiertas y la pantalla del móvil encendida.",
     "offer.opening": "Abriendo…",
+    "offer.scroll_more": "Desliza para ver más",
     "offer.all_plans": "Ver todos los planes",
     "offer.title": "Continúa tu descarga",
     "offer.balance": "Esta descarga necesita {{ required }} puntos. Tienes {{ current }}; te faltan {{ gap }}.",

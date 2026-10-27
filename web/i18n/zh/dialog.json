@@ -12,6 +12,7 @@
     "mobile_large.transfer": "打开文件传输",
     "mobile_large.transfer_limit": "文件传输支持单文件最大 2 GB。传输大文件需要足够的浏览器存储空间。请保持两端传输页面打开，并让手机屏幕保持亮屏。",
     "offer.opening": "正在打开…",
+    "offer.scroll_more": "向下滑动查看更多",
     "offer.all_plans": "查看更多方案",
     "offer.title": "继续下载这个视频",
     "offer.balance": "本次需要 {{ required }} 积分，当前余额 {{ current }} 积分，还差 {{ gap }} 积分。",

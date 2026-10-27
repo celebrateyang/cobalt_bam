@@ -102,9 +102,34 @@ test("Aparat player links with a playlist parameter expand the collection", asyn
     assert.equal(result.currentUrl, "https://www.aparat.com/playlist/531891");
 });
 
-test("blocked, private and missing direct media fail without an HLS or yt-dlp fallback", async () => {
+test("a public free video with its download button disabled still requires a verified direct MP4", async () => {
+    const url = "https://persian29.cdn.asset.aparat.com/aparat-video/public-1080p.apt?sig=keep";
+    for (const valid of [true, false]) {
+        let calls = 0;
+        const result = await aparat({ id: "efw910m" }, async target => {
+            calls++;
+            if (target.includes("/etc/api/")) return json({ video: {
+                title: "Public lesson", duration: 423, isHidden: null, can_download: false,
+                cost_type: { type: "free" }, file_link_all: [], file_link: url,
+            } });
+            assert.equal(target, url);
+            return new Response(valid ? mp4 : "not an MP4", { status: 206 });
+        });
+        assert.equal(calls, 2);
+        if (valid) {
+            assert.equal(result.urls, url);
+            assert.equal(result.directClientDownload, true);
+            assert.equal(result.duration, 423);
+        } else {
+            assert.equal(result.error, "fetch.empty");
+            assert.equal(result.urls, undefined);
+        }
+    }
+});
+
+test("private, paid and missing direct media fail without an HLS or yt-dlp fallback", async () => {
     for (const video of [{ title: "Private", isHidden: true }, { title: "Paid", cost_type: { type: "paid" } },
-        { title: "Disabled", can_download: false }, { title: "No file", file_link: "https://evil.test/video.mp4" }]) {
+        { title: "No file", can_download: false }, { title: "No file", file_link: "https://evil.test/video.mp4" }]) {
         let calls = 0;
         const result = await aparat({ id: "test" }, async () => { calls++; return json({ video }); });
         assert.ok(result.error);

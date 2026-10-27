@@ -105,7 +105,9 @@ export default async function aparat({ id, shortId, quality = "max" }, fetcher =
         } else {
             const data = await json(fetcher, `${API_ORIGIN}/etc/api/video/videohash/${id}`);
             const video = data?.video;
-            if (!video || video.isHidden || video.can_download === false || (video.cost_type?.type && video.cost_type.type !== "free")) return { error: "content.post.unavailable" };
+            if (!video || video.isHidden || (video.cost_type?.type && video.cost_type.type !== "free")) return { error: "content.post.unavailable" };
+            // can_download controls Aparat's download button; public, free videos
+            // can still expose a playable MP4. Require our CDN and MP4 checks below.
             title = video.title;
             author = video.username;
             duration = Number(video.duration);

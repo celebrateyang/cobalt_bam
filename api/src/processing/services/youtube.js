@@ -409,6 +409,38 @@ const collectCandidates = ({ formats, requestClientIp }) => {
         .filter(Boolean);
 };
 
+const normalizeAudioLanguage = (value) => String(value || "").trim().toLowerCase();
+
+const preferOriginalAudio = (candidates, info) => {
+    // yt-dlp marks YouTube originals with language_preference=10, defaults
+    // with 5, and dubs with -1. Do this before codec/bitrate scoring so a
+    // slightly better dub (or an earlier equal-score format) cannot win.
+    const originalLanguages = new Set(candidates
+        .filter((candidate) => candidate.hasAudio && (
+            parseNumber(candidate.format.language_preference) >= 10
+            || /\boriginal\b/i.test(candidate.format.format_note || "")
+        ))
+        .map((candidate) => normalizeAudioLanguage(candidate.format.language))
+        .filter(Boolean));
+    const infoLanguage = normalizeAudioLanguage(info.language);
+    const getPreference = (candidate) => {
+        const language = normalizeAudioLanguage(candidate.format.language);
+        const preference = parseNumber(candidate.format.language_preference);
+        if (preference <= -10 || /\bdescriptive\b/i.test(candidate.format.format_note || "")) return -10;
+        if (preference >= 10 || /\boriginal\b/i.test(candidate.format.format_note || "")
+            || (language && originalLanguages.has(language))) return 10;
+        if (!originalLanguages.size && language && language === infoLanguage) return 10;
+        return preference;
+    };
+    const usableAudio = candidates.filter((candidate) => candidate.hasAudio
+        && candidate.rangeDownloadable
+        && Math.max(candidate.directAccessScore, candidate.serverAccessScore) > MIN_GOOD_URL_SCORE);
+    if (!usableAudio.length) return candidates;
+
+    const preferred = Math.max(...usableAudio.map(getPreference));
+    return candidates.filter((candidate) => !candidate.hasAudio || getPreference(candidate) === preferred);
+};
+
 const getQualityScore = (height, targetQuality) => {
     if (targetQuality > 0 && targetQuality < 9000 && height > 0) {
         return -Math.abs(height - targetQuality) * 2;
@@ -475,7 +507,7 @@ const logCandidates = (label, candidates, scoreKey) => {
         try {
             const parsed = new URL(candidate.url);
             console.log(
-                `======> [youtube][${label} ${i + 1}] fmt=${candidate.format.format_id} ext=${candidate.ext} h=${candidate.height} tbr=${candidate.tbr} score=${score.toFixed(2)} direct=${candidate.directAccessScore.toFixed(2)} server=${candidate.serverAccessScore.toFixed(2)} c=${parsed.searchParams.get("c") || "n/a"} ip=${parsed.searchParams.get("ip") || "n/a"} ipbypass=${parsed.searchParams.get("ipbypass") || "no"}`,
+                `======> [youtube][${label} ${i + 1}] fmt=${candidate.format.format_id} ext=${candidate.ext} h=${candidate.height} tbr=${candidate.tbr} lang=${candidate.format.language || "n/a"} lang_pref=${candidate.format.language_preference ?? "n/a"} score=${score.toFixed(2)} direct=${candidate.directAccessScore.toFixed(2)} server=${candidate.serverAccessScore.toFixed(2)} c=${parsed.searchParams.get("c") || "n/a"} ip=${parsed.searchParams.get("ip") || "n/a"} ipbypass=${parsed.searchParams.get("ipbypass") || "no"}`,
             );
         } catch {
             console.log(
@@ -849,10 +881,11 @@ export const buildYoutubeResult = ({
     const title = String(info.title || `youtube_${o.id}`).trim() || `youtube_${o.id}`;
     const artist = String(info.channel || info.uploader || "").trim();
     const subtitles = pickSubtitleUrl(info, o.subtitleLang);
-    const candidates = collectCandidates({
+    const allCandidates = collectCandidates({
         formats: allFormats,
         requestClientIp,
     });
+    const candidates = o.isAudioMuted ? allCandidates : preferOriginalAudio(allCandidates, info);
     const audioCandidates = pickSortedAudioCandidates({
         candidates,
     });

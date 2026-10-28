@@ -58,6 +58,118 @@ const buildResult = (formats, overrides = {}, targetQuality = 1080) => buildYout
     targetQuality,
 });
 
+const dubbedAudio = (id, language, preference, overrides = {}) => ({
+    format_id: id, ext: "m4a", tbr: 129.472,
+    vcodec: "none", acodec: "mp4a.40.2", url: mediaUrl(id),
+    language, language_preference: preference, ...overrides,
+});
+
+const h264Video = {
+    format_id: "137", ext: "mp4", width: 1920, height: 1080, tbr: 2000,
+    vcodec: "avc1.640028", acodec: "none", url: mediaUrl("137"),
+};
+
+test("preserves the Spanish original in tJn2Xg21zik instead of the first equal-bitrate English dub", () => {
+    for (const isAudioOnly of [false, true]) {
+        const result = buildResult([
+            h264Video,
+            dubbedAudio("140-0", "en-US", -1),
+            dubbedAudio("140-1", "pt-BR", -1),
+            dubbedAudio("140-2", "es-US", 10),
+        ], { codec: "h264", isAudioOnly });
+        assert.equal(result.error, undefined);
+        assert.equal(result.originalRequest.itag.audio, "140-2");
+        assert.equal(result.type, isAudioOnly ? "proxy" : "merge");
+    }
+});
+
+test("original audio takes precedence over a higher-bitrate default dub", () => {
+    const result = buildResult([
+        h264Video,
+        dubbedAudio("english-default", "en", 5, { tbr: 320 }),
+        dubbedAudio("spanish-original", "es", 10, { tbr: 64 }),
+    ], { codec: "h264" });
+    assert.equal(result.originalRequest.itag.audio, "spanish-original");
+});
+
+test("does not promote audio description in the original language", () => {
+    const result = buildResult([
+        h264Video,
+        dubbedAudio("es-description", "es", -10, { tbr: 320 }),
+        dubbedAudio("es-original", "es", 10, { tbr: 64 }),
+    ], { codec: "h264" });
+    assert.equal(result.originalRequest.itag.audio, "es-original");
+});
+
+test("recognizes original notes and propagates original language across codec variants", () => {
+    const result = buildResult([
+        h264Video,
+        dubbedAudio("english", "en-US", 5),
+        dubbedAudio("spanish-opus", "es-US", -1, {
+            ext: "webm", acodec: "opus", format_note: "Spanish (US) original (default)",
+        }),
+        dubbedAudio("spanish-aac", "es-US", -1),
+    ], { codec: "h264" });
+    assert.equal(result.originalRequest.itag.audio, "spanish-aac");
+});
+
+test("uses extracted media language when per-format original markers are absent", () => {
+    const result = buildYoutubeResult({
+        info: { language: "es-US", formats: [
+            h264Video, dubbedAudio("english", "en-US", -1), dubbedAudio("spanish", "es-US", -1),
+        ] },
+        o: { id: "video-id", codec: "h264", container: "auto" },
+        requestClientIp: "", targetQuality: 1080,
+    });
+    assert.equal(result.originalRequest.itag.audio, "spanish");
+});
+
+test("low-resolution downloads merge original audio instead of returning a muxed dub", () => {
+    const result = buildResult([
+        { ...h264Video, height: 360, width: 640 },
+        {
+            ...dubbedAudio("18-english", "en", 5), ext: "mp4",
+            vcodec: "avc1.42001E", height: 360, width: 640,
+        },
+        dubbedAudio("140-spanish", "es", 10),
+    ], { codec: "h264" }, 360);
+    assert.equal(result.type, "merge");
+    assert.equal(result.originalRequest.itag.audio, "140-spanish");
+});
+
+test("audio-only muxed fallback preserves the original track", () => {
+    const result = buildResult([
+        { ...dubbedAudio("en-muxed", "en", 5), ext: "mp4", vcodec: "avc1.42001E" },
+        { ...dubbedAudio("es-muxed", "es", 10), ext: "mp4", vcodec: "avc1.42001E" },
+    ], { codec: "h264", isAudioOnly: true });
+    assert.equal(result.originalRequest.itag.audio, "es-muxed");
+});
+
+test("does not replace incompatible original audio with a compatible dub", () => {
+    const result = buildResult([
+        h264Video,
+        dubbedAudio("en-aac", "en", 5),
+        dubbedAudio("es-opus", "es", 10, { ext: "webm", acodec: "opus" }),
+    ], { codec: "h264" });
+    assert.equal(result.error, "youtube.no_matching_format");
+});
+
+test("unavailable HLS original does not suppress the usable default track", () => {
+    const result = buildResult([
+        dubbedAudio("es-hls", "es", 10, { url: hlsUrl("es"), protocol: "m3u8_native" }),
+        dubbedAudio("english-default", "en", 5),
+    ], { isAudioOnly: true });
+    assert.equal(result.originalRequest.itag.audio, "english-default");
+});
+
+test("muted downloads do not discard muxed video based on its audio language", () => {
+    const result = buildResult([
+        { ...dubbedAudio("18-en", "en", 5), ext: "mp4", vcodec: "avc1.42001E", height: 360 },
+        dubbedAudio("es-original", "es", 10),
+    ], { codec: "h264", isAudioMuted: true }, 360);
+    assert.equal(result.originalRequest.itag.video, "18-en");
+});
+
 test("exposes the selected audio size before downloading", () => {
     const result = buildResult([{
         format_id: "140", ext: "m4a", vcodec: "none", acodec: "mp4a.40.2",

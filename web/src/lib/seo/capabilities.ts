@@ -1,4 +1,5 @@
 import { personalAgentDiscovery } from './agent-discovery';
+import { platformDownloadConfigs } from './platform-download-landings';
 
 export type CapabilityService = {
     id: string;
@@ -122,6 +123,24 @@ const defaultUnsupportedCases = [
 ];
 
 export const capabilityServices: CapabilityService[] = [
+    ...platformDownloadConfigs.filter(config => config.id !== 'threads').map(config => ({
+        id: config.id === 'bluesky' ? 'bsky' : config.id,
+        name: config.name,
+        category: 'video' as const,
+        publicOnly: true,
+        audioMode: !['vk'].includes(config.id),
+        noWatermark: false,
+        batchFriendly: true,
+        collectionFriendly: false,
+        landingSlug: config.slug,
+        notes: [
+            `The focused ${config.name} page accepts one specific public source link. Available media and quality depend on the source.`,
+            ...(config.id === 'twitch' ? ['Only individual Clips are supported; live streams, full VODs and channel archives are outside this workflow.'] : []),
+            ...(config.id === 'bluesky' ? ['Native video, photo attachments and supported Tenor GIF embeds return distinct media types; arbitrary external videos are not native uploads.'] : []),
+        ],
+        searchIntents: [`${config.name} video downloader`],
+        unsupportedCases: [...defaultUnsupportedCases, 'profile or feed URLs', 'whole-channel or playlist expansion on this page'],
+    })),
     {
         id: 'dailymotion',
         name: 'Dailymotion',
@@ -486,6 +505,7 @@ export const capabilityServices: CapabilityService[] = [
         noWatermark: false,
         batchFriendly: true,
         collectionFriendly: false,
+        landingSlug: 'threads-video-downloader',
         notes: ['Supports public Threads post links with available videos or photos.'],
         searchIntents: ['threads video downloader', 'download threads video'],
         unsupportedCases: defaultUnsupportedCases,
@@ -599,16 +619,11 @@ export const capabilityServices: CapabilityService[] = [
 
 export const additionalSupportedServices = [
     'Amazon Live',
-    'Bluesky',
     'CCTV',
     'Loom',
     'Newgrounds',
     'OK.ru',
-    'Rutube',
-    'Streamable',
     'Tumblr',
-    'Twitch Clips',
-    'VK',
 ] as const;
 
 export const toolCapabilities: ToolCapability[] = [

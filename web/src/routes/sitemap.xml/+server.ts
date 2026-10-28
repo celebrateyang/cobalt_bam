@@ -7,6 +7,7 @@ import { getLearnPage, learnSlugs } from '$lib/seo/learn-pages';
 import { supportedSeoLanguages } from '$lib/seo/site';
 import { getDownloadSeoLanguages, getGuideSeoLanguages } from '$lib/seo/route-locales';
 import { isTiktokLanding, tiktokContentUpdatedAt } from '$lib/seo/tiktok-content';
+import { getPlatformDownloadConfig } from '$lib/seo/platform-download-landings';
 
 const site = env.HOST ? `https://${env.HOST}` : 'https://freesavevideo.online';
 const languages = [...supportedSeoLanguages];
@@ -134,7 +135,7 @@ function generateSitemap(): string {
             urls.push(
                 urlEntry(
                     `${site}${path}`,
-                    slug === 'aparat-video-downloader' ? '2026-10-25' : isTiktokLanding(slug)
+                    getPlatformDownloadConfig(slug) ? '2026-10-27' : slug === 'aparat-video-downloader' ? '2026-10-25' : isTiktokLanding(slug)
                         ? tiktokContentUpdatedAt
                         : slug === 'dailymotion-video-downloader'
                         ? '2026-10-11'

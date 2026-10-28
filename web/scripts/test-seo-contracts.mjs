@@ -76,6 +76,7 @@ framework['$components/save/GoogleDriveDownloadForm.svelte'] = { __esModule: tru
 framework['$components/save/AparatDownloadForm.svelte'] = { __esModule: true, default: await component('src/components/save/AparatDownloadForm.svelte') };
 framework['$components/aparat/AparatDownloadPage.svelte'] = { __esModule: true, default: await component('src/components/aparat/AparatDownloadPage.svelte') };
 framework['$components/save/SupportLink.svelte'] = { __esModule: true, default: await component('src/components/save/SupportLink.svelte') };
+framework['$components/social/PlatformDownloadPage.svelte'] = { __esModule: true, default: await component('src/components/social/PlatformDownloadPage.svelte') };
 framework['$components/youtube/YouTubeDownloadPage.svelte'] = { __esModule: true, default: await component('src/components/youtube/YouTubeDownloadPage.svelte') };
 for (const name of ['SourceDownloadForm', 'RedditDownloadPage', 'PinterestDownloadPage']) {
     framework[`$components/social/${name}.svelte`] = { __esModule: true, default: await component(`src/components/social/${name}.svelte`) };
@@ -102,6 +103,78 @@ const routes = load('src/lib/seo/route-locales.ts');
 const links = load('src/lib/seo/internal-links.ts');
 const { supportedLanguages } = load('src/lib/seo/language-routing.ts');
 const { seoLandingSlugs, getSeoLandingPage, getSeoLandingLocale } = load('src/lib/seo/landing-pages.ts');
+
+test('focused platform forms accept source pages and reject lookalikes, feeds and cross-platform input', () => {
+    const { parsePlatformDownloadInput: parse } = load('src/lib/seo/platform-download-input.ts');
+    const inputs = {
+        rutube: ['https://rutube.ru/video/0123456789abcdef0123456789abcdef/', 'https://rutube.ru/shorts/0123456789abcdef0123456789abcdef/', 'https://rutube.ru/play/embed/0123456789abcdef0123456789abcdef'],
+        bluesky: ['https://bsky.app/profile/example.bsky.social/post/3abc123', 'https://bsky.app/profile/did:plc:abc123/post/3abc123', 'https://bsky.app/profile/example.com/post/3abc123'],
+        vk: ['https://vk.com/video-123456_456789', 'https://m.vkvideo.ru/clip-123456_456789', 'https://vk.ru/video123456_456789?list=test'],
+        threads: ['https://www.threads.com/@user/post/ABC_123', 'https://threads.net/@user/post/ABC_123', 'https://threads.com/t/ABC_123'],
+        streamable: ['https://streamable.com/abc123', 'https://streamable.com/e/abc123', 'https://streamable.com/o/abc123', 'https://streamable.com/s/abc123'],
+        twitch: ['https://clips.twitch.tv/AValidClip-Slug123', 'https://www.twitch.tv/channel/clip/AValidClip-Slug123'],
+    };
+    const invalid = {
+        rutube: ['https://rutube.ru/channel/123', 'https://rutube.ru/plst/123', 'https://rutube.ru/video/shortid', 'https://rutube.ru/video/private/0123456789abcdef0123456789abcdef'],
+        bluesky: ['https://bsky.app/profile/example.bsky.social', 'https://video.bsky.app/watch/abc/video.m3u8', 'https://example.com/profile/user/post/123'],
+        vk: ['https://vk.com/wall-123_456', 'https://vkvideo.ru/@user', 'https://vk.com/clips123', 'https://vk.com/video123'],
+        threads: ['https://threads.com/@user', 'https://threads.com/', 'https://cdninstagram.com/video.mp4'],
+        streamable: ['https://streamable.com/upload', 'https://streamable.com/login', 'https://streamable.com/123456789', 'https://cdn.streamable.com/video.mp4'],
+        twitch: ['https://twitch.tv/channel', 'https://twitch.tv/videos/1234', 'https://clips.twitch.tv/embed?clip=test', 'https://twitch.tv/channel/clips'],
+    };
+    for (const [platform, urls] of Object.entries(inputs)) {
+        for (const url of urls) {
+            assert.equal(parse(platform, url), url, `${platform}: ${url}`);
+            assert.equal(parse(platform, `Share: ${url}`), url);
+            const lookalike = new URL(url); lookalike.hostname += '.example.com';
+            const credentials = new URL(url); credentials.username = 'example';
+            for (const bad of [lookalike.href, credentials.href, url + ' ' + url, url.replace('https:', 'ftp:'), url.replace(new URL(url).host, new URL(url).host + ':8443')]) assert.equal(parse(platform, bad), null, bad);
+            for (const other of Object.keys(inputs).filter(other => other !== platform)) assert.equal(parse(other, url), null, `${other}: ${url}`);
+        }
+        for (const url of invalid[platform]) assert.equal(parse(platform, url), null, url);
+    }
+});
+
+test('six focused landing pages have usable SSR, accurate schemas and deliberate locale routes', async () => {
+    const { platformDownloadConfigs } = load('src/lib/seo/platform-download-landings.ts');
+    const detail = await component('src/routes/[lang]/download/[slug]/+page.svelte');
+    const loader = load('src/routes/[lang]/download/[slug]/+page.ts');
+    const { capabilityServices } = load('src/lib/seo/capabilities.ts');
+    const xml = await load('src/routes/sitemap.xml/+server.ts').GET().text();
+    assert.equal(platformDownloadConfigs.length, 6);
+    for (const config of platformDownloadConfigs) {
+        assert(capabilityServices.some(item => item.landingSlug === config.slug), config.slug);
+        assert.deepEqual(routes.getDownloadSeoLanguages(config.slug).sort(), [...config.languages].sort());
+        for (const lang of config.languages) {
+            setTestLocale(lang, `download/${config.slug}`);
+            const data = await loader.load({ params: { lang, slug: config.slug } });
+            const content = getSeoLandingLocale(data.landing, lang);
+            const rendered = detail.render({ data });
+            assert(rendered.html.includes(`id="${config.id}-source-url"`));
+            assert(!rendered.html.includes('hero-omnibox'));
+            assert(!rendered.html.includes('class="services"'));
+            assert.doesNotMatch(rendered.html, /credits?|pricing|points|unlimited|guaranteed|no registration/i);
+            for (const text of [content.h1, content.lede, ...content.steps, ...content.features, ...content.faqs.map(item => item.a), ...content.sections.flatMap(item => item.paragraphs)]) assert(rendered.html.includes(escapeText(text)), `${config.slug}/${lang}: ${text}`);
+            const schema = [...rendered.head.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(match => JSON.parse(match[1]));
+            const application = schema.find(item => item['@type'] === 'WebPage').mainEntity;
+            assert.equal(application.offers, undefined);
+            assert(!application.knowsAbout.includes('playlist download'));
+            assert(!application.knowsAbout.includes('batch download'));
+            assert.deepEqual(application.featureList, content.features);
+            assert.equal(schema.find(item => item['@type'] === 'HowTo').totalTime, undefined);
+            assert.deepEqual(schema.find(item => item['@type'] === 'FAQPage').mainEntity.map(item => item.acceptedAnswer.text), content.faqs.map(item => item.a));
+            assert(xml.includes(`<loc>https://freesavevideo.online/${lang}/download/${config.slug}</loc>`));
+            const directory = await load('src/routes/[lang]/download/+page.ts').load({ params: { lang } });
+            assert(directory.cards.some(item => item.slug === config.slug));
+        }
+        for (const lang of supportedLanguages.filter(lang => !config.languages.includes(lang))) {
+            assert(!loader.entries().some(item => item.slug === config.slug && item.lang === lang));
+            assert(!xml.includes(`<loc>https://freesavevideo.online/${lang}/download/${config.slug}</loc>`));
+            await assert.rejects(loader.load({ params: { lang, slug: config.slug } }), error => error.status === 308 && error.location === `/en/download/${config.slug}`);
+        }
+    }
+    setTestLocale('en');
+});
 
 test('Aparat has real English and Persian pages without inventing Persian app routes', () => {
     const slug = 'aparat-video-downloader';
@@ -507,6 +580,13 @@ test('every advertised download and guide detail renders localized shared labels
                 assert(html.includes(escapeText(copy.input)), context);
                 assert(html.includes(escapeText(copy.placeholder)), context);
                 assert(html.includes('id="youtube-query"'), context);
+                assert(!html.includes('class="omnibox'), context);
+            } else if (kind === 'download' && load('src/lib/seo/platform-download-landings.ts').getPlatformDownloadConfig(params.slug)) {
+                const config = load('src/lib/seo/platform-download-landings.ts').getPlatformDownloadConfig(params.slug);
+                const form = load('src/lib/seo/platform-download-input.ts').getPlatformFormCopy(params.lang);
+                assert(html.includes(`id="${config.id}-source-url"`), context);
+                assert(html.includes(escapeText(form.action)), context);
+                assert(html.includes(escapeText(form.label)), context);
                 assert(!html.includes('class="omnibox'), context);
             } else if (kind === 'download' && ['reddit-video-download', 'pinterest-video-download'].includes(params.slug)) {
                 const platform = params.slug.startsWith('reddit') ? 'reddit' : 'pinterest';

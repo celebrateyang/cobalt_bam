@@ -45,6 +45,12 @@ Core supported platforms include SOOP (formerly AfreecaTV), WeChat Channels, WeC
 Different platforms expose different capabilities. Some support video, audio, no-watermark output, stories, reels, GIFs, images, multi-part videos, collections, or playlist parsing. See `/capabilities.json` for the most concise machine-readable service map.
 
 ## Important Public Pages
+- RUTUBE video and Shorts downloader (English / Russian): https://freesavevideo.online/en/download/rutube-video-downloader and https://freesavevideo.online/ru/download/rutube-video-downloader. One public video at a time; available streams are prepared as MP4. No channel or playlist expansion.
+- Bluesky post media downloader: https://freesavevideo.online/en/download/bluesky-video-downloader. Native videos, photo attachments and supported Tenor GIF embeds are distinct results. Profiles and arbitrary external video embeds are outside this page.
+- VK / VK Video downloader (English / Russian): https://freesavevideo.online/en/download/vk-video-downloader and https://freesavevideo.online/ru/download/vk-video-downloader. Individual public video and Clip links; no VK Music or playlist expansion.
+- Threads post media downloader: https://freesavevideo.online/en/download/threads-video-downloader. Current and legacy post domains; available multiple attachments can be selected. Does not archive conversations or profiles.
+- Streamable clip downloader: https://freesavevideo.online/en/download/streamable-video-downloader. Clip and supported embed links; available MP4 source files only. Deleted clips cannot be recovered.
+- Twitch Clip downloader: https://freesavevideo.online/en/download/twitch-clip-downloader. Individual public Clip share links only; no live streams, complete VODs or channel-wide archives.
 - Product overview: https://freesavevideo.online/en/free-video-tools
 - Chinese product overview: https://freesavevideo.online/zh/free-video-tools
 - Download directory: https://freesavevideo.online/en/download

@@ -1,3 +1,5 @@
+import { getPlatformDownloadConfig, platformDownloadConfigs } from './platform-download-landings';
+
 export type FeaturedDownloadLink = {
     slug: string;
     platform: string;
@@ -18,6 +20,7 @@ type CrossLinkEntry = {
 export type LinkAudience = 'all' | 'international';
 
 const crossLinkEntries: CrossLinkEntry[] = [
+    ...platformDownloadConfigs.map(item => ({ platform: item.name, downloadSlug: item.slug, homeKey: item.id === 'bluesky' ? 'bsky' : item.id })),
     { platform: 'Aparat', downloadSlug: 'aparat-video-downloader', homeKey: 'aparat' },
     { platform: 'Google Drive', downloadSlug: 'google-drive-video-downloader' },
     {
@@ -240,6 +243,7 @@ const strategicDownloadOrder = [
 ] as const;
 
 const internationalDownloadSlugs = new Set([
+    ...platformDownloadConfigs.map(item => item.slug),
     'aparat-video-downloader',
     'google-drive-video-downloader',
     'dailymotion-video-downloader',
@@ -322,6 +326,8 @@ const matchesAudience = (slug: string, audience: LinkAudience): boolean =>
 // Keep links and route generation on the same language policy. Do not advertise
 // translated URLs merely because an English fallback can render their content.
 export const isDownloadAvailableInLanguage = (slug: string, lang: string): boolean => {
+    const focusedPlatform = getPlatformDownloadConfig(slug);
+    if (focusedPlatform) return focusedPlatform.languages.includes(lang);
     if (slug === 'aparat-video-downloader') return lang === 'en' || lang === 'fa';
     if (lang === 'fa') return false;
     if (slug === 'dailymotion-video-downloader') return ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de', 'id'].includes(lang);
@@ -333,6 +339,7 @@ export const isDownloadAvailableInLanguage = (slug: string, lang: string): boole
 };
 
 export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
+    ...Object.fromEntries(platformDownloadConfigs.map(item => [item.slug, platformDownloadConfigs.filter(other => other.id !== item.id).map(other => other.slug)])),
     'aparat-video-downloader': ['dailymotion-video-downloader', 'playlist-downloader', 'vimeo-video-download'],
     'google-drive-video-downloader': ['vimeo-video-download', 'dailymotion-video-downloader', 'youtube-download'],
     'dailymotion-video-downloader': ['vimeo-video-download', 'youtube-download', 'batch-video-downloader', 'playlist-downloader'],

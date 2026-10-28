@@ -9,6 +9,7 @@ import { googleDriveLanding } from '$lib/seo/google-drive-landing';
 import { aparatLanding } from '$lib/seo/aparat-landing';
 import { getSocialDownloadContent, socialPlatformForSlug } from '$lib/seo/social-download-content';
 import { getTiktokLandingContent, isTiktokLanding } from '$lib/seo/tiktok-content';
+import { platformDownloadLandings } from '$lib/seo/platform-download-landings';
 
 export type SeoLandingFaqItem = {
     q: string;
@@ -862,6 +863,7 @@ const buildGenericWorkflowLocales = (
 });
 
 const landingPages: SeoLandingPage[] = [
+    ...platformDownloadLandings,
     googleDriveLanding,
     aparatLanding,
     dailymotionLanding,

@@ -10,6 +10,7 @@
     import HomeDeferredSections from "$components/home/HomeDeferredSections.svelte";
     import ExtensionPromoCard from "$components/home/ExtensionPromoCard.svelte";
     import HomeTrust from "$components/home/HomeTrust.svelte";
+    import HomeTiktokHelp from "$components/home/HomeTiktokHelp.svelte";
     import HomePlatformLinks from "$components/home/HomePlatformLinks.svelte";
     import HomeExtensionFeature from "$components/home/HomeExtensionFeature.svelte";
     import SupportLink from "$components/save/SupportLink.svelte";
@@ -877,6 +878,7 @@
             batchGuidePlatforms={batchGuidePlatforms.map(getGuidePlatformLabel)}
         />
         <HomeTrust />
+        <HomeTiktokHelp {currentLocale} />
         <!--<UserGuide/>-->
     </main>
 

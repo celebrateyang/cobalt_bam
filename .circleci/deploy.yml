@@ -1,6 +1,6 @@
 version: 2.1
 
-# Redeploy API after the frontend download queue fix (2026-10-14).
+# Deploy API with the Aparat media hostname fix (2026-10-29).
 
 orbs:
   evilms: evilms/gcr-cleaner@0.1.9

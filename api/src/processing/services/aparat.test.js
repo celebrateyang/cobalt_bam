@@ -41,10 +41,26 @@ test("ordinary video selects requested quality and falls back only to verified C
 
 test("untrusted media URLs, credentials, ports, HLS and arbitrary paths are rejected", () => {
     assert.equal(isAparatMediaURL(media), true);
+    assert.equal(isAparatMediaURL("https://caspian22.asset.aparat.com/aparat-video/test-720p.mp4?sig=keep"), true);
+    for (const host of ["aparat.com", "new.asset.aparat.com", "media.aparat.cloud", "a.b.aparat.com"]) {
+        assert.equal(isAparatMediaURL(`https://${host}/aparat-video/test.mp4?sig=keep`), true);
+    }
+    for (const host of ["evilaparat.com", "aparat.com.evil.test", "aparat.cloud.evil.test"]) {
+        assert.equal(isAparatMediaURL(`https://${host}/aparat-video/test.mp4`), false);
+    }
     for (const url of [media.replace('aparat.com', 'aparat.com.evil.test'), media.replace('https:', 'http:'),
         media.replace('https://', 'https://user:pass@'), media.replace('.com/', '.com:8443/'),
         media.replace('/aparat-short/', '/other/'), media.replace('.mp4?', '.m3u8?')]) assert.equal(isAparatMediaURL(url), false, url);
     assert.deepEqual(aparatShortsCandidates('#EXT-X-STREAM-INF:RESOLUTION=720x1280\nhttps://evil.test/aparat-short/123.mp4/chunk.m3u8'), []);
+});
+
+test("ordinary videos accept and verify Caspian asset MP4s", async () => {
+    const url = "https://caspian22.asset.aparat.com/aparat-video/test-720p.mp4?sig=keep";
+    const result = await aparat({ id: "izr55ly" }, async (target) => target.includes("/etc/api/")
+        ? json({ video: { cost_type: { type: "free" }, file_link_all: [{ profile: "720p", urls: [url] }] } })
+        : new Response(mp4, { status: 206 }));
+    assert.equal(result.urls, url);
+    assert.equal(result.filenameAttributes.qualityLabel, "720p");
 });
 
 test("MP4 probe cancels a server that ignores Range without buffering the whole media", async () => {

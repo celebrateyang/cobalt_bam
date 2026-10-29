@@ -9,6 +9,7 @@ import { clearFetchResumeStateForTask } from "$lib/state/task-manager/fetch-resu
 import { finalizePointsHold, releasePointsHold } from "$lib/api/points";
 import { reportDownloadOutcome } from "$lib/api/download-outcome";
 import { markCollectionDownloadedItems } from "$lib/api/collection-memory";
+import { isAparatMediaURL } from "$lib/api/aparat-media";
 import { saveFileToAutoSaveDirectory } from "$lib/storage/auto-save";
 import { offerReferralGift } from "$lib/state/referral-gift";
 
@@ -355,7 +356,7 @@ export function itemError(
         !["audio", "mute"].includes(failed.originalRequest.downloadMode || "auto") &&
         /^https:\/\/(?:www\.|shorts\.)?aparat\.com\//i.test(failed.originalRequest.url)) {
         const worker = failed.pipeline.find(worker => worker.workerId === workerId);
-        if (worker?.worker === "fetch" && /^https:\/\/(?:[a-z0-9-]+\.)*cdn\.asset\.aparat\.(?:com|cloud)\//i.test(worker.workerArgs.url)) {
+        if (worker?.worker === "fetch" && isAparatMediaURL(worker.workerArgs.url)) {
             const urls = [worker.workerArgs.url, ...(worker.workerArgs.urlCandidates || [])];
             createDialog({
                 id: `aparat-handoff-${id}`, type: "preview-download", filename: failed.filename,

@@ -78,8 +78,8 @@
         "*://*.magnific.ai/*",
         "*://*.cloudfront.net/*",
         "https://*.media-amazon.com/*",
-        "https://*.cdn.asset.aparat.com/*",
-        "https://*.cdn.asset.aparat.cloud/*"
+        "https://*.aparat.com/*",
+        "https://*.aparat.cloud/*"
     ],
     "icons": {
         "16": "icons/icon-16.png",

@@ -47,7 +47,7 @@ const isAllowedPageBridgeUrl = (value: string) => {
             host.endsWith('.muscdn.com') ||
             host.endsWith('.akamaized.net') ||
             host.endsWith('.bilivideo.com') ||
-            (/^(?:[a-z0-9-]+\.)*cdn\.asset\.aparat\.(?:com|cloud)$/i.test(host) &&
+            (/^(?:[a-z0-9-]+\.)*aparat\.(?:com|cloud)$/i.test(host) &&
                 !url.username && !url.password && !url.port &&
                 /^\/aparat-(?:video|short)\/[a-zA-Z0-9_.-]+\.(?:mp4|apt)$/.test(url.pathname)) ||
             ((host === 'media-amazon.com' || host.endsWith('.media-amazon.com')) && /\.(?:mp4|m3u8)$/i.test(url.pathname)) ||

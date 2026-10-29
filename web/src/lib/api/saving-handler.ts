@@ -22,6 +22,7 @@ import { markCollectionDownloadedItems } from "$lib/api/collection-memory";
 import { savePendingLaunchIntent } from "$lib/pwa/launch-intent";
 import { uuid } from "$lib/util";
 import { redditPhotoHandoff } from "$lib/api/reddit-photo-handoff";
+import { isAparatMediaURL } from "$lib/api/aparat-media";
 import {
     fetchCurrentUserPointsProfile,
     showSingleDownloadOffer,
@@ -718,7 +719,7 @@ export const savingHandler = async ({
 
         if (response.service === "aparat" && selectedRequest.batch === true) {
             const candidates = [response.directUrl || "", ...(response.directUrlCandidates || [])]
-                .filter((url) => /^https:\/\/(?:[a-z0-9-]+\.)*cdn\.asset\.aparat\.(?:com|cloud)\/aparat-(?:video|short)\/[^/?]+\.(?:mp4|apt)(?:\?|$)/i.test(url));
+                .filter(isAparatMediaURL);
             downloadButtonState.set("done");
             createDirectCdnPipeline(candidates, response.filename, "video/mp4", selectedRequest, effectiveTaskId,
                 { useRangeRequests: false });

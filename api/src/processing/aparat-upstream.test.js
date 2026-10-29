@@ -7,6 +7,8 @@ const url = "https://edge.cdn.asset.aparat.com/aparat-video/test.mp4?sig=keep";
 const direct = { status: "redirect", service: "aparat", url, directUrl: url, directUrlCandidates: [url] };
 test("accepts only direct Aparat resources, refusing tunnel and fallback responses", () => {
     assert.equal(isAparatDirectResponse(direct), true);
+    const newHost = "https://new.media.aparat.com/aparat-video/test.mp4?sig=keep";
+    assert.equal(isAparatDirectResponse({ ...direct, url: newHost, directUrl: newHost, directUrlCandidates: [newHost] }), true);
     for (const patch of [{ status: "tunnel" }, { url: "https://api.test/tunnel?id=1" },
         { directUrl: "https://evil.test/file.mp4" }, { tunnelUrl: "https://api.test/tunnel" },
         { fallback: { url: "https://api.test/tunnel" } }, { directUrlCandidates: ["https://evil.test/file.mp4"] }]) {

@@ -54,8 +54,8 @@ test('TikTok rejects HTML labeled as video and accepts MP4 split over chunks', a
         c.enqueue(bytes.slice(0, 2)); c.enqueue(bytes.slice(2)); c.close();
     } }), { headers: { 'content-type': 'video/mp4', 'content-length': String(bytes.length) } }));
     await good.downloadFromUrl('https://v16.tokcdn.com/video', new AbortController().signal);
-    good.save();
     assert.equal(good.saved.length, 1);
+    assert.equal(good.state().saveStarted, true);
     assert.equal(good.saved[0].type, 'video/mp4');
 });
 
@@ -113,6 +113,19 @@ test('extension saves verified MP4 bytes and rejects incomplete downloads', asyn
         if (truncated) await assert.rejects(result, /incomplete/);
         else assert.equal((await result).type, 'video/mp4');
     }
+});
+
+test('extension sends the TikTok referer only for the selected CDN URL and removes the rule', async () => {
+    const updates = [];
+    const helper = extensionModule('tiktok-fetch', { './tiktok-job': jobs }, {
+        chrome: { declarativeNetRequest: { updateSessionRules: async update => updates.push(update) } },
+        fetch: async () => new Response(mp4(), { headers: { 'content-type': 'video/mp4' } }),
+    });
+    const url = 'https://v16.tiktokcdn.com/video/file.mp4?token=abc';
+    await helper.fetchTikTokBlob(url, new AbortController().signal);
+    assert.equal(updates[0].addRules[0].condition.urlFilter, `|${url}|`);
+    assert.equal(updates[0].addRules[0].action.requestHeaders[0].value, 'https://www.tiktok.com/');
+    assert.equal(updates[1].removeRuleIds[0], updates[0].addRules[0].id);
 });
 
 test('extension routes TikTok video to verification while retaining photo downloads', async () => {

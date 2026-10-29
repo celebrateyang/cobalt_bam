@@ -371,6 +371,8 @@
         progress = 100;
         status = "done";
         statusText = tt("dialog.tiktok_download.status.complete");
+        saveStarted = true;
+        openFile(file, giftKey);
     };
 
     const start = async () => {
@@ -557,6 +559,19 @@
                     <IconDownload />
                     {$t("button.retry")}
                 </button>
+                {#if primaryUrl}
+                    <a
+                        class="button elevated"
+                        href={primaryUrl}
+                        download={filename}
+                        target="_blank"
+                        rel="noreferrer noopener nofollow"
+                        on:click={() => offerReferralGift("browser_handoff", giftKey)}
+                    >
+                        <IconDownload />
+                        {$t("dialog.tiktok_download.open_link")}
+                    </a>
+                {/if}
             {:else}
                 <button
                     type="button"

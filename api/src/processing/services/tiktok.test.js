@@ -93,6 +93,10 @@ test("resolves a vm short link from its Location header", async (t) => {
             };
         }
 
+        if (String(input).includes("/video/7531234567890123456")) {
+            return { text: async () => "" };
+        }
+
         return {
             ok: true,
             status: 200,
@@ -116,7 +120,7 @@ test("resolves a vm short link from its Location header", async (t) => {
     });
 
     assert.equal(requests[0].url, "https://vm.tiktok.com/ZG9hWhf2CwnqE-ytsZH");
-    assert.match(requests[1].url, /\/api\/video\/task\/result\?task_id=/);
+    assert.ok(requests.some(({ url }) => /\/api\/video\/task\/result\?task_id=/.test(url)));
     assert.equal(
         result.urls,
         "https://v16.tokcdn.com/hash/time/7531234567890123456_original.mp4",
@@ -124,4 +128,25 @@ test("resolves a vm short link from its Location header", async (t) => {
     assert.equal(result.tiktokVideoSource, "tikwm-original");
     assert.equal(result.tiktokOriginalQuality, true);
     assert.equal(result.tiktokUsedDirectProvider, true);
+});
+
+test("prefers an advertised H.264 rendition and resolves its TikTok CDN redirect", async (t) => {
+    const postId = "7701548922690374926";
+    const detail = { author: { uniqueId: "creator" }, video: { duration: 10, bitrateInfo: [
+        { CodecType: "h265_hvc1", PlayAddr: { UrlList: ["https://www.tiktok.com/aweme/v1/play/?codec=h265"] } },
+        { CodecType: "h264", PlayAddr: { UrlList: ["https://www.tiktok.com/aweme/v1/play/?codec=h264"] } },
+    ] } };
+    const page = `<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__" type="application/json">${JSON.stringify({
+        __DEFAULT_SCOPE__: { "webapp.video-detail": { itemInfo: { itemStruct: detail } } },
+    })}</script>`;
+    t.mock.method(globalThis, "fetch", async (input, options) => {
+        const url = String(input);
+        if (url.includes("/video/")) return { headers: new Headers(), text: async () => page };
+        assert.match(url, /codec=h264/);
+        assert.equal(options.headers.referer, "https://www.tiktok.com/");
+        return { status: 302, headers: new Headers({ location: "https://v16.tiktokcdn.com/video/file.mp4" }) };
+    });
+    const result = await tiktok({ postId, user: "creator" });
+    assert.equal(result.urls, "https://v16.tiktokcdn.com/video/file.mp4");
+    assert.equal(result.tiktokVideoSource, "legacy-h264");
 });

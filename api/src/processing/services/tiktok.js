@@ -292,7 +292,7 @@ const withOptionalCookie = (headers, cookie) => {
     };
 };
 
-const fetchLegacyDetail = async (postId, cookie, username) => {
+const fetchLegacyDetail = async (postId, cookie, username, userAgent = genericUserAgent) => {
     try {
         // Legacy flow: should always be /video/, even for photos.
         // Prefer the real username path when available. Newer TikTok pages can
@@ -301,7 +301,7 @@ const fetchLegacyDetail = async (postId, cookie, username) => {
         const userPath = normalizeTikTokUsernamePath(username);
         const res = await fetch(`https://www.tiktok.com/${userPath}/video/${postId}`, {
             headers: withOptionalCookie({
-                "user-agent": genericUserAgent,
+                "user-agent": userAgent,
             }, cookie)
         });
         updateCookie(cookie, res.headers);
@@ -421,6 +421,50 @@ const isOfficialTikTokMediaUrl = (value) => {
     } catch {
         return false;
     }
+};
+
+// Prefer a compatible H.264 rendition when TikTok advertises one. Original
+// uploads may be HEVC 10-bit HDR, which some browsers cannot render.
+const fetchCompatibleTikTokVideo = async (obj, cookie) => {
+    if (obj.h265 || obj.isAudioOnly || obj.isAudioMuted) return null;
+    const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130.0.0.0 Safari/537.36";
+    const legacy = await fetchLegacyDetail(obj.postId, cookie, obj.username, userAgent);
+    if (!legacy.ok || legacy.detail?.imagePost?.images) return null;
+    const formats = Array.isArray(legacy.detail?.video?.bitrateInfo)
+        ? legacy.detail.video.bitrateInfo : [];
+    const h264 = formats.filter((item) => String(item?.CodecType || "").toLowerCase() === "h264");
+    for (const format of h264) {
+        const candidates = collectUrlCandidates(format?.PlayAddr?.UrlList);
+        // The www.tiktok.com play endpoint can redirect to a usable CDN URL;
+        // do not follow arbitrary URLs supplied in page metadata.
+        for (const candidate of candidates) {
+            let parsed;
+            try { parsed = new URL(candidate); } catch { continue; }
+            if (parsed.protocol !== "https:" || parsed.hostname !== "www.tiktok.com" || !parsed.pathname.startsWith("/aweme/v1/play/")) continue;
+            try {
+                const response = await fetch(candidate, {
+                    redirect: "manual",
+                    headers: { "user-agent": userAgent, referer: "https://www.tiktok.com/" },
+                    signal: AbortSignal.timeout(8000),
+                });
+                const location = response.headers.get("location");
+                const directUrl = location ? new URL(location, candidate).toString() : "";
+                if (response.status >= 300 && response.status < 400 && isOfficialTikTokMediaUrl(directUrl) && new URL(directUrl).protocol === "https:") {
+                    return {
+                        urls: directUrl,
+                        filename: `tiktok_${obj.username || "video"}_${obj.postId}.mp4`,
+                        duration: toSeconds(legacy.detail?.video?.duration),
+                        service: "tiktok",
+                        tiktokVideoSource: "legacy-h264",
+                        tiktokVideoSourceKind: "direct-provider",
+                    };
+                }
+            } catch {
+                // Fall back to existing extractors when the rendition is blocked.
+            }
+        }
+    }
+    return null;
 };
 
 const buildDirectProviderFilename = ({ title, postId }) => {
@@ -768,6 +812,9 @@ export default async function(obj) {
 
     obj.postId = postId;
     obj.username = username;
+
+    const compatibleVideo = await fetchCompatibleTikTokVideo(obj, cookie);
+    if (compatibleVideo) return compatibleVideo;
 
     // TikTok share parameters can carry the request context that yt-dlp needs
     // to avoid an otherwise slow or blocked canonical-page extraction. Keep

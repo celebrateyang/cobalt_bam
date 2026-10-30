@@ -42,6 +42,7 @@ type CobaltQueueItemBase = {
     collectionMemory?: CobaltQueueItemCollectionMemory;
     batchSessionId?: string;
     batchSelectionTotal?: number;
+    filenamePrefix?: string;
     saveRequested?: boolean;
     saveOutcome?: SaveOutcome;
     saveAttempts?: number;

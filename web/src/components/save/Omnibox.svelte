@@ -725,6 +725,7 @@
             title: item.title,
             duration: item.duration,
             itemKey: item.itemKey,
+            playlistPosition: item.playlistPosition,
             availability: item.availability,
         }));
 

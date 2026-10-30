@@ -97,6 +97,7 @@
                         ),
                         oldTaskId: id,
                         skipPoints: !originalAudio,
+                        queueMeta: { filenamePrefix: info.filenamePrefix },
                     });
                     if (response?.status !== "error") {
                         await waitForQueueItemTerminal(id);

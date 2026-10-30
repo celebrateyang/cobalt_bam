@@ -27,6 +27,7 @@ export type DialogPickerItem = {
 
 export type DialogBatchItem = {
     url: string,
+    playlistPosition?: number,
     title?: string,
     duration?: number,
     itemKey?: string,

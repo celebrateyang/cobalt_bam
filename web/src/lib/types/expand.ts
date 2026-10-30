@@ -5,6 +5,7 @@ export type CobaltExpandItem = {
     title?: string;
     duration?: number;
     itemKey?: string;
+    playlistPosition?: number;
     availability?: "available" | "platform_restricted";
 };
 

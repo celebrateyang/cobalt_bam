@@ -1774,7 +1774,7 @@ const expandYouTube = async (inputUrl) => {
         const entries = Array.isArray(playlistInfo?.entries) ? playlistInfo.entries : [];
         const items = uniqBy(
             entries
-                .map((entry) => {
+                .map((entry, index) => {
                     const id = toStringId(entry?.id);
                     const url = normalizeYouTubeEntryUrl(entry);
                     if (!url) return null;
@@ -1782,6 +1782,8 @@ const expandYouTube = async (inputUrl) => {
                     return {
                         itemKey: id ? `youtube:video:${id}` : undefined,
                         url,
+                        playlistPosition: Number.isSafeInteger(entry?.playlist_index) && entry.playlist_index > 0
+                            ? entry.playlist_index : index + 1,
                         title:
                             typeof entry?.title === "string" && entry.title.trim()
                                 ? entry.title.trim()

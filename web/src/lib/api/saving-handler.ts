@@ -57,6 +57,7 @@ type SavingHandlerArgs = {
         batchSessionId?: string;
         batchSelectionTotal?: number;
         autoSaveEnabled?: boolean;
+        filenamePrefix?: string;
     },
     suppressErrors?: true | string[],
 }
@@ -245,6 +246,7 @@ const applyQueueMeta = (
         collectionMemory: queueMeta?.collectionMemory ?? current.collectionMemory,
         batchSessionId: queueMeta?.batchSessionId ?? current.batchSessionId,
         batchSelectionTotal: queueMeta?.batchSelectionTotal ?? current.batchSelectionTotal,
+        filenamePrefix: queueMeta?.filenamePrefix ?? current.filenamePrefix,
         autoSave: queueMeta?.autoSaveEnabled
             ? {
                 enabled: true,
@@ -598,12 +600,21 @@ export const savingHandler = async ({
     }
 
     if (!preFetchedResponse) onStage?.('resolving');
-    const response = preFetchedResponse ?? await API.request(selectedRequest);
+    let response = preFetchedResponse ?? await API.request(selectedRequest);
 
     if (!response) {
         downloadButtonState.set("error");
         showError(get(t)("error.api.unreachable"), "error.api.unreachable");
         return null;
+    }
+
+    const filenamePrefix = queueMeta?.filenamePrefix;
+    if (filenamePrefix && response.status !== "error") {
+        if (response.status === "local-processing") {
+            response = { ...response, output: { ...response.output, filename: filenamePrefix + response.output.filename } };
+        } else if ((response.status === "redirect" || response.status === "tunnel") && response.filename) {
+            response = { ...response, filename: filenamePrefix + response.filename };
+        }
     }
 
     const warningKey = `${effectiveTaskId}:${selectedRequest.url}`;

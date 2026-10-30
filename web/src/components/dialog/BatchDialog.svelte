@@ -727,6 +727,7 @@
                 batchSessionId: string;
                 batchSelectionTotal: number;
                 autoSaveEnabled: boolean;
+                filenamePrefix?: string;
                 collectionMemory?: {
                     collectionKey: string;
                     title?: string;
@@ -739,6 +740,9 @@
                 batchSessionId,
                 batchSelectionTotal: selectedItems.length,
                 autoSaveEnabled: saveMode === "auto",
+                filenamePrefix: collectionKey?.startsWith("youtube:playlist:") && Number.isSafeInteger(item.playlistPosition) && item.playlistPosition! > 0
+                    ? `${String(item.playlistPosition).padStart(Math.max(3, ...items.map(entry => String(entry.playlistPosition || 0).length)), "0")} - `
+                    : undefined,
             };
 
             if (clerkEnabled && collectionKey && $isSignedIn && item.itemKey) {
@@ -1279,18 +1283,24 @@
     }
 
     .batch-notice {
-        padding: 6px 10px;
+        padding: 10px 12px;
         border-radius: 8px;
         border: 1px solid color-mix(in srgb, var(--secondary) 22%, transparent);
         background: color-mix(in srgb, var(--secondary) 5%, var(--surface-1));
     }
     .batch-notice summary {
-        font-size: 11px;
-        line-height: 1.4;
-        color: var(--gray);
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--text);
         cursor: pointer;
     }
-    .batch-notice[open] .batch-notice-line { margin-top: 6px; }
+    .batch-notice[open] .batch-notice-line { margin-top: 8px; }
+
+    .batch-notice .batch-notice-line {
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--text);
+    }
 
     .batch-notice-line {
         font-size: 11px;

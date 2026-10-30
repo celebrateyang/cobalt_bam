@@ -27,6 +27,7 @@
         "test:tiktok": "node --test ./scripts/test-tiktok-download.mjs",
         "test:referral-gift": "node --test ./scripts/test-referral-gift.mjs",
         "test:ffmpeg-startup": "node --test ./scripts/test-ffmpeg-startup.mjs",
+        "test:memory-storage": "node --test ./scripts/test-memory-storage.mjs",
         "test:fetch-startup": "node --test ./scripts/test-fetch-startup.mjs",
         "test:fetch-streaming": "node --test ./scripts/test-fetch-streaming.mjs",
         "test:amazon-direct": "node --test ./scripts/test-amazon-direct.mjs",

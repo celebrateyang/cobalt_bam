@@ -86,20 +86,16 @@ export class MemoryStorage extends AbstractStorage {
         const writeEnd = pos + data.length;
         this.#expand(writeEnd);
 
-        const chunkIndex = pos / this.#chunkSize | 0;
-        const offset = pos - (this.#chunkSize * chunkIndex);
-
-        if (offset + data.length > this.#chunkSize) {
-            this.#chunks[chunkIndex].set(
-                data.subarray(0, this.#chunkSize - offset),
-                offset,
-            );
-            this.#chunks[chunkIndex + 1].set(
-                data.subarray(this.#chunkSize - offset),
-                0,
-            );
-        } else {
-            this.#chunks[chunkIndex].set(data, offset);
+        // Encoded output can grow far beyond the input-sized allocation hint.
+        // A single LibAV write may cross any number of chunks (not just two).
+        let consumed = 0;
+        while (consumed < data.length) {
+            const position = pos + consumed;
+            const chunkIndex = Math.floor(position / this.#chunkSize);
+            const offset = position - (this.#chunkSize * chunkIndex);
+            const length = Math.min(data.length - consumed, this.#chunkSize - offset);
+            this.#chunks[chunkIndex].set(data.subarray(consumed, consumed + length), offset);
+            consumed += length;
         }
 
         this.#actualSize = Math.max(writeEnd, this.#actualSize);

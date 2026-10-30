@@ -1,4 +1,4 @@
-export const DOWNLOAD_PROTECTION_DURATION_MS = 30 * 60 * 1000;
+export const DOWNLOAD_PROTECTION_DURATION_MS = 8 * 60 * 1000;
 
 export const isDownloadProtected = (user, admittedAt = Date.now()) => {
     const startedAt = Number(user?.download_protection_started_at);

@@ -8,6 +8,7 @@ import {
 const newUser = { id: 1, points: 0, download_protection_eligible: true, download_protection_started_at: null };
 
 test('protection includes the first action and excludes the exact expiry boundary', () => {
+    assert.equal(DOWNLOAD_PROTECTION_DURATION_MS, 8 * 60 * 1000);
     const user = { ...newUser, download_protection_started_at: '1000' };
     assert.equal(isDownloadProtected(user, 999), false);
     assert.equal(isDownloadProtected(user, 1000), true);

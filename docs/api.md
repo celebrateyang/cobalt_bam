@@ -179,7 +179,7 @@ Only the registrable domain and generated `https://<domain>/` homepage are store
 ## internal new-user download protection
 
 Normal accounts registered with Clerk after the first protection schema rollout receive one
-30-minute points-free window. Existing local users and older Clerk accounts first synchronized
+8-minute points-free window. Existing local users and older Clerk accounts first synchronized
 after rollout remain ineligible. The rollout timestamp is persisted and is not reset on restart.
 
 The web client calls Clerk-authenticated `POST /user/download-protection/start` on an explicit

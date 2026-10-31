@@ -150,6 +150,18 @@ function aliasURL(url) {
             break;
 
         case "kuaishou":
+            // Shared short links can have an @author label pasted onto the ID.
+            // Restrict cleanup to short-link routes, never photo/profile IDs.
+            if ((url.hostname === 'v.kuaishou.com' && parts.length === 2)
+                || (['kuaishou.com', 'www.kuaishou.com'].includes(url.hostname)
+                    && parts.length === 3 && parts[1] === '_shortLink')) {
+                const index = parts.length - 1;
+                const labeled = /^([A-Za-z0-9_-]{1,16})(?:@|%40).+$/i.exec(parts[index]);
+                if (labeled) {
+                    parts[index] = labeled[1];
+                    url.pathname = parts.join('/');
+                }
+            }
             if (url.hostname === 'v.kuaishou.com' && parts.length === 2) {
                 url = new URL(`https://kuaishou.com/_shortLink/${parts[1]}`);
             }

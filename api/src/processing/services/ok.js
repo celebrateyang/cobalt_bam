@@ -11,6 +11,17 @@ const resolutions = {
     "mobile": "144"
 }
 
+export const parseOkVideoMetadata = (options) => {
+    try {
+        const metadata = JSON.parse(options).flashvars?.metadata;
+        const parsed = typeof metadata === "string" ? JSON.parse(metadata) : metadata;
+        return parsed && typeof parsed === "object" && !Array.isArray(parsed) && parsed.movie
+            ? parsed : null;
+    } catch {
+        return null;
+    }
+};
+
 export default async function(o) {
     let quality = o.quality === "max" ? "2160" : o.quality;
 
@@ -28,7 +39,8 @@ export default async function(o) {
         return { error: "fetch.empty" };
     }
 
-    videoData = JSON.parse(JSON.parse(videoData).flashvars.metadata);
+    videoData = parseOkVideoMetadata(videoData);
+    if (!videoData) return { error: "fetch.empty" };
 
     if (videoData.provider !== "UPLOADED_ODKL")
         return { error: "link.unsupported" };
@@ -39,7 +51,8 @@ export default async function(o) {
     if (videoData.movie.duration > env.durationLimit)
         return { error: "content.too_long" };
 
-    let videos = videoData.videos.filter(v => !v.disallowed);
+    let videos = (Array.isArray(videoData.videos) ? videoData.videos : [])
+        .filter(v => v && typeof v.url === "string" && v.url && !v.disallowed);
     let bestVideo = videos.find(v => resolutions[v.name] === quality) || videos[videos.length - 1];
 
     let fileMetadata = {

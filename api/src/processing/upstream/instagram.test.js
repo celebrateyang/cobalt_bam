@@ -3,6 +3,8 @@ import test from "node:test";
 import { env } from "../../config.js";
 import { getUpstreamNodes, refreshUpstreamPool } from "./pool.js";
 import { requestInstagramUpstream } from "./instagram.js";
+import { getInstagramUpstreamPicker, isInstagramUpstreamMedia } from "./instagram-media.js";
+import instagram from "../services/instagram.js";
 
 const setup = (t) => {
     const keys = ["apiURL", "upstreamURLs", "upstreamGlobalURLs", "upstreamCnURLs"];
@@ -22,6 +24,40 @@ const setup = (t) => {
     return env.upstreamGlobalURLs;
 };
 const payload = { url: "https://www.instagram.com/reel/example/" };
+
+const album = { status: "picker", picker: [
+    { type: "photo", url: "https://cdn.example/photo.jpg", thumb: "https://cdn.example/thumb.jpg" },
+    { type: "video", url: "https://cdn.example/video.mp4" },
+] };
+
+test("a mixed album wins the upstream race and preserves item order", async (t) => {
+    const nodes = setup(t);
+    globalThis.fetch = async (url) => new URL(url).origin === nodes[1]
+        ? Response.json(album) : Response.json({ status: "picker", picker: [] });
+    const result = await requestInstagramUpstream({ payload });
+    assert.equal(result.upstreamOrigin, nodes[1]);
+    assert.deepEqual(getInstagramUpstreamPicker(result.body), album.picker);
+});
+
+test("extractor forwards an upstream album when local GraphQL has no media", async (t) => {
+    const nodes = setup(t);
+    globalThis.fetch = async (url) => nodes.includes(new URL(url).origin)
+        ? Response.json(album) : Response.json({ status: "ok", data: null });
+    const result = await instagram({ postId: "ExampleAlbum", quality: "720" });
+    assert.deepEqual(result.picker, album.picker);
+    assert.equal(result.error, undefined);
+});
+
+test("empty, malformed and unsafe albums are rejected intact", () => {
+    for (const picker of [[], null, [{}], [{ type: "photo", url: "javascript:alert(1)" }],
+        [{ type: "video", url: "https://user:secret@cdn.example/video.mp4" }],
+        [album.picker[0], { type: "audio", url: "https://cdn.example/audio.mp3" }]]) {
+        assert.equal(isInstagramUpstreamMedia({ status: "picker", picker }), false);
+        assert.equal(getInstagramUpstreamPicker({ status: "picker", picker }), null);
+    }
+    assert.equal(isInstagramUpstreamMedia({ status: "redirect", url: "javascript:bad" }), false);
+    assert.equal(isInstagramUpstreamMedia({ status: "redirect", url: "https://cdn.example/video.mp4" }), true);
+});
 
 test("a working session wins without waiting for slow nodes; cancellations preserve health", async (t) => {
     const nodes = setup(t);

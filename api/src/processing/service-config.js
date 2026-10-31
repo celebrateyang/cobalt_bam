@@ -29,6 +29,10 @@ export const services = {
         patterns: [
             "video/:comId",
             "video/:comId?p=:partId",
+            "zh-Hant/video/:comId",
+            "zh-Hant/video/:comId?p=:partId",
+            "zh-Hans/video/:comId",
+            "zh-Hans/video/:comId?p=:partId",
             "bangumi/play/:epId",
             "_shortLink/:comShortLink",
             "_tv/:lang/video/:tvId",
@@ -306,6 +310,7 @@ export const services = {
         patterns: [
             "@:username/post/:postId",
             "t/:postId",
+            "share/:shareId",
         ],
         altDomains: ["threads.net"],
     },

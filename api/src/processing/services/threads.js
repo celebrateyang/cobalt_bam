@@ -1,4 +1,5 @@
 import { createStream } from "../../stream/manage.js";
+import { resolveThreadsShare } from "./threads-share.js";
 
 const THREADS_APP_ID = "238260118697367";
 const THREADS_DOC_ID = "27551653811086797";
@@ -148,7 +149,12 @@ const extractMedia = (media, postId, alwaysProxy) => {
     };
 };
 
-export default async function threads({ username, postId, alwaysProxy, dispatcher }) {
+export default async function threads({ username, postId, shareId, alwaysProxy, dispatcher }) {
+    if (shareId) {
+        const resolved = await resolveThreadsShare(shareId, fetch, dispatcher);
+        if (!resolved) return { error: "fetch.empty" };
+        ({ username, postId } = resolved);
+    }
     const path = username
         ? `/@${encodeURIComponent(username)}/post/${encodeURIComponent(postId)}`
         : `/t/${encodeURIComponent(postId)}`;

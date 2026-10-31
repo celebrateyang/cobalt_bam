@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { getUpstreamNodes, selectUpstreamNode } from "./pool.js";
 import { requestUpstream } from "./request.js";
+import { isInstagramUpstreamMedia } from "./instagram-media.js";
 
 // Sessions differ across nodes. A slow node must not delay a working session.
 export const requestInstagramUpstream = async ({ payload, ...options }) => {
@@ -25,10 +26,9 @@ export const requestInstagramUpstream = async ({ payload, ...options }) => {
                 maxAttempts: 1,
                 allowedUpstreamOrigins: [node.origin],
                 signal: controller.signal,
-                acceptResponse: ({ body }) =>
-                    body?.status === "redirect" && typeof body.url === "string" && body.url.length > 0,
+                acceptResponse: ({ body }) => isInstagramUpstreamMedia(body),
             });
-            if (result?.body?.status !== "redirect" || !result.body.url) {
+            if (!isInstagramUpstreamMedia(result?.body)) {
                 throw new Error("Instagram node returned no downloadable media");
             }
             return result;

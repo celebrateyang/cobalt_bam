@@ -4,6 +4,7 @@ import { env, genericUserAgent } from "../../config.js";
 import { createStream } from "../../stream/manage.js";
 import { getCookie, updateCookie } from "../cookie/manager.js";
 import { requestInstagramUpstream } from "../upstream/instagram.js";
+import { getInstagramUpstreamPicker, isInstagramUpstreamMedia } from "../upstream/instagram-media.js";
 import { hasUpstreams } from "../upstream/pool.js";
 
 const INSTAGRAM_DEBUG = /^(1|true|yes)$/i.test(process.env.DEBUG_INSTAGRAM || "");
@@ -163,8 +164,7 @@ export default function instagram(obj) {
                 payload: { url: String(postUrl) },
                 service: "instagram",
                 timeoutMs,
-                acceptResponse: ({ body }) =>
-                    body?.status === "redirect" && typeof body?.url === "string",
+                acceptResponse: ({ body }) => isInstagramUpstreamMedia(body),
             });
             const payload = upstream?.body;
             logUpstream(
@@ -177,6 +177,8 @@ export default function instagram(obj) {
             );
 
             if (!payload || typeof payload !== "object") return null;
+            const picker = getInstagramUpstreamPicker(payload);
+            if (picker) return { picker, duration: toSecondsMaybeMs(payload.duration) };
             if (payload.status !== "redirect") return null;
             if (!payload.url) return null;
 
@@ -793,6 +795,7 @@ export default function instagram(obj) {
         const tryUpstream = async () => {
             upstreamAttempted = true;
             const upstream = await requestUpstreamCobalt(`https://www.instagram.com/p/${id}/`);
+            if (upstream?.picker) return upstream;
             if (!upstream?.url) return;
             return {
                 urls: upstream.url,

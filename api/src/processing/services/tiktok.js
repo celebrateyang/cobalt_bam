@@ -450,6 +450,16 @@ const fetchCompatibleTikTokVideo = async (obj, cookie) => {
                 const location = response.headers.get("location");
                 const directUrl = location ? new URL(location, candidate).toString() : "";
                 if (response.status >= 300 && response.status < 400 && isOfficialTikTokMediaUrl(directUrl) && new URL(directUrl).protocol === "https:") {
+                    // TikTok sometimes redirects to a CDN URL that already returns 403.
+                    // Check a small range before choosing it over other providers.
+                    const media = await fetch(directUrl, {
+                        redirect: "manual",
+                        headers: { range: "bytes=0-1023" },
+                        signal: AbortSignal.timeout(8000),
+                    });
+                    const usable = media.ok && /^video\//i.test(media.headers.get("content-type") || "");
+                    await media.body?.cancel().catch(() => {});
+                    if (!usable) continue;
                     return {
                         urls: directUrl,
                         filename: `tiktok_${obj.username || "video"}_${obj.postId}.mp4`,
@@ -562,6 +572,32 @@ const fetchTikWmJson = async (url, options = {}) => {
     });
     if (!response.ok) return null;
     return response.json().catch(() => null);
+};
+
+const fetchTikWmCompatibleDetail = async (url, postId, reason) => {
+    if (!url || !postId) return null;
+    try {
+        const data = await fetchTikWmJson(`${directProviderConfig.tikwmOriginal.baseUrl}/api/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+            body: new URLSearchParams({ url, hd: "1" }),
+        });
+        const directUrl = normalizeUrlCandidate(data?.data?.play);
+        if (data?.code !== 0 || String(data?.data?.id) !== String(postId)
+            || !isOfficialTikTokMediaUrl(directUrl) || new URL(directUrl).protocol !== "https:") return null;
+        return {
+            urls: directUrl,
+            filename: buildDirectProviderFilename({ title: data.data.title, postId }),
+            duration: typeof data.data.duration === "number" ? data.data.duration : undefined,
+            service: "tiktok",
+            tiktokVideoSource: "tikwm-compatible",
+            tiktokVideoSourceKind: "direct-provider",
+            tiktokUsedDirectProvider: true,
+        };
+    } catch (error) {
+        console.log(`[tiktok] direct provider=tikwm-compatible failed reason=${reason || "unknown"} message=${error?.message || String(error)}`);
+        return null;
+    }
 };
 
 const fetchTikWmOriginalDetail = async (url, postId, reason) => {
@@ -698,7 +734,7 @@ const fallbackToDirectProviders = async (obj, reason) => {
     });
 
     const providers = [
-        fetchTikWmOriginalDetail,
+        ...(obj.h265 ? [fetchTikWmOriginalDetail, fetchTikWmCompatibleDetail] : [fetchTikWmCompatibleDetail, fetchTikWmOriginalDetail]),
         fetchSnapAnyProviderDetail,
     ];
 

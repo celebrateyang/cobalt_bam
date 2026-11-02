@@ -141,12 +141,39 @@ test("prefers an advertised H.264 rendition and resolves its TikTok CDN redirect
     })}</script>`;
     t.mock.method(globalThis, "fetch", async (input, options) => {
         const url = String(input);
-        if (url.includes("/video/")) return { headers: new Headers(), text: async () => page };
+        if (url.includes(`/video/${postId}`)) return { headers: new Headers(), text: async () => page };
+        if (url === "https://v16.tiktokcdn.com/file.mp4") {
+            assert.equal(options.headers.range, "bytes=0-1023");
+            return { ok: true, headers: new Headers({ "content-type": "video/mp4" }) };
+        }
         assert.match(url, /codec=h264/);
         assert.equal(options.headers.referer, "https://www.tiktok.com/");
-        return { status: 302, headers: new Headers({ location: "https://v16.tiktokcdn.com/video/file.mp4" }) };
+        return { status: 302, headers: new Headers({ location: "https://v16.tiktokcdn.com/file.mp4" }) };
     });
     const result = await tiktok({ postId, user: "creator" });
-    assert.equal(result.urls, "https://v16.tiktokcdn.com/video/file.mp4");
+    assert.equal(result.urls, "https://v16.tiktokcdn.com/file.mp4");
     assert.equal(result.tiktokVideoSource, "legacy-h264");
+});
+
+test("falls back to a direct provider when the official CDN redirect returns 403", async (t) => {
+    const postId = "7675983684037627150";
+    const detail = { video: { bitrateInfo: [
+        { CodecType: "h264", PlayAddr: { UrlList: ["https://www.tiktok.com/aweme/v1/play/?codec=h264"] } },
+    ] } };
+    const page = `<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__" type="application/json">${JSON.stringify({
+        __DEFAULT_SCOPE__: { "webapp.video-detail": { itemInfo: { itemStruct: detail } } },
+    })}</script>`;
+    t.mock.method(globalThis, "fetch", async (input) => {
+        const url = String(input);
+        if (url.includes(`/video/${postId}`)) return { headers: new Headers(), text: async () => page };
+        if (url.includes("/aweme/v1/play/")) return { status: 302, headers: new Headers({ location: "https://v16.tiktokcdn.com/blocked.mp4" }) };
+        if (url.includes("blocked.mp4")) return { ok: false, headers: new Headers({ "content-type": "video/mp4" }) };
+        assert.equal(url, "https://www.tikwm.com/api/");
+        return { ok: true, json: async () => ({ code: 0, data: {
+            id: postId, play: "https://v16e.tiktokcdn.com/working.mp4",
+        } }) };
+    });
+    const result = await tiktok({ postId, user: "creator" });
+    assert.equal(result.urls, "https://v16e.tiktokcdn.com/working.mp4");
+    assert.equal(result.tiktokVideoSource, "tikwm-compatible");
 });

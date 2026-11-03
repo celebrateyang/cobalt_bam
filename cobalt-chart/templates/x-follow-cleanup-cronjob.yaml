@@ -1,0 +1,60 @@
+{{- if .Values.xFollowProofs.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: infra-follow-cleanup
+spec:
+  schedule: {{ .Values.xFollowProofs.cleanupSchedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          {{- if .Values.aiVideo.serviceAccountName }}
+          serviceAccountName: {{ .Values.aiVideo.serviceAccountName | quote }}
+          {{- end }}
+          restartPolicy: Never
+          containers:
+            - name: cleanup
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              command: ["node", "src/util/cleanup-x-follow-proofs.js"]
+              env:
+                - name: DB_TYPE
+                  value: {{ .Values.database.type | quote }}
+                - name: DB_HOST
+                  value: {{ .Values.database.host | quote }}
+                - name: DB_PORT
+                  value: {{ .Values.database.port | quote }}
+                - name: DB_USER
+                  value: {{ .Values.database.user | quote }}
+                - name: DB_PASSWORD
+                  value: {{ .Values.database.password | quote }}
+                - name: DB_NAME
+                  value: {{ .Values.database.name | quote }}
+                - name: AI_VIDEO_STORAGE_PROVIDER
+                  value: {{ .Values.aiVideo.storageProvider | quote }}
+                - name: AI_VIDEO_GCS_BUCKET
+                  value: {{ .Values.aiVideo.gcsBucket | quote }}
+                - name: AI_VIDEO_LOCAL_STORAGE_ROOT
+                  value: {{ .Values.aiVideo.localStorageRoot | quote }}
+                {{- if and (eq .Values.aiVideo.storageProvider "gcs") .Values.aiVideo.gcsCredentials.secretName }}
+                - name: GOOGLE_APPLICATION_CREDENTIALS
+                  value: {{ printf "%s/%s" .Values.aiVideo.gcsCredentials.mountPath .Values.aiVideo.gcsCredentials.fileName | quote }}
+              volumeMounts:
+                - name: gcs-credentials
+                  mountPath: {{ .Values.aiVideo.gcsCredentials.mountPath | quote }}
+                  readOnly: true
+          volumes:
+            - name: gcs-credentials
+              secret:
+                secretName: {{ .Values.aiVideo.gcsCredentials.secretName | quote }}
+                defaultMode: 0400
+                items:
+                  - key: {{ .Values.aiVideo.gcsCredentials.secretKey | quote }}
+                    path: {{ .Values.aiVideo.gcsCredentials.fileName | quote }}
+                {{- end }}
+{{- end }}

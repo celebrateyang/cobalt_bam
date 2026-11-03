@@ -227,6 +227,10 @@ pointsHoldCleanup:
   startingDeadlineSeconds: 600
   suspend: false
 
+xFollowProofs:
+  enabled: true
+  cleanupSchedule: "15 3 * * *"
+
 downloadAttemptCleanup:
   enabled: true
   # Keep the operational download audit table close to its 2-day retention window.

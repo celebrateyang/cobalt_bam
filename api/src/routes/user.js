@@ -1,4 +1,7 @@
 import express from "express";
+import { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
+import { getXFollowStorage, createXFollowKey } from '../ai-video/x-follow-storage.js';
 import { clerkClient, clerkMiddleware, getAuth } from "@clerk/express";
 import { createUserPointsHandler } from "./user-points.js";
 import { awardShareReward, isShareRewardRequest, listShareRewards } from "../db/share-rewards.js";
@@ -28,6 +31,10 @@ import {
     listPromotionSubmissions,
     listPromotionSubmissionsForUser,
     reviewPromotionSubmission,
+    submitXFollow,
+    getXFollowProof,
+    finishXFollowUpload,
+    failXFollowUpload,
 } from "../db/promotion-submissions.js";
 import {
     listCreditOrders,
@@ -852,6 +859,19 @@ router.post("/admin/random-chat-reports/:id/review", requireAdminAuth, async (re
 });
 
 // Admin-only: list promotion submissions (paginated)
+router.get('/admin/promotion-submissions/:id/x-proof', requireAdminAuth, async (req, res) => {
+    try {
+        const id = Number(req.params.id);
+        if (!Number.isSafeInteger(id) || id < 1) return jsonError(res, 400, 'INVALID_INPUT', 'Invalid id');
+        const proof = await getXFollowProof(id);
+        if (!proof) return jsonError(res, 404, 'NOT_FOUND', 'Proof not found');
+        res.set({ 'Content-Type': proof.content_type, 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' });
+        const chunks = [];
+        for await (const chunk of getXFollowStorage().openReadStream(proof.object_key, proof.generation)) chunks.push(chunk);
+        return res.send(Buffer.concat(chunks));
+    } catch (error) { console.error('GET X proof error:', error); return jsonError(res, 500, 'SERVER_ERROR', 'Failed to load proof'); }
+});
+
 router.get("/admin/promotion-submissions", requireAdminAuth, async (req, res) => {
     try {
         const page = req.query?.page;
@@ -1440,6 +1460,40 @@ if (!isClerkApiConfigured) {
             const clerkUser = await clerkClient.users.getUser(clerkUserId);
             return upsertUserFromClerk(mapClerkUser(clerkUser));
         };
+
+        router.post('/x-follow-submissions', express.raw({ type: ['image/png', 'image/jpeg', 'image/webp'], limit: '2mb' }), async (req, res) => {
+            try {
+                const auth = getAuth(req);
+                if (!auth.userId) return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
+                const username = String(req.header('X-Follow-Username') || '').replace(/^@/, '').trim().toLowerCase();
+                const image = req.body;
+                const type = req.header('content-type')?.split(';')[0].toLowerCase();
+                const validImage = Buffer.isBuffer(image) && image.length > 0 && (
+                    (type === 'image/png' && image.subarray(0, 8).equals(Buffer.from('89504e470d0a1a0a', 'hex'))) ||
+                    (type === 'image/jpeg' && image.subarray(0, 3).equals(Buffer.from('ffd8ff', 'hex'))) ||
+                    (type === 'image/webp' && image.subarray(0, 4).toString('ascii') === 'RIFF' && image.subarray(8, 12).toString('ascii') === 'WEBP')
+                );
+                if (!/^[a-z0-9_]{1,15}$/.test(username) || !validImage) return jsonError(res, 400, 'INVALID_INPUT', 'Invalid X username or image');
+                const user = await ensureLocalUserByClerkId(auth.userId);
+                if (!user || user.is_disabled) return jsonError(res, 403, "ACCOUNT_DISABLED", "Account disabled");
+                const objectKey = createXFollowKey();
+                const result = await submitXFollow({ userId: user.id, clerkUserId: auth.userId, username, contentType: type, objectKey });
+                if (!result.ok) return jsonError(res, 409, result.code, 'An application is pending or this reward has already been claimed');
+                try {
+                    const storage = getXFollowStorage();
+                    await pipeline(Readable.from([image]), storage.createWriteStream(objectKey, { metadata: { contentType: type } }));
+                    const metadata = await storage.headObject(objectKey);
+                    if (!await finishXFollowUpload(result.id, metadata.generation)) throw new Error('Upload no longer active');
+                } catch (error) {
+                    await failXFollowUpload(result.id).catch(failure => console.error('Failed to mark X proof upload failed:', failure));
+                    throw error;
+                }
+                return res.json({ status: 'success', data: result });
+            } catch (error) {
+                console.error('POST X follow submission error:', error);
+                return jsonError(res, 500, 'SERVER_ERROR', 'Failed to submit application');
+            }
+        });
 
         router.get("/points", createUserPointsHandler({
             getAuth, getUserByClerkId, getActiveMembershipForUser,

@@ -654,6 +654,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         "Authorization",
         "X-Clerk-Token",
         "X-Clerk-Email",
+        "X-Follow-Username",
         "xrequestid",
         "XRequestId",
         "X-Request-Id",

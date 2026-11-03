@@ -94,9 +94,9 @@ class GcsObjectStorage {
         };
     }
 
-    openReadStream(objectKey) {
+    openReadStream(objectKey, generation) {
         assertObjectKey(objectKey, this.prefix);
-        return this.bucket.file(objectKey).createReadStream();
+        return this.bucket.file(objectKey, generation ? { generation } : {}).createReadStream();
     }
 
     createWriteStream(objectKey, options = {}) {
@@ -185,6 +185,12 @@ class LocalObjectStorage {
 }
 
 let singleton;
+export const createObjectStorage = ({ prefix }) => {
+    const provider = process.env.AI_VIDEO_STORAGE_PROVIDER || (process.env.NODE_ENV === "production" ? "gcs" : "local");
+    return provider === "gcs"
+        ? new GcsObjectStorage({ bucketName: process.env.AI_VIDEO_GCS_BUCKET || "ebay-mag-terraform-state", prefix })
+        : new LocalObjectStorage({ root: process.env.AI_VIDEO_LOCAL_STORAGE_ROOT || ".ai-video-storage", prefix });
+};
 export const getAiVideoObjectStorage = () => {
     if (singleton) return singleton;
     const provider = process.env.AI_VIDEO_STORAGE_PROVIDER || (process.env.NODE_ENV === "production" ? "gcs" : "local");

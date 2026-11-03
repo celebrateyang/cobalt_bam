@@ -26,7 +26,7 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
-      {{- if and (or .Values.aiVideo.enabled .Values.videoAgent.enabled) .Values.aiVideo.serviceAccountName }}
+      {{- if and (or .Values.aiVideo.enabled .Values.videoAgent.enabled .Values.xFollowProofs.enabled) .Values.aiVideo.serviceAccountName }}
       serviceAccountName: {{ .Values.aiVideo.serviceAccountName | quote }}
       {{- end }}
       {{- with .Values.imagePullSecrets }}
@@ -54,7 +54,7 @@ spec:
               name: wechatpay-secret
               readOnly: true
             {{- end }}
-            {{- if and (or .Values.aiVideo.enabled .Values.videoAgent.enabled) (eq .Values.aiVideo.storageProvider "gcs") .Values.aiVideo.gcsCredentials.secretName }}
+            {{- if and (or .Values.aiVideo.enabled .Values.videoAgent.enabled .Values.xFollowProofs.enabled) (eq .Values.aiVideo.storageProvider "gcs") .Values.aiVideo.gcsCredentials.secretName }}
             - name: ai-video-gcs-credentials
               mountPath: {{ .Values.aiVideo.gcsCredentials.mountPath | quote }}
               readOnly: true
@@ -262,9 +262,7 @@ spec:
             {{- end }}
             - name: AI_VIDEO_EXECUTION_GLOBAL_CONCURRENCY
               value: {{ .Values.aiVideo.executionGlobalConcurrency | quote }}
-            {{- if or .Values.aiVideo.enabled .Values.videoAgent.enabled }}
-            - name: AI_VIDEO_ENABLED
-              value: {{ ternary "1" "0" .Values.aiVideo.enabled | quote }}
+            {{- if or .Values.aiVideo.enabled .Values.videoAgent.enabled .Values.xFollowProofs.enabled }}
             - name: AI_VIDEO_STORAGE_PROVIDER
               value: {{ .Values.aiVideo.storageProvider | quote }}
             - name: AI_VIDEO_GCS_BUCKET
@@ -277,6 +275,10 @@ spec:
             {{- end }}
             - name: AI_VIDEO_LOCAL_STORAGE_ROOT
               value: {{ .Values.aiVideo.localStorageRoot | quote }}
+            {{- end }}
+            {{- if or .Values.aiVideo.enabled .Values.videoAgent.enabled }}
+            - name: AI_VIDEO_ENABLED
+              value: {{ ternary "1" "0" .Values.aiVideo.enabled | quote }}
             - name: AI_VIDEO_MONTHLY_SECONDS
               value: {{ .Values.aiVideo.monthlySeconds | quote }}
             - name: AI_VIDEO_MAX_FILE_BYTES
@@ -354,7 +356,7 @@ spec:
           secret:
             secretName: {{ .Values.wechatpay.secretName | quote }}
         {{- end }}
-        {{- if and (or .Values.aiVideo.enabled .Values.videoAgent.enabled) (eq .Values.aiVideo.storageProvider "gcs") .Values.aiVideo.gcsCredentials.secretName }}
+        {{- if and (or .Values.aiVideo.enabled .Values.videoAgent.enabled .Values.xFollowProofs.enabled) (eq .Values.aiVideo.storageProvider "gcs") .Values.aiVideo.gcsCredentials.secretName }}
         - name: ai-video-gcs-credentials
           secret:
             secretName: {{ .Values.aiVideo.gcsCredentials.secretName | quote }}

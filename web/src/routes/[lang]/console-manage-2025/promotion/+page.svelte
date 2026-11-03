@@ -30,6 +30,19 @@
     let loading = true;
     let error = "";
     let reviewingId: number | null = null;
+    let proofUrl = "";
+    let proofId: number | null = null;
+
+    async function showProof(id: number) {
+        try {
+            const response = await fetch(`${currentApiURL()}/user/admin/promotion-submissions/${id}/x-proof`, { headers: { Authorization: `Bearer ${getToken()}` } });
+            if (response.status === 404) throw new Error("Screenshot is unavailable or has expired.");
+            if (!response.ok) throw new Error("Failed to load screenshot");
+            if (proofUrl) URL.revokeObjectURL(proofUrl);
+            proofUrl = URL.createObjectURL(await response.blob());
+            proofId = id;
+        } catch (e) { error = e instanceof Error ? e.message : "Failed to load screenshot"; }
+    }
 
     let search = "";
     let statusFilter = "";
@@ -56,6 +69,7 @@
     });
 
     const typeLabel = (promotionType: string) => {
+        if (promotionType === "x_follow") return "X Follow";
         if (promotionType === "share") return "Website Share (WhatsApp)";
         if (promotionType === "post") return "Post Promotion";
         if (promotionType === "video") return "Video Promotion";
@@ -126,6 +140,8 @@
 
     async function reviewSubmission(item: PromotionSubmission, action: "approve" | "reject") {
         if (reviewingId) return;
+        const adminNote = action === "reject" ? window.prompt("Reason for rejection (shown to the user):") : "";
+        if (adminNote === null) return;
 
         reviewingId = item.id;
         error = "";
@@ -148,6 +164,7 @@
                     body: JSON.stringify({
                         action,
                         awardedPoints: action === "approve" ? item.requested_points : 0,
+                        adminNote,
                     }),
                 },
             );
@@ -327,6 +344,10 @@
                             <td>
                                 <div class="access-cell">
                                     <div class="text clamp">{item.access_method}</div>
+                                    {#if item.promotion_type === "x_follow"}
+                                        <button class="btn-secondary" type="button" on:click={() => showProof(item.id)}>View screenshot</button>
+                                        {#if proofId === item.id}<a href={proofUrl} target="_blank" rel="noopener noreferrer"><img src={proofUrl} alt="X follow proof" style="max-width: 200px; max-height: 160px" /></a>{/if}
+                                    {/if}
                                     <button
                                         class="btn-secondary btn-copy"
                                         type="button"

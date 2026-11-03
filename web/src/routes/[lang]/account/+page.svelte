@@ -570,6 +570,7 @@
     };
 
     const promotionTypeLabel = (value: string) => {
+        if (value === "x_follow") return "X Follow";
         if (value === "share") return $t("dialog.offer.share_button");
         if (value === "post") return $t("auth.promotion_post_type");
         if (value === "video") return $t("auth.promotion_video_type");

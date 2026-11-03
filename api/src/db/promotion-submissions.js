@@ -94,6 +94,67 @@ export const initPromotionSubmissionsDatabase = async (runQuery = query) => {
         `CREATE INDEX IF NOT EXISTS idx_user_promotion_submissions_clerk
          ON user_promotion_submissions(clerk_user_id);`,
     );
+    await runQuery(`CREATE TABLE IF NOT EXISTS x_follow_objects (
+        submission_id INTEGER PRIMARY KEY, object_key TEXT NOT NULL UNIQUE, generation TEXT,
+        content_type TEXT NOT NULL, state TEXT NOT NULL, created_at BIGINT NOT NULL
+    )`);
+    await runQuery(`CREATE UNIQUE INDEX IF NOT EXISTS idx_x_follow_user_active
+        ON user_promotion_submissions(user_id) WHERE promotion_type='x_follow' AND status IN ('PENDING','APPROVED')`);
+    await runQuery(`CREATE UNIQUE INDEX IF NOT EXISTS idx_x_follow_username_approved
+        ON user_promotion_submissions(lower(access_method)) WHERE promotion_type='x_follow' AND status='APPROVED'`);
+    await runQuery(`CREATE UNIQUE INDEX IF NOT EXISTS idx_x_follow_user_inflight
+        ON user_promotion_submissions(user_id) WHERE promotion_type='x_follow' AND status IN ('UPLOADING','PENDING','APPROVED')`);
+};
+
+export const submitXFollow = async ({ userId, clerkUserId, username, contentType, objectKey }, clientFactory = getClient) => {
+    const client = await clientFactory();
+    try {
+        await client.query('BEGIN');
+        const user = await client.query('SELECT id, is_disabled FROM users WHERE id=$1 FOR UPDATE', [userId]);
+        if (!user.rows[0] || user.rows[0].is_disabled) { await client.query('ROLLBACK'); return { ok: false, code: 'ACCOUNT_DISABLED' }; }
+        const previous = await client.query("SELECT id FROM user_promotion_submissions WHERE promotion_type='x_follow' AND ((user_id=$1 AND status IN ('UPLOADING','PENDING','APPROVED')) OR (lower(access_method)=lower($2) AND status='APPROVED')) LIMIT 1", [userId, username]);
+        if (previous.rows.length) { await client.query('ROLLBACK'); return { ok: false, code: 'ALREADY_SUBMITTED' }; }
+        const now = Date.now();
+        const result = await client.query(`INSERT INTO user_promotion_submissions (user_id,clerk_user_id,promotion_type,access_method,requested_points,status,created_at,updated_at)
+            VALUES ($1,$2,'x_follow',$3,100,'UPLOADING',$4,$4) RETURNING id`, [userId, clerkUserId, username, now]);
+        await client.query("INSERT INTO x_follow_objects (submission_id,object_key,content_type,state,created_at) VALUES ($1,$2,$3,'uploading',$4)", [result.rows[0].id, objectKey, contentType, now]);
+        await client.query('COMMIT');
+        return { ok: true, id: result.rows[0].id };
+    } catch (error) {
+        await client.query('ROLLBACK');
+        if (error.code === '23505') return { ok: false, code: 'ALREADY_SUBMITTED' };
+        throw error;
+    } finally { client.release(); }
+};
+
+export const getXFollowProof = async (submissionId, clerkUserId = null) => {
+    const result = await query(`SELECT p.content_type,p.object_key,p.generation FROM x_follow_objects p JOIN user_promotion_submissions s ON s.id=p.submission_id
+        WHERE p.submission_id=$1 AND p.state='ready' AND ($2::text IS NULL OR s.clerk_user_id=$2)`, [submissionId, clerkUserId]);
+    return result.rows[0] ?? null;
+};
+
+export const finishXFollowUpload = async (id, generation, clientFactory = getClient) => {
+    const client = await clientFactory();
+    try {
+        await client.query('BEGIN');
+        const proof = await client.query("UPDATE x_follow_objects SET state='ready',generation=$2 WHERE submission_id=$1 AND state='uploading' RETURNING submission_id", [id, generation]);
+        if (!proof.rows.length) { await client.query('ROLLBACK'); return false; }
+        const submission = await client.query("UPDATE user_promotion_submissions SET status='PENDING',updated_at=$2 WHERE id=$1 AND status='UPLOADING' RETURNING id", [id, Date.now()]);
+        if (!submission.rows.length) { await client.query('ROLLBACK'); return false; }
+        await client.query('COMMIT'); return true;
+    } catch (error) { await client.query('ROLLBACK'); throw error; }
+    finally { client.release(); }
+};
+
+export const failXFollowUpload = async (id, clientFactory = getClient) => {
+    const client = await clientFactory();
+    try {
+        await client.query('BEGIN');
+        await client.query("UPDATE x_follow_objects SET state='failed' WHERE submission_id=$1 AND state='uploading'", [id]);
+        await client.query("UPDATE user_promotion_submissions SET status='REJECTED',admin_note='Screenshot upload failed; please resubmit.',reviewed_at=$2,updated_at=$2 WHERE id=$1 AND status='UPLOADING'", [id, Date.now()]);
+        await client.query('COMMIT');
+    } catch (error) { await client.query('ROLLBACK'); throw error; }
+    finally { client.release(); }
 };
 
 export const createPromotionSubmission = async ({
@@ -313,7 +374,7 @@ export const reviewPromotionSubmission = async ({
     action,
     awardedPoints,
     adminNote,
-}) => {
+}, clientFactory = getClient) => {
     const normalizedAction = typeof action === "string" ? action.trim().toLowerCase() : "";
     if (normalizedAction !== "approve" && normalizedAction !== "reject") {
         return { ok: false, code: "INVALID_ACTION" };
@@ -325,7 +386,7 @@ export const reviewPromotionSubmission = async ({
             : REVIEW_STATUS.rejected;
     let pointsToAward = 0;
 
-    const client = await getClient();
+    const client = await clientFactory();
 
     try {
         await client.query("BEGIN");
@@ -352,6 +413,11 @@ export const reviewPromotionSubmission = async ({
         }
 
         if (nextStatus === REVIEW_STATUS.approved) {
+            if (current.promotion_type === 'x_follow') {
+                const prior = await client.query("SELECT id FROM user_promotion_submissions WHERE promotion_type='x_follow' AND status='APPROVED' AND (user_id=$1 OR lower(access_method)=lower($2)) LIMIT 1", [current.user_id, current.access_method]);
+                if (prior.rows.length) { await client.query('ROLLBACK'); return { ok: false, code: 'ALREADY_REWARDED' }; }
+                awardedPoints = 100;
+            }
             pointsToAward =
                 awardedPoints === undefined || awardedPoints === null
                     ? Number(current.requested_points ?? 0)
@@ -417,6 +483,7 @@ export const reviewPromotionSubmission = async ({
         try {
             await client.query("ROLLBACK");
         } catch {}
+        if (error.code === '23505') return { ok: false, code: 'ALREADY_REWARDED' };
         throw error;
     } finally {
         client.release();

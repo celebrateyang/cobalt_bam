@@ -4,6 +4,17 @@ import test from "node:test";
 import { env } from "../config.js";
 import { createStream, verifyStream, getInternalTunnelFromURL, destroyInternalStream } from "./manage.js";
 
+test("Rutube HLS processing reads the original playlist so relative segments resolve", async () => {
+    const source = 'https://cdn.example.com/hls/video.m3u8?token=test';
+    for (const type of ['remux', 'mute', 'audio']) {
+        const p = new URL(createStream({ type, url: source, service: 'rutube',
+            isHLS: true, filename: 'rutube.mp4' })).searchParams;
+        const info = await verifyStream(p.get('id'), p.get('sig'), p.get('exp'), p.get('sec'), p.get('iv'));
+        assert.equal(info.urls, source);
+        assert.equal(info.isHLS, true);
+    }
+});
+
 test("NAVER HLS remux and mute preserve the selected rendition and source headers", async () => {
     const source = 'https://cdn.example.com/hls/720.m3u8?token=test';
     const headers = { referer: 'https://m.naver.com/', origin: 'https://m.naver.com' };

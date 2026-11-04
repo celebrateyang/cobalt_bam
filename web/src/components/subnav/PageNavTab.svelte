@@ -7,6 +7,7 @@
     export let tabTitle: string;
     export let iconColor: "gray" | "blue" | "green" = "gray";
     export let badgeCount = 0;
+    export let badgeDot = false;
 
     $: isActive = $page.url.pathname === tabPath;
 </script>
@@ -26,7 +27,9 @@
         </div>
     </div>
     <div class="subnav-tab-right">
-        {#if badgeCount > 0}
+        {#if badgeDot}
+            <span class="notification-dot" role="img" aria-label={`${tabTitle}: pending review`}></span>
+        {:else if badgeCount > 0}
             <span class="notification-badge" aria-label={`${badgeCount} pending`}>
                 {badgeCount > 99 ? "99+" : badgeCount}
             </span>
@@ -110,6 +113,8 @@
         font-weight: 700;
         line-height: 1;
     }
+
+    .notification-dot { width: 9px; height: 9px; border-radius: 50%; background: #ef233c; flex: none; }
 
     @media (hover: hover) {
         .subnav-tab:hover {

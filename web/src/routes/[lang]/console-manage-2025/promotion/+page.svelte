@@ -180,6 +180,7 @@
                 throw new Error(data?.error?.message || "Failed to review submission");
             }
 
+            window.dispatchEvent(new Event("admin-promotion-updated"));
             await loadSubmissions();
         } catch (e) {
             error = e instanceof Error ? e.message : "Network error";

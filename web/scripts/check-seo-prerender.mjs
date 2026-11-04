@@ -81,7 +81,7 @@ const learnHub = readOutput('en', 'learn.html');
 for (const slug of ['cobalt-tools-alternative', 'savefrom-alternative']) {
     const path = `/en/learn/${slug}`;
     const html = readOutput('en', 'learn', `${slug}.html`);
-    assert(sitemapLocs.has(`https://freesavevideo.online${path}`), `${slug} is missing from sitemap`);
+    assert(!sitemapLocs.has(`https://freesavevideo.online${path}`), `${slug} should be excluded from the focused sitemap`);
     assert(learnHub.includes(`href="${path}"`), `${slug} is missing from the learning hub`);
     assert(html.includes(`rel="canonical" href="https://freesavevideo.online${path}"`), `${slug} needs its own canonical`);
     const data = [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)]
@@ -107,11 +107,11 @@ for (const excludedUrl of [
     assert(!sitemap.includes(`<loc>${excludedUrl}</loc>`), `Sitemap must exclude ${excludedUrl}`);
 }
 for (const priorityUrl of [
-    'https://freesavevideo.online/en/download/batch-video-downloader',
-    'https://freesavevideo.online/en/download/playlist-downloader',
-    'https://freesavevideo.online/en/download/youtube-playlist-downloader',
-    'https://freesavevideo.online/en/guide/how-to-download-multiple-videos',
-    'https://freesavevideo.online/en/guide/download-videos-to-folder',
+    'https://freesavevideo.online/en',
+    'https://freesavevideo.online/es/download',
+    'https://freesavevideo.online/ja/download',
+    'https://freesavevideo.online/en/download/youtube-download',
+    'https://freesavevideo.online/en/download/aparat-video-downloader',
 ]) {
     assert(sitemap.includes(`<loc>${priorityUrl}</loc>`), `Sitemap is missing ${priorityUrl}`);
 }

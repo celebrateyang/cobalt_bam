@@ -31,6 +31,8 @@ import IconFlag from "@tabler/icons-svelte/IconFlag.svelte";
 
     let unprocessedFeedback = 0;
     let pendingChatReports = 0;
+    let pendingPromotions = false;
+    let promotionRequestVersion = 0;
     let feedbackStatsTimer: ReturnType<typeof setInterval> | null = null;
 
     const loadFeedbackStats = async () => {
@@ -63,23 +65,53 @@ import IconFlag from "@tabler/icons-svelte/IconFlag.svelte";
 
     const handleStatsRefresh = () => void loadFeedbackStats();
 
+    const loadPromotionStats = async () => {
+        if (isLoginPage || typeof window === "undefined") return;
+        const token = window.localStorage.getItem("admin_token");
+        if (!token) { pendingPromotions = false; return; }
+        const version = ++promotionRequestVersion;
+        try {
+            const { currentApiURL } = await import("$lib/api/api-url");
+            const res = await fetch(`${currentApiURL()}/user/admin/promotion-submissions?status=PENDING&page=1&limit=1`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json().catch(() => ({}));
+            if (version !== promotionRequestVersion || !res.ok || data?.status !== "success") return;
+            const total = Number(data?.data?.pagination?.total);
+            if (Number.isFinite(total)) pendingPromotions = total > 0;
+        } catch {
+            // Keep the last known state during transient failures.
+        }
+    };
+    const handlePromotionRefresh = () => void loadPromotionStats();
+    $: if (typeof window !== "undefined" && pathname && !isLoginPage) void loadPromotionStats();
+
     onMount(() => {
         void loadFeedbackStats();
         feedbackStatsTimer = setInterval(loadFeedbackStats, 60_000);
+        const promotionTimer = setInterval(loadPromotionStats, 30 * 60_000);
         window.addEventListener("focus", handleStatsRefresh);
+        window.addEventListener("focus", handlePromotionRefresh);
+        window.addEventListener("admin-promotion-updated", handlePromotionRefresh);
         window.addEventListener("admin-feedback-updated", handleStatsRefresh);
         window.addEventListener("admin-chat-report-updated", handleStatsRefresh);
+        return () => clearInterval(promotionTimer);
     });
 
     onDestroy(() => {
         if (feedbackStatsTimer) clearInterval(feedbackStatsTimer);
         if (typeof window === "undefined") return;
         window.removeEventListener("focus", handleStatsRefresh);
+        window.removeEventListener("focus", handlePromotionRefresh);
+        window.removeEventListener("admin-promotion-updated", handlePromotionRefresh);
+        promotionRequestVersion++;
         window.removeEventListener("admin-feedback-updated", handleStatsRefresh);
         window.removeEventListener("admin-chat-report-updated", handleStatsRefresh);
     });
 
     const handleLogout = () => {
+        promotionRequestVersion++;
+        pendingPromotions = false;
         auth.logout();
         goto(`/${lang}/console-manage-2025`);
     };
@@ -171,6 +203,7 @@ import IconFlag from "@tabler/icons-svelte/IconFlag.svelte";
                         tabPath="/{lang}/console-manage-2025/promotion"
                         tabTitle="推广审核"
                         iconColor="gray"
+                        badgeDot={pendingPromotions}
                     >
                         <IconSpeakerphone />
                     </PageNavTab>

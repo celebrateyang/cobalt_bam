@@ -450,7 +450,7 @@ test('alternative articles replace the combined URL with independent indexable p
     for (const slug of ['cobalt-tools-alternative', 'savefrom-alternative']) {
         const article = getLearnPage(slug);
         assert(article);
-        assert(sitemap.includes(`/en/learn/${slug}</loc>`));
+        assert(!sitemap.includes(`/en/learn/${slug}</loc>`));
         const result = await route.load({ params: { lang: 'en', slug } });
         assert.equal(result.article, article);
         const rendered = articleComponent.render({ data: result });
@@ -770,7 +770,7 @@ test('TikTok sitemap dates track the edited pages without refreshing unrelated c
     const xml = await load('src/routes/sitemap.xml/+server.ts').GET().text();
     const entries = [...xml.matchAll(/<url>(.*?)<\/url>/gs)].map(match => match[1]);
     const tiktokEntries = entries.filter(entry => /\/(download|guide)\/tiktok-/.test(entry));
-    assert.equal(tiktokEntries.length, 66);
+    assert.equal(tiktokEntries.length, routes.getDownloadSeoLanguages('tiktok-no-watermark').length);
     for (const entry of tiktokEntries) assert(entry.includes(`<lastmod>${tiktokContentUpdatedAt}</lastmod>`));
     for (const entry of entries.filter(entry => !tiktokEntries.includes(entry))) {
         assert(!entry.includes(`<lastmod>${tiktokContentUpdatedAt}</lastmod>`));
@@ -803,23 +803,19 @@ test('Spanish, French and Vietnamese SEO titles retain native diacritics', () =>
     }
 });
 
-test('sitemap contains the repaired hubs and bilingual audio route without noindex entries', async () => {
+test('sitemap contains only indexed pages and the selected landing pages', async () => {
     const { shouldNoindexLocalizedPath } = load('src/lib/seo/indexing.ts');
     const response = load('src/routes/sitemap.xml/+server.ts').GET();
     const xml = await response.text();
     assert(xml.includes('<loc>https://freesavevideo.online/en/download/google-drive-video-downloader</loc>'));
     assert(!xml.includes('/zh/download/google-drive-video-downloader'));
-    for (const path of ['/en/download', '/zh/download', '/ja', '/ja/download', '/th', '/th/download', '/en/download/youtube-playlist-to-mp3']) assert(xml.includes(`<loc>https://freesavevideo.online${path}</loc>`));
-    assert(!xml.includes('/fr/download/youtube-playlist-to-mp3'));
-    for (const lang of supportedLanguages) {
-        for (const page of ['guide', 'faq']) {
-            assert(!shouldNoindexLocalizedPath(`/${page}`, lang));
-            assert(xml.includes(`<loc>https://freesavevideo.online/${lang}/${page}</loc>`));
-            assert(xml.includes(`hreflang="${lang}" href="https://freesavevideo.online/${lang}/${page}"`));
-        }
-    }
+    for (const path of ['/en', '/es/download', '/ja/download']) assert(xml.includes(`<loc>https://freesavevideo.online${path}</loc>`));
+    const slugs = ['youtube-download', 'aparat-video-downloader', 'dailymotion-video-downloader', 'google-drive-video-downloader', 'vk-video-downloader', 'rutube-video-downloader', 'streamable-video-downloader', 'threads-video-downloader', 'bluesky-video-downloader', 'twitch-clip-downloader', 'vimeo-video-download', 'reddit-video-download', 'pinterest-video-download', 'tiktok-no-watermark'];
+    const expected = new Set(['/en', '/es/download', '/ja/download']);
+    for (const slug of slugs) for (const lang of routes.getDownloadSeoLanguages(slug)) expected.add(`/${lang}/download/${slug}`);
     const locations = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map(m => m[1]);
     assert.equal(new Set(locations).size, locations.length);
+    assert.deepEqual(new Set(locations.map(location => new URL(location).pathname)), expected);
     for (const location of locations) {
         const [, lang, ...path] = new URL(location).pathname.split('/');
         assert(!shouldNoindexLocalizedPath('/' + path.join('/'), lang), location);

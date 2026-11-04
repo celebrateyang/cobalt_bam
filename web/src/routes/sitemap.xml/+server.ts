@@ -1,11 +1,8 @@
 import type { RequestHandler } from './$types';
 
 import env from '$lib/env';
-import { seoLandingSlugs } from '$lib/seo/landing-pages';
-import { getGuidePage, guideSlugs } from '$lib/seo/guide-pages';
-import { getLearnPage, learnSlugs } from '$lib/seo/learn-pages';
 import { supportedSeoLanguages } from '$lib/seo/site';
-import { getDownloadSeoLanguages, getGuideSeoLanguages } from '$lib/seo/route-locales';
+import { getDownloadSeoLanguages } from '$lib/seo/route-locales';
 import { isTiktokLanding, tiktokContentUpdatedAt } from '$lib/seo/tiktok-content';
 import { getPlatformDownloadConfig } from '$lib/seo/platform-download-landings';
 
@@ -15,10 +12,16 @@ const lastModified = {
     site: '2026-09-06',
 };
 
-// Include localized hubs that have complete, indexable task-selection content.
-const sitemapHubLanguages = ['en', 'zh', 'ja', 'th'];
-const languageHubPages = ['', 'download'];
-const localizedSupportPages = ['guide', 'faq'];
+// Search Console's indexed pages report, last updated 2026-10-23.
+const indexedPaths = ['/en', '/es/download', '/ja/download'];
+// Dedicated pages reviewed in the November 2026 landing-page traffic analysis.
+const featuredLandingSlugs = [
+    'youtube-download', 'aparat-video-downloader', 'dailymotion-video-downloader',
+    'google-drive-video-downloader', 'vk-video-downloader', 'rutube-video-downloader',
+    'streamable-video-downloader', 'threads-video-downloader', 'bluesky-video-downloader',
+    'twitch-clip-downloader', 'vimeo-video-download', 'reddit-video-download',
+    'pinterest-video-download', 'tiktok-no-watermark',
+];
 const priorityLandingLastModified = new Set([
     'youtube-download',
     'youtube-shorts-download',
@@ -76,59 +79,11 @@ const urlEntry = (
 
 function generateSitemap(): string {
     const urls: string[] = [];
-    urls.push(urlEntry(`${site}/agents`, '2026-10-05', 'monthly', '0.7'));
-
-    for (const lang of ['en', 'zh']) {
-        const path = `/${lang}/clipboard`;
-        urls.push(urlEntry(`${site}${path}`, '2026-09-05', 'monthly', '0.8', buildAlternateLinks(path, ['en', 'zh'])));
+    for (const path of indexedPaths) {
+        urls.push(urlEntry(`${site}${path}`, lastModified.site, 'weekly', '0.8'));
     }
 
-    urls.push(urlEntry(`${site}/en/learn`, '2026-09-06', 'weekly', '0.8'));
-    for (const slug of learnSlugs) {
-        const article = getLearnPage(slug);
-        urls.push(
-            urlEntry(
-                `${site}/en/learn/${slug}`,
-                article?.updatedAt,
-                'weekly',
-                '0.8',
-            ),
-        );
-    }
-
-    for (const lang of sitemapHubLanguages) {
-        for (const page of languageHubPages) {
-            const path = page ? `/${lang}/${page}` : `/${lang}`;
-            const priority = page === '' ? '1.0' : '0.8';
-            const changefreq = page === '' ? 'daily' : 'weekly';
-            urls.push(
-                urlEntry(
-                    `${site}${path}`,
-                    lastModified.site,
-                    changefreq,
-                    priority,
-                    buildAlternateLinks(path, sitemapHubLanguages),
-                ),
-            );
-        }
-    }
-
-    for (const lang of languages) {
-        for (const page of localizedSupportPages) {
-            const path = `/${lang}/${page}`;
-            urls.push(
-                urlEntry(
-                    `${site}${path}`,
-                    lastModified.site,
-                    'weekly',
-                    '0.7',
-                    buildAlternateLinks(path, languages),
-                ),
-            );
-        }
-    }
-
-    for (const slug of seoLandingSlugs) {
+    for (const slug of featuredLandingSlugs) {
         const availableLanguages = getDownloadSeoLanguages(slug);
         for (const lang of availableLanguages) {
             const path = `/${lang}/download/${slug}`;
@@ -148,26 +103,6 @@ function generateSitemap(): string {
                             : undefined,
                     'weekly',
                     '0.9',
-                    buildAlternateLinks(path, availableLanguages),
-                ),
-            );
-        }
-    }
-
-    for (const slug of guideSlugs) {
-        const guide = getGuidePage(slug);
-        if (!guide) continue;
-        const availableLanguages = getGuideSeoLanguages(slug);
-        for (const lang of availableLanguages) {
-            const path = `/${lang}/guide/${slug}`;
-            urls.push(
-                urlEntry(
-                    `${site}${path}`,
-                    isTiktokLanding(guide.landingSlug)
-                        ? tiktokContentUpdatedAt
-                        : ['youtube-download-guide', 'youtube-shorts-download-guide'].includes(slug) && ['en', 'zh'].includes(lang) ? '2026-09-06' : undefined,
-                    'monthly',
-                    '0.7',
                     buildAlternateLinks(path, availableLanguages),
                 ),
             );

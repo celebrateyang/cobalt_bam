@@ -80,7 +80,6 @@ test('discovery summary and JSON flag agree, while account pages stay disallowed
     assert.match(robots,/https:\/\/freesavevideo.online\/agents/);
     assert.ok(robots.includes('Disallow: /*/account/'));
     assert.ok(read('src/routes/[lang]/+page.svelte').includes('href="/agents"'));
-    assert.ok(read('src/routes/sitemap.xml/+server.ts').includes('`${site}/agents`'));
     const {agentDiscoveryLinkHeader} = load(resolve(root,'src/lib/seo/agent-discovery.ts'));
     assert.ok(read('static/_headers').includes(`Link: ${agentDiscoveryLinkHeader}`));
 });

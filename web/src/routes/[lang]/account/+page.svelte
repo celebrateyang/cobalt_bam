@@ -2093,6 +2093,14 @@
 
 
 
+                    <section class="card x-follow-card" aria-labelledby="account-x-follow-title">
+                        <div>
+                            <div class="card-title" id="account-x-follow-title">{isChinese ? "关注 X 账号领取 100 积分" : "Follow us on X for 100 points"}</div>
+                            <div class="subtext card-subtitle">{isChinese ? "关注后提交用户名和截图，审核通过即可领取。" : "Follow our account and submit your username and screenshot for review."}</div>
+                        </div>
+                        <a class="x-follow-action" href={`/${$page.params.lang}/free-points#x-follow-title`}>{isChinese ? "前往申请" : "Apply for 100 points"} <span aria-hidden="true">&rarr;</span></a>
+                    </section>
+
                     <section class="card contact-card" bind:this={contactSectionEl}>
                         <details class="accordion" bind:open={contactAccordionOpen}>
                             <summary class="accordion-summary">
@@ -3048,6 +3056,10 @@
     .contact-card {
         gap: 12px;
     }
+
+    .x-follow-card { gap: 12px; }
+    .x-follow-action { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 9px; color: var(--accent-strong); background: var(--accent-background); text-decoration: none; font-weight: 600; }
+    .x-follow-action:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
     .contact-grid {
         display: grid;

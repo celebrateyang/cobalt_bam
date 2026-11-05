@@ -125,6 +125,8 @@ export default class LibAVWrapper {
         const pendingWrites = new Set<Promise<void>>();
         let writeError: unknown = null;
         let reportedOutputWrite = false;
+        let storage: Awaited<ReturnType<typeof Storage.init>> | undefined;
+        let keepOutput = false;
 
         try {
             for (let i = 0; i < files.length; i++) {
@@ -140,7 +142,8 @@ export default class LibAVWrapper {
             this.#debug("render:writers-ready", { outputName });
 
             const totalInputSize = files.reduce((a, b) => a + b.size, 0);
-            const storage = await Storage.init(totalInputSize);
+            storage = await Storage.init(totalInputSize);
+            const outputStorage = storage;
             this.#debug("render:storage-ready", {
                 implementation: storage.constructor.name,
                 expectedBytes: totalInputSize,
@@ -167,7 +170,7 @@ export default class LibAVWrapper {
                 }
 
                 let writeTask: Promise<void> | null = null;
-                writeTask = Promise.resolve(storage.write(data, pos))
+                writeTask = Promise.resolve(outputStorage.write(data, pos))
                     .then((written) => {
                         if (!Number.isFinite(written) || written <= 0) {
                             throw new Error("storage_write_no_progress");
@@ -222,14 +225,19 @@ export default class LibAVWrapper {
                 }
             }
             if (file.size === 0) {
-                await storage.destroy().catch(() => undefined);
                 this.#debug("render:no-output");
                 return;
             }
 
             this.#debug("render:done", { bytes: file.size, type: file.type });
+            keepOutput = true;
             return file;
         } finally {
+            // Failed renders must not leave a partial output consuming the quota
+            // needed by subsequent attempts. Do not remove successful output:
+            // the returned File still refers to it.
+            await Promise.allSettled(Array.from(pendingWrites));
+            if (storage && !keepOutput) await storage.destroy().catch(() => undefined);
             try {
                 await libav.unlink(outputName);
                 await libav.unlink('progress.txt');

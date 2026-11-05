@@ -240,6 +240,7 @@ const queueFixture = () => {
             finalizePointsHold: async (...args) => { finalizes.push(args); return { ok: true, status: "finalized", charged: 14 }; },
         },
         "$lib/api/download-outcome": { reportDownloadOutcome: async (...args) => { reports.push(args); } },
+        "$lib/api/aparat-media": { isAparatMediaURL: () => false },
         "$lib/api/collection-memory": { markCollectionDownloadedItems: async () => true },
         "$lib/storage/auto-save": { saveFileToAutoSaveDirectory: async () => ({ directoryName: "Downloads", filename: "output" }) },
         "$lib/state/referral-gift": { offerReferralGift() {} },

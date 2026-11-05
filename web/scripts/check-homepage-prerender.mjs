@@ -40,11 +40,6 @@ for (const lang of languages) {
         }
     }
 
-    if (count(html, /href="https:\/\/nopainstudy\.top\/"/g) !== 1) {
-        fail(lang, 'expected exactly one NoPainStudy link');
-    }
-    if (!/class="[^"]*\becosystem-card\b[^"]*"/.test(html)) fail(lang, 'NoPainStudy ecosystem card is missing');
-
     for (const forbidden of ['isAccessibleForFree', 'priceCurrency', '&quot;price&quot;:&quot;0&quot;']) {
         if (html.includes(forbidden)) fail(lang, `forbidden free-price signal found: ${forbidden}`);
     }

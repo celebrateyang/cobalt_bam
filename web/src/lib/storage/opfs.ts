@@ -92,8 +92,17 @@ export class OPFSStorage extends AbstractStorage {
     }
 
     async destroy() {
-        await this.close();
-        await this.#root.removeEntry(this.#handle.name);
+        try {
+            await this.close();
+        } finally {
+            // A flush can fail when the quota is exhausted; release the handle
+            // and still attempt to remove the incomplete file in that case.
+            if (!this.#closed) {
+                this.#io.close();
+                this.#closed = true;
+            }
+            await this.#root.removeEntry(this.#handle.name);
+        }
     }
 
     static async #computeIsAvailable() {

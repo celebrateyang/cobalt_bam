@@ -121,6 +121,10 @@
             "name": "NicoNico Video Downloader",
             "desc": "Save public NicoNico watch and shorts videos with available HLS quality options."
         },
+        "aparat": {
+            "name": "Aparat Video Downloader",
+            "desc": "Save available public Aparat videos and Shorts, or select videos from a playlist."
+        },
         "threads": {
             "name": "Threads Video Downloader",
             "desc": "Paste a public Threads post link to save available videos or photos directly."

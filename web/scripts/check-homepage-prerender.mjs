@@ -27,6 +27,7 @@ for (const lang of languages) {
     if (count(html, /<h1(?:\s|>)/g) !== 1) fail(lang, 'homepage must contain exactly one H1');
     if (count(html, /<h2(?:\s|>)/g) < 6) fail(lang, 'expected semantic H2 section headings');
     if (!/class="[^"]*\bplatform-section\b[^"]*"/.test(html)) fail(lang, 'platform content is missing from SSR HTML');
+    if (/home\.platforms\.aparat\.(?:name|desc)/.test(html)) fail(lang, 'Aparat card contains an unresolved translation key');
     if (!/class="[^"]*\bseo-body\b[^"]*"/.test(html)) fail(lang, 'capability content is missing from SSR HTML');
     if (!/class="[^"]*\bhome-faq\b[^"]*"/.test(html)) fail(lang, 'visible FAQ is missing from SSR HTML');
     if (!html.includes('FAQPage')) fail(lang, 'FAQPage JSON-LD is missing');

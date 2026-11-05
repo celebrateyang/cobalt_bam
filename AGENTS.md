@@ -161,6 +161,13 @@
   - restore text before continuing feature changes.
 
 ## Frontend build and deployment
+
+### Sitemap indexing experiment (2026-11-04)
+- On 2026-11-04, the focused `https://freesavevideo.online/sitemap.xml` was verified live. Google Search Console showed it submitted and successfully read on 2026-11-04, with 80 discovered pages; discovery does not imply indexing.
+- The intended sitemap contains 80 URLs: the three URLs shown in the Search Console indexed-pages report last updated 2026-10-23 (`/en`, `/es/download`, `/ja/download`) and supported locale variants of 14 dedicated landing pages from the recent traffic review. The selection is maintained in `web/src/routes/sitemap.xml/+server.ts`.
+- Track GSC sitemap processing, indexed pages and search impressions/clicks over time. Report meaningful changes and actionable issues; avoid detailed attribution work unless requested. Sitemap pruning alone is not evidence of improved indexing or search traffic. Do not assume removed URLs are deindexed.
+- An older TikTok indexing experiment has its own tracking; this sitemap change is a concurrent change and can confound causal conclusions.
+
 - The agent may run `pnpm build`, `pnpm run build`, or `pnpm -C web build` and complete frontend deployment to the existing Cloudflare Pages project when needed for the user's task.
 - For frontend deployment, verify the production build-time configuration, run the build, deploy using the command above, and verify the deployment result.
 - For routine development, prefer targeted checks and tests such as `pnpm -C web check`, API tests, syntax checks, and i18n encoding checks.

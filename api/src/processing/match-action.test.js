@@ -26,6 +26,23 @@ const youtubeResult = {
     duration: 60,
 };
 
+test("uses Direct Bridge only for Twitter videos requiring no processing", () => {
+    const url = "https://video.twimg.com/ext_tw_video/123/pu/vid/test.mp4";
+    for (const forced of [false, true]) {
+        const response = matchAction({ ...baseArgs, host: "twitter", alwaysProxy: forced,
+            localProcessing: forced ? "forced" : "disabled", r: { urls: url, filename: "twitter.mp4" } });
+        assert.equal(response.body.status, "redirect");
+        assert.equal(response.body.directUrl, url);
+        assert.deepEqual(response.body.directUrlCandidates, [url]);
+        assert.equal(response.body.tunnelUrl, undefined);
+    }
+    for (const type of ["remux", "proxy"]) {
+        const response = matchAction({ ...baseArgs, host: "twitter", r: { type, urls: url, filename: "twitter.mp4" } });
+        assert.equal(response.body.status, "tunnel");
+        assert.equal(response.body.directUrl, undefined);
+    }
+});
+
 test("preserves YouTube size estimates across redirect, tunnel and local processing", () => {
     const estimatedSizeBytes = 780700000;
     for (const localProcessing of ["disabled", "preferred"]) {

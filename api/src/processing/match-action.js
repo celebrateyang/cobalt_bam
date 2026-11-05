@@ -374,6 +374,7 @@ export default function({
                         params = { type: r.type };
                     } else {
                         responseType = "redirect";
+                        params = { url: r.urls, directUrl: r.urls, directUrlCandidates: [r.urls] };
                     }
                     break;
 
@@ -622,6 +623,7 @@ export default function({
         host === "tiktok" &&
         responseType === "redirect" &&
         typeof params.directUrl === "string";
+    const keepTwitterDirectBridge = host === "twitter" && responseType === "redirect" && typeof params.directUrl === "string";
     const keepTikTokServerTunnel =
         host === "tiktok" &&
         r.tiktokVideoSourceKind === "yt-dlp";
@@ -634,6 +636,7 @@ export default function({
         !keepSoundcloudDirectBridge &&
         !keepWechatDirectBridge &&
         !keepTencentVideoDirectBridge &&
+        !keepTwitterDirectBridge &&
         !keepTikTokDirectBridge
     ) {
         responseType = "tunnel";
@@ -656,6 +659,7 @@ export default function({
         !keepSoundcloudDirectBridge &&
         !keepWechatDirectBridge &&
         !keepTencentVideoDirectBridge &&
+        !keepTwitterDirectBridge &&
         !keepTikTokDirectBridge &&
         !keepTikTokServerTunnel &&
         !keepIqiyiServerTunnel

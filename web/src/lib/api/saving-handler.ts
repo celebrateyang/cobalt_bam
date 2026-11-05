@@ -139,6 +139,7 @@ const isPreviewDownloadResponse = (response: CobaltAPIResponse) => (
         response.service === "bilibili_cdn" ||
         response.service === "douyin" ||
         response.service === "tencent_video" ||
+        response.service === "twitter" ||
         response.service === "wechat_channels" ||
         response.service === "xiaohongshu"
     ) &&
@@ -183,6 +184,8 @@ const openPreviewDownloadDialog = (
             : {};
     const cdnNotice = response.service === "bilibili_cdn"
         ? { noticeText: get(t)("error.api.bilibili.cdn.notice") }
+        : response.service === "twitter"
+        ? { noticeText: "If the browser opens the video instead of saving it, use the video menu (three dots) and select Download, or use the browser extension." }
         : {};
 
     downloadButtonState.set("done");

@@ -102,6 +102,7 @@ type PreviewDownloadDialog = Dialog & {
     amazonHls?: boolean,
     skipDirectFetch?: boolean,
     noticeText?: string,
+    showExtensionInstallLink?: boolean,
     extensionPromptTitleKey?: string,
     extensionPromptBodyKey?: string,
     extensionPromptKey?: string,

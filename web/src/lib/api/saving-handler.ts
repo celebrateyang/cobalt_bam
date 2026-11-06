@@ -186,7 +186,7 @@ const openPreviewDownloadDialog = (
     const cdnNotice = response.service === "bilibili_cdn"
         ? { noticeText: get(t)("error.api.bilibili.cdn.notice") }
         : response.service === "youporn"
-        ? { noticeText: "Install or update the FreeSaveVideo browser extension to download this video if direct access is blocked." }
+        ? { showExtensionInstallLink: true }
         : response.service === "twitter"
         ? { noticeText: "If the browser opens the video instead of saving it, use the video menu (three dots) and select Download, or use the browser extension." }
         : {};

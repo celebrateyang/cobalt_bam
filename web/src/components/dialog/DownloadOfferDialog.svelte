@@ -192,6 +192,13 @@
                 {#if purchaseError}<p role="alert">{purchaseError}</p>{/if}
                 </div>
                 <section class="free-option">
+                    <h3><span class="reward-icon"><OfferIcon name="gift" /></span><span>{$t("dialog.offer.x_follow_title")}</span></h3>
+                    <p>{$t("dialog.offer.x_follow_summary")}</p>
+                    <a class="offer-action offer-action--reward" href={`/${$page.params.lang || "en"}/free-points#x-follow-title`} target="_blank" rel="noopener noreferrer">
+                        <OfferIcon name="arrow" /><span>{$t("dialog.offer.x_follow_apply")}</span>
+                    </a>
+                </section>
+                <section class="free-option">
                     <h3><span class="reward-icon"><OfferIcon name="gift" /></span><span>{$t("dialog.offer.share_title", { count: SHARE_REWARD_POINTS })}</span></h3>
                     <p>{$t("dialog.offer.share_summary")}</p>
                     <button class="offer-action offer-action--reward" disabled={busy} on:click={() => { sharing = true; trackShareRewardStep("view", "single_download"); }}>

@@ -7,6 +7,7 @@
     import { downloadAmazonMp4 } from "@freesavevideo/amazon-direct/runner";
     import {
         detectFreeSaveVideoExtensionInstalled,
+        FREESAVEVIDEO_EXTENSION_STORE_URL,
         isChromiumLike,
         openFreeSaveVideoExtensionStore,
     } from "$lib/extension/freesavevideo";
@@ -33,6 +34,7 @@
     export let amazonHls = false;
     export let skipDirectFetch = false;
     export let noticeText = "";
+    export let showExtensionInstallLink = false;
     export let extensionPromptTitleKey = "";
     export let extensionPromptBodyKey = "";
     export let extensionPromptKey = "preview";
@@ -490,7 +492,9 @@
             </div>
         </header>
 
-        {#if noticeText}
+        {#if showExtensionInstallLink}
+            <a class="media-notice install-link" href={FREESAVEVIDEO_EXTENSION_STORE_URL} target="_blank" rel="noopener noreferrer">{$t("home.extension.install")}</a>
+        {:else if noticeText}
             <p class="media-notice" role="note">{noticeText}</p>
         {/if}
 
@@ -604,6 +608,11 @@
         color: var(--subtext);
         font-size: .88rem;
         line-height: 1.5;
+    }
+
+    .install-link {
+        color: var(--text);
+        text-decoration: underline;
     }
 
     .header-actions {

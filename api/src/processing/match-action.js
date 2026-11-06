@@ -109,14 +109,14 @@ export default function({
         }
     }
 
-    if (host === "amazon" && !isAudioOnly && !isAudioMuted && typeof r.urls === "string") {
+    if ((host === "amazon" || host === "youporn") && !isAudioOnly && !isAudioMuted && typeof r.urls === "string") {
         return createResponse("redirect", {
             url: r.urls,
             directUrl: r.urls,
             directUrlCandidates: [r.urls],
             filename: defaultParams.filename,
             duration: defaultParams.duration,
-            service: "amazon",
+            service: host,
         });
     }
 

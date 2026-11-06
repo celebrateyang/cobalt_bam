@@ -160,6 +160,16 @@ test("returns Amazon HLS through Direct Bridge even with forced local processing
     }
 });
 
+test("returns YouPorn HLS without a tunnel even when proxying is forced", () => {
+    const url = "https://ev-h-ph.ypncdn.com/video/index-v1-a1.m3u8";
+    const response = matchAction({ ...baseArgs, host: "youporn", localProcessing: "forced",
+        alwaysProxy: true, r: { service: "youporn", urls: url, isHLS: true, filename: "video.mp4" } });
+    assert.equal(response.body.status, "redirect");
+    assert.equal(response.body.service, "youporn");
+    assert.equal(response.body.directUrl, url);
+    assert.equal(response.body.tunnelUrl, undefined);
+});
+
 test('returns Xinpianchang progressive media through a server tunnel', () => {
     const response = matchAction({
         ...baseArgs, host: 'xinpianchang',

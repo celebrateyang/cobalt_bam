@@ -1,4 +1,5 @@
 export const testers = {
+    youporn: pattern => /^\d{1,20}$/.test(pattern.id || ""),
     aparat: pattern => pattern.shortId
         ? /^\d{1,24}$/.test(pattern.shortId)
         : /^[a-zA-Z0-9]{1,32}$/.test(pattern.id || ""),

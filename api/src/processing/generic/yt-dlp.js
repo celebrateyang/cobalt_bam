@@ -580,6 +580,7 @@ export default async function extractWithYtDlp({
     downloadMode,
     timeoutMs,
     avoidWatermarked = false,
+    preferHls = false,
 }) {
     const runner = await resolveRunner();
     if (!runner) {
@@ -674,6 +675,17 @@ export default async function extractWithYtDlp({
         logCandidates("hlsAudio", hlsAudio ? [hlsAudio] : []);
 
         const base = buildResponseBase({ info, url });
+
+        if (preferHls) {
+            if (!hlsVideo || hlsAudio || !hlsVideo.hasAudio) return { error: "fetch.empty" };
+            return {
+                ...withSelectedHeaders(base, hlsVideo),
+                urls: hlsVideo.url,
+                isHLS: true,
+                filenameAttributes: buildFilenameAttributes({ originUrl: url, title: base.title,
+                    uploader: base.uploader, extension: "mp4", height: hlsVideo.height }),
+            };
+        }
 
         if (downloadMode === "audio") {
             const selected = audioOnly || hlsAudio || directVideo || hlsVideo;

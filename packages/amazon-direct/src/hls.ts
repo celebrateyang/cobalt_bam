@@ -2,7 +2,7 @@ export const isAmazonMediaUrl = (value: string, extension = 'm3u8') => {
     try {
         const url = new URL(value);
         return url.protocol === 'https:' && !url.username && !url.password && !url.port &&
-            /(^|\.)media-amazon\.com$/i.test(url.hostname) &&
+            /(^|\.)(?:media-amazon\.com|ypncdn\.com)$/i.test(url.hostname) &&
             url.pathname.toLowerCase().endsWith(`.${extension}`);
     } catch { return false; }
 };

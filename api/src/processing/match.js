@@ -13,6 +13,7 @@ import matchAction from "./match-action.js";
 import { friendlyServiceName } from "./service-alias.js";
 
 import amazon from "./services/amazon.js";
+import youporn from "./services/youporn.js";
 import analdin from "./services/analdin.js";
 import bilibili from "./services/bilibili.js";
 import bilibiliCdn from "./services/bilibili-cdn.js";
@@ -347,6 +348,9 @@ export default async function({ host, patternMatch, params, authType }) {
             params.subtitleLang !== "none" ? params.subtitleLang : undefined;
 
         switch (host) {
+            case "youporn":
+                r = await youporn({ ...patternMatch, quality: params.videoQuality, isAudioOnly, isAudioMuted });
+                break;
             case "amazon":
                 r = await amazon({
                     id: patternMatch.id,

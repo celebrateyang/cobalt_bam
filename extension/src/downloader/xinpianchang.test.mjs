@@ -130,6 +130,13 @@ test('Amazon extension download saves worker MP4 output instead of an HLS playli
     assert.equal(s.downloads[0].filename, 'FreeSaveVideo/replay.mp4');
 });
 
+test('YouPorn HLS uses the extension MP4 processing page', async () => {
+    const s = await setup(mp4, { jobKind: 'amazon' });
+    const m = await s.entry('chrome-downloads.ts');
+    await m.downloadWithChrome({ url: 'https://ev-h-ph.ypncdn.com/video/index.m3u8', filename: 'FreeSaveVideo/video.mp4' });
+    assert.equal(s.tabs[0].url, `chrome-extension://fsv/download/index.html#amazon-job-${uuid}`);
+});
+
 test('hands off from worker to persistent page, saves the exact fetched Blob and releases it on completion', async () => {
     const s = await setup();
     const m = await s.entry('chrome-downloads.ts');

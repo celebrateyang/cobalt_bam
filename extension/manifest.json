@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "FreeSaveVideo Downloader",
-    "version": "0.1.13",
+    "version": "0.1.14",
     "description": "Detect media on the current page and open supported public links in FreeSaveVideo.",
     "action": {
         "default_popup": "popup/index.html",
@@ -78,6 +78,7 @@
         "*://*.magnific.ai/*",
         "*://*.cloudfront.net/*",
         "https://*.media-amazon.com/*",
+        "https://*.ypncdn.com/*",
         "https://*.aparat.com/*",
         "https://*.aparat.cloud/*"
     ],

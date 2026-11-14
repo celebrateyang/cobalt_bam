@@ -127,9 +127,9 @@
         <p class="balance">{$t("dialog.offer.balance", { current: currentPoints, required: requiredPoints, gap })}</p>
         <div class="offer-layout">
         <nav class="offer-nav" aria-label={$t("dialog.offer.title")}>
-            <button class:active={selected === "membership"} on:click={() => { selected = "membership"; sharing = false; }}>{$t("auth.membership_label")} <span aria-hidden="true">&rarr;</span></button>
+            <button class:active={selected === "free"} on:click={() => { selected = "free"; sharing = false; }}>{$t("home.welcome.points_title")} <span aria-hidden="true">&rarr;</span></button>
             <button class:active={selected === "credit"} on:click={() => { selected = "credit"; sharing = false; }}>{$t("auth.topup_title")} <span aria-hidden="true">&rarr;</span></button>
-            <button class:active={selected === "free"} on:click={() => { selected = "free"; sharing = false; }}>{$t("button.free_points")} <span aria-hidden="true">&rarr;</span></button>
+            <button class:active={selected === "membership"} on:click={() => { selected = "membership"; sharing = false; }}>{$t("auth.membership_label")} <span aria-hidden="true">&rarr;</span></button>
         </nav>
         <div class="offer-content" id={`offer-options-${id}`} bind:this={scrollArea} use:observeOverflow aria-busy={loading && !sharing}>
             <div class="offer-scroll-body">

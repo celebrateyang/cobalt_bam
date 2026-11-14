@@ -5,7 +5,7 @@
     import { t } from "$lib/i18n/translations";
     import { currentApiURL } from "$lib/api/api-url";
     import { accountPath, fetchCurrentUserPointsProfile } from "$lib/points/ui";
-    import { selectCreditOffer, selectPassOffer, OFFER_PROVIDER, SHARE_REWARD_POINTS } from "$lib/points/download-offer.mjs";
+    import { isAvailableOffer, OFFER_PROVIDER, SHARE_REWARD_POINTS } from "$lib/points/download-offer.mjs";
     import { trackTopupPrompt, trackShareRewardStep } from "$lib/analytics/commerce";
     import DialogContainer from "./DialogContainer.svelte";
     import ShareRewardPanel from "$components/points/ShareRewardPanel.svelte";
@@ -16,13 +16,14 @@
     export let currentPoints: number;
     export let requiredPoints: number;
     export let redirectPath: string | null = null;
-    type Offer = { key: string; points?: number; durationDays?: number; amountFen: number; currency: string;
+    type Offer = { key: string; points?: number; durationDays?: number; amountFen: number; currency: string; enabled?: boolean; billingType?: string;
         limits?: { dailySuccessfulDownloads?: number } };
-    let credit: Offer | undefined;
-    let pass: Offer | undefined;
+    let credits: Offer[] = [];
+    let passes: Offer[] = [];
+    let selected: "membership" | "credit" | "free" = "membership";
     let loading = true;
     let failed = false;
-    let busyAction: "credit" | "membership" | "all_plans" | null = null;
+    let busyAction: "credit" | "membership" | null = null;
     $: busy = busyAction !== null;
     let sharing = false;
     let claimOpened = false;
@@ -68,29 +69,30 @@
 
     async function load() {
         loading = true; failed = false;
-        const [credits, passes, profile] = await Promise.allSettled([
+        const [creditResult, passResult, profile] = await Promise.allSettled([
             products("credits"), products("memberships"), fetchCurrentUserPointsProfile(),
         ]);
         if (disposed) return;
-        credit = credits.status === "fulfilled" ? selectCreditOffer(credits.value, gap) : undefined;
+        credits = creditResult.status === "fulfilled" ? creditResult.value.filter((p: Offer) => isAvailableOffer(p) && Number(p.points) > 0).sort((a: Offer, b: Offer) => Number(a.points) - Number(b.points)) : [];
         // Do not offer an additional pass when membership state is unknown or active.
-        pass = passes.status === "fulfilled" && profile.status === "fulfilled" && profile.value && !profile.value.membershipActive
-            ? selectPassOffer(passes.value) : undefined;
-        failed = credits.status === "rejected" || passes.status === "rejected" || profile.status === "rejected" ||
+        passes = passResult.status === "fulfilled" && profile.status === "fulfilled" && profile.value && !profile.value.membershipActive
+            ? passResult.value.filter((p: Offer) => isAvailableOffer(p) && Number(p.durationDays) > 0 && p.billingType === "one_time").sort((a: Offer, b: Offer) => Number(a.durationDays) - Number(b.durationDays)) : [];
+        failed = creditResult.status === "rejected" || passResult.status === "rejected" || profile.status === "rejected" ||
             (profile.status === "fulfilled" && !profile.value);
         loading = false;
     }
     onMount(() => { void load(); return () => { disposed = true; controller.abort(); }; });
 
-    async function buy(kind: "credit" | "membership") {
+    async function buy(kind: "credit" | "membership", product: Offer) {
         if (busyAction) return;
         busyAction = kind;
         purchaseError = "";
         try {
             try { trackTopupPrompt(kind === "credit" ? "topup" : "membership", "single_download", currentPoints, requiredPoints); } catch { /* Best-effort analytics. */ }
-            const target = new URL(accountPath(kind === "credit" ? "topup" : "membership", redirectPath,
-                kind === "credit" ? "credit_199" : "membership_3day"), window.location.origin);
+            const target = new URL(accountPath(kind === "credit" ? "topup" : "membership", redirectPath), window.location.origin);
             target.searchParams.set("provider", OFFER_PROVIDER);
+            target.searchParams.set("checkout_product", product.key);
+            target.searchParams.set("checkout_kind", kind);
             await goto(`${target.pathname}${target.search}`);
             close();
         } catch { busyAction = null; purchaseError = $t("dialog.offer.load_failed"); }
@@ -114,19 +116,6 @@
         finally { checking = false; }
     }
 
-    async function viewAllPlans() {
-        if (busyAction) return;
-        busyAction = "all_plans";
-        purchaseError = "";
-        try {
-            try { trackTopupPrompt("all_plans", "single_download", currentPoints, requiredPoints); } catch { /* Best-effort analytics. */ }
-            await goto(accountPath("topup", redirectPath));
-            close();
-        } catch {
-            busyAction = null;
-            purchaseError = $t("dialog.offer.load_failed");
-        }
-    }
 </script>
 
 <DialogContainer {id} managedCancel={true} ariaLabel={sharing ? $t("dialog.offer.share_title", { count: SHARE_REWARD_POINTS }) : $t("dialog.offer.title")} bind:close>
@@ -135,13 +124,13 @@
             <h2>{sharing ? $t("dialog.offer.share_title", { count: SHARE_REWARD_POINTS }) : $t("dialog.offer.title")}</h2>
             <button class="close" aria-label={$t("dialog.offer.close")} on:click={() => { trackTopupPrompt("dismiss", "single_download", currentPoints, requiredPoints); close(); }}>&times;</button>
         </header>
-        {#if !sharing}
-            <button class="offer-action all-plans" disabled={busy} aria-busy={busyAction === "all_plans"} on:click={viewAllPlans}>
-                {#if busyAction === "all_plans"}<span class="offer-spinner" aria-hidden="true"></span>{/if}
-                <span>{busyAction === "all_plans" ? $t("dialog.offer.opening") : $t("dialog.offer.all_plans")}</span>
-                {#if busyAction !== "all_plans"}<OfferIcon name="arrow" />{/if}
-            </button>
-        {/if}
+        <p class="balance">{$t("dialog.offer.balance", { current: currentPoints, required: requiredPoints, gap })}</p>
+        <div class="offer-layout">
+        <nav class="offer-nav" aria-label={$t("dialog.offer.title")}>
+            <button class:active={selected === "membership"} on:click={() => { selected = "membership"; sharing = false; }}>{$t("auth.membership_label")} <span aria-hidden="true">&rarr;</span></button>
+            <button class:active={selected === "credit"} on:click={() => { selected = "credit"; sharing = false; }}>{$t("auth.topup_title")} <span aria-hidden="true">&rarr;</span></button>
+            <button class:active={selected === "free"} on:click={() => { selected = "free"; sharing = false; }}>{$t("button.free_points")} <span aria-hidden="true">&rarr;</span></button>
+        </nav>
         <div class="offer-content" id={`offer-options-${id}`} bind:this={scrollArea} use:observeOverflow aria-busy={loading && !sharing}>
             <div class="offer-scroll-body">
             {#if sharing}
@@ -156,42 +145,43 @@
                 <button class="offer-action offer-action--link" on:click={() => sharing = false}>{$t("dialog.offer.back")}</button>
             {:else}
                 <div class="purchase-options">
-                <p class="balance">{$t("dialog.offer.balance", { current: currentPoints, required: requiredPoints, gap })}</p>
-                {#if loading}
+                {#if selected !== "free" && loading}
                     <p role="status">{$t("dialog.offer.loading")}</p>
-                {:else}
-                    {#if pass}
+                {:else if selected !== "free"}
+                    {#if selected === "membership"}
+                    {#each passes as pass (pass.key)}
                         <section class="plan offer-card recommended">
                             <div class="plan-heading"><h3>{$t("dialog.offer.pass_title", { days: pass.durationDays })}</h3>
-                            <div class="plan-price"><span class="badge">{$t("dialog.offer.recommended")}</span>
+                            <div class="plan-price">
                             <strong class="price">{price(pass)}</strong></div></div>
-                            <p>{$t("dialog.offer.pass_body", { days: pass.durationDays })} {$t("dialog.offer.pass_limit", { count: pass.limits?.dailySuccessfulDownloads })}</p>
-                            <button class="offer-action offer-action--primary" disabled={busy} aria-busy={busyAction === "membership"} on:click={() => buy("membership")}>
+                            <p>{$t("dialog.offer.pass_body", { days: pass.durationDays })} {#if pass.limits?.dailySuccessfulDownloads}{$t("dialog.offer.pass_limit", { count: pass.limits.dailySuccessfulDownloads })}{/if}</p>
+                            <button class="offer-action offer-action--primary" disabled={busy} aria-busy={busyAction === "membership"} on:click={() => buy("membership", pass)}>
                                 {#if busyAction === "membership"}<span class="offer-spinner" aria-hidden="true"></span>{/if}
                                 <span>{busyAction === "membership" ? $t("dialog.offer.opening") : $t("dialog.offer.buy_pass", { days: pass.durationDays })}</span>
                             </button>
                         </section>
-                    {/if}
-                    {#if credit}
+                    {/each}
+                    {:else}
+                    {#each credits as credit (credit.key)}
                         <section class="plan offer-card">
                             <div class="plan-heading"><h3>{$t("dialog.offer.credit_title", { count: credit.points })}</h3>
                             <strong class="price">{price(credit)}</strong></div>
-                            <p>{$t("dialog.offer.credit_body")}</p>
-                            <button class="offer-action" class:offer-action--primary={!pass} disabled={busy} aria-busy={busyAction === "credit"} on:click={() => buy("credit")}>
+                            <button class="offer-action offer-action--primary" disabled={busy} aria-busy={busyAction === "credit"} on:click={() => buy("credit", credit)}>
                                 {#if busyAction === "credit"}<span class="offer-spinner" aria-hidden="true"></span>{/if}
                                 <span>{busyAction === "credit" ? $t("dialog.offer.opening") : $t("dialog.offer.buy_credit", { count: credit.points })}</span>
                             </button>
                         </section>
+                    {/each}
                     {/if}
-                    {#if pass || credit}<p class="note">{$t("dialog.offer.one_time")}</p>{/if}
-                    {#if failed || (!credit && !pass)}
+                    {#if (selected === "membership" ? passes : credits).length}<p class="note">{$t("dialog.offer.one_time")}</p>{/if}
+                    {#if failed || !(selected === "membership" ? passes : credits).length}
                         <p role="status">{$t("dialog.offer.load_failed")}</p>
                         <button class="offer-action offer-action--link" on:click={load}>{$t("dialog.offer.retry")}</button>
                     {/if}
                 {/if}
                 {#if purchaseError}<p role="alert">{purchaseError}</p>{/if}
                 </div>
-                <section class="free-option">
+                {#if selected === "free"}<section class="free-option">
                     <h3><span class="reward-icon"><OfferIcon name="gift" /></span><span>{$t("dialog.offer.x_follow_title")}</span></h3>
                     <p>{$t("dialog.offer.x_follow_summary")}</p>
                     <a class="offer-action offer-action--reward" href={`/${$page.params.lang || "en"}/free-points#x-follow-title`} target="_blank" rel="noopener noreferrer">
@@ -205,8 +195,10 @@
                         <OfferIcon name="share" /><span>{$t("dialog.offer.share_claim", { count: SHARE_REWARD_POINTS })}</span>
                     </button>
                 </section>
+                {/if}
             {/if}
             </div>
+        </div>
         </div>
         {#if canScrollFurther}
             <button class="more-options" aria-controls={`offer-options-${id}`} on:click={scrollForMore}>
@@ -217,7 +209,12 @@
 </DialogContainer>
 
 <style>
-    .offer-dialog { width: min(460px, calc(100% - 24px)); box-sizing: border-box; max-height: calc(100dvh - 32px - env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: stretch; text-align: left; color: var(--text); }
+    .offer-dialog { width: min(780px, calc(100% - 24px)); box-sizing: border-box; max-height: calc(100dvh - 32px - env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: stretch; text-align: left; color: var(--text); }
+    .offer-layout { display: grid; grid-template-columns: 205px minmax(0, 1fr); gap: 16px; min-height: 0; margin-top: 16px; }
+    .offer-nav { display: flex; flex-direction: column; gap: 8px; }
+    .offer-nav button { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 52px; padding: 12px; border: 1px solid var(--popup-stroke); border-radius: 12px; background: var(--background); color: var(--text); font: inherit; font-weight: 700; text-align: left; cursor: pointer; }
+    .offer-nav button.active { border-color: var(--accent-strong); background: color-mix(in srgb, var(--accent) 15%, var(--background)); color: var(--offer-ink); }
+    .offer-nav button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
     header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-shrink: 0; padding-bottom: 8px; }
     h2 { margin: 0; font-size: 21px; line-height: 1.4; }
     .close { background: transparent; border: 1px solid var(--popup-stroke); box-shadow: none; color: var(--text); font-size: 26px; min-width: 44px; min-height: 44px; padding: 0; border-radius: 12px; cursor: pointer; transition: background-color 160ms ease, border-color 160ms ease; }
@@ -244,6 +241,10 @@
     .reward-icon :global(svg) { width: 19px; height: 19px; }
     @media (max-width: 535px) {
         .offer-dialog { --dialog-padding: 14px; }
+        .offer-layout { display: flex; flex-direction: column; gap: 12px; }
+        .offer-nav { flex-direction: row; }
+        .offer-nav button { flex: 1 1 0; min-width: 0; justify-content: center; padding: 8px 5px; font-size: 12px; text-align: center; overflow-wrap: anywhere; }
+        .offer-nav button span { display: none; }
         h2 { font-size: 19px; }
         h3 { font-size: 15px; }
         .plan { padding: 11px; gap: 6px; }

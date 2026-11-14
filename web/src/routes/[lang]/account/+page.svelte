@@ -1659,6 +1659,24 @@
         if ($page.url.searchParams.has("bmc_order")) return;
         if (!browser || checkoutIntentHandled || !$clerkUser) return;
         const checkoutIntent = $page.url.searchParams.get("checkout");
+        const requestedProduct = $page.url.searchParams.get("checkout_product");
+        const requestedKind = $page.url.searchParams.get("checkout_kind");
+        if (requestedProduct && (requestedKind === "credit" || requestedKind === "membership") && $page.url.searchParams.get("provider") === "buymeacoffee") {
+            if (selectedPaymentProvider !== "buymeacoffee" && !isChinese) {
+                selectPaymentProvider("buymeacoffee");
+                return;
+            }
+            if (selectedPaymentProvider !== "buymeacoffee" || (requestedKind === "credit" ? creditProductsLoading : membershipProductsLoading)) return;
+            const product = (requestedKind === "credit" ? creditProducts : membershipProducts).find((p) => p.key === requestedProduct && p.enabled === true);
+            if (!product) return;
+            checkoutIntentHandled = true;
+            const url = new URL(window.location.href);
+            url.searchParams.delete("checkout_product");
+            url.searchParams.delete("checkout_kind");
+            window.history.replaceState({}, "", url.toString());
+            void startBuyMeACoffeePay(requestedProduct, requestedKind);
+            return;
+        }
         // A quoted offer must resolve to the same provider at checkout.
         if (checkoutIntent && $page.url.searchParams.get("provider") === "buymeacoffee" &&
             selectedPaymentProvider !== "buymeacoffee" && !isChinese) {
@@ -1761,6 +1779,7 @@
     $: if (
         browser &&
         $clerkUser &&
+        !creditProductsLoading && !membershipProductsLoading &&
         ((creditProducts.length > 0 && recommendedValueProductKey) ||
             membershipProducts.length > 0)
     ) {

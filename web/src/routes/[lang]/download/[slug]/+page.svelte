@@ -11,7 +11,7 @@
     import { FREESAVEVIDEO_EXTENSION_STORE_URL } from '$lib/extension/freesavevideo';
     import { socialPlatformForSlug } from '$lib/seo/social-download-content';
     import { isTiktokLanding } from '$lib/seo/tiktok-content';
-    import { getPlatformDownloadConfig, platformDownloadConfigs } from '$lib/seo/platform-download-landings';
+    import { getPlatformDownloadConfig } from '$lib/seo/platform-download-landings';
     import PlatformDownloadPage from '$components/social/PlatformDownloadPage.svelte';
 
     import SupportedServices from '$components/save/SupportedServices.svelte';
@@ -81,7 +81,10 @@
     $: isGoogleDrive = data.slug === 'google-drive-video-downloader';
     $: isAparat = data.slug === 'aparat-video-downloader';
     $: focusedPlatform = getPlatformDownloadConfig(data.slug);
-    $: focusedRelated = platformDownloadConfigs.filter(item => item.slug !== data.slug && item.languages.includes(data.lang));
+    $: focusedRelated = data.relatedPages.map((landing) => ({
+        slug: landing.slug,
+        name: getPlatformDownloadConfig(landing.slug)?.name ?? getSeoLandingLocale(landing, data.lang).h1,
+    }));
     $: usesFocusedPriorityContent =
         isGoogleDrive || isAparat || Boolean(focusedPlatform) ||
         isTiktok ||
@@ -196,6 +199,10 @@
               keywords: pageKeywords,
               url: canonicalUrl,
               inLanguage: data.lang,
+              ...(localeContent.reviewedAt ? {
+                  dateModified: localeContent.reviewedAt,
+                  author: { '@type': 'Organization', name: 'FreeSaveVideo', url: `https://${fallbackHost}/${data.lang}/about/general` },
+              } : {}),
               isPartOf: {
                   '@type': 'WebSite',
                   name: 'FreeSaveVideo',
@@ -276,7 +283,7 @@
 </svelte:head>
 
 {#if focusedPlatform}
-    {#key data.slug}<PlatformDownloadPage config={focusedPlatform} content={localeContent} lang={data.lang} related={focusedRelated} />{/key}
+    {#key data.slug}<PlatformDownloadPage config={focusedPlatform} content={localeContent} lang={data.lang} related={focusedRelated} guides={data.relatedLearnPages ?? []} />{/key}
 {:else if isAparat}
     <AparatDownloadPage lang={data.lang} content={localeContent} />
 {:else if data.slug === 'youtube-download'}

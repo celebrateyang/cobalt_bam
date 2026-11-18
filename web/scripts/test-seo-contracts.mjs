@@ -107,6 +107,8 @@ const { seoLandingSlugs, getSeoLandingPage, getSeoLandingLocale } = load('src/li
 test('focused platform forms accept source pages and reject lookalikes, feeds and cross-platform input', () => {
     const { parsePlatformDownloadInput: parse } = load('src/lib/seo/platform-download-input.ts');
     const inputs = {
+        loom: ['https://www.loom.com/share/aa3d8b08bee74d05af5b42989e9f33e9', 'https://loom.com/embed/aa3d8b08bee74d05af5b42989e9f33e9', 'https://www.loom.com/share/Meet-AI-workflows-aa3d8b08bee74d05af5b42989e9f33e9?sid=test'],
+        tumblr: ['https://www.tumblr.com/example-blog/696499862852780032', 'https://example-blog.tumblr.com/post/696499862852780032/a-video', 'https://www.tumblr.com/blog/view/example-blog/696499862852780032', 'https://tumblr.com/example-blog/696499862852780032/title?source=share'],
         rutube: ['https://rutube.ru/video/0123456789abcdef0123456789abcdef/', 'https://rutube.ru/shorts/0123456789abcdef0123456789abcdef/', 'https://rutube.ru/play/embed/0123456789abcdef0123456789abcdef'],
         bluesky: ['https://bsky.app/profile/example.bsky.social/post/3abc123', 'https://bsky.app/profile/did:plc:abc123/post/3abc123', 'https://bsky.app/profile/example.com/post/3abc123'],
         vk: ['https://vk.com/video-123456_456789', 'https://m.vkvideo.ru/clip-123456_456789', 'https://vk.ru/video123456_456789?list=test'],
@@ -115,6 +117,8 @@ test('focused platform forms accept source pages and reject lookalikes, feeds an
         twitch: ['https://clips.twitch.tv/AValidClip-Slug123', 'https://www.twitch.tv/channel/clip/AValidClip-Slug123'],
     };
     const invalid = {
+        loom: ['https://loom.com/share/folder/aa3d8b08bee74d05af5b42989e9f33e9', 'https://loom.com/workspace/123', 'https://loom.com/share/not-a-video', 'https://cdn.loom.com/video.mp4'],
+        tumblr: ['https://www.tumblr.com/dashboard', 'https://example-blog.tumblr.com/', 'https://www.tumblr.com/tagged/video', 'https://media.tumblr.com/post/123', 'https://evil.example/tumblr.com/example/123', 'https://sub.example.tumblr.com/post/123'],
         rutube: ['https://rutube.ru/channel/123', 'https://rutube.ru/plst/123', 'https://rutube.ru/video/shortid', 'https://rutube.ru/video/private/0123456789abcdef0123456789abcdef'],
         bluesky: ['https://bsky.app/profile/example.bsky.social', 'https://video.bsky.app/watch/abc/video.m3u8', 'https://example.com/profile/user/post/123'],
         vk: ['https://vk.com/wall-123_456', 'https://vkvideo.ru/@user', 'https://vk.com/clips123', 'https://vk.com/video123'],
@@ -135,13 +139,13 @@ test('focused platform forms accept source pages and reject lookalikes, feeds an
     }
 });
 
-test('six focused landing pages have usable SSR, accurate schemas and deliberate locale routes', async () => {
+test('focused landing pages have usable SSR, accurate schemas and deliberate locale routes', async () => {
     const { platformDownloadConfigs } = load('src/lib/seo/platform-download-landings.ts');
     const detail = await component('src/routes/[lang]/download/[slug]/+page.svelte');
     const loader = load('src/routes/[lang]/download/[slug]/+page.ts');
     const { capabilityServices } = load('src/lib/seo/capabilities.ts');
     const xml = await load('src/routes/sitemap.xml/+server.ts').GET().text();
-    assert.equal(platformDownloadConfigs.length, 6);
+    assert.equal(platformDownloadConfigs.length, 8);
     for (const config of platformDownloadConfigs) {
         assert(capabilityServices.some(item => item.landingSlug === config.slug), config.slug);
         assert.deepEqual(routes.getDownloadSeoLanguages(config.slug).sort(), [...config.languages].sort());
@@ -154,6 +158,25 @@ test('six focused landing pages have usable SSR, accurate schemas and deliberate
             assert(!rendered.html.includes('hero-omnibox'));
             assert(!rendered.html.includes('class="services"'));
             assert.doesNotMatch(rendered.html, /credits?|pricing|points|unlimited|guaranteed|no registration/i);
+            if (content.quickAnswer) {
+                assert(rendered.html.includes(escapeText(content.quickAnswer)));
+                assert(rendered.html.includes(`<time datetime="${content.reviewedAt}">${content.reviewedAt}</time>`));
+                assert(rendered.html.includes('href="/en/about/general" rel="author"'));
+                for (const related of data.relatedPages) assert(rendered.html.includes(`href="/${lang}/download/${related.slug}"`));
+                for (const guide of data.relatedLearnPages) assert(rendered.html.includes(`href="/en/learn/${guide.slug}"`));
+                for (const source of content.sources) {
+                    assert(rendered.html.includes(`href="${source.href}"`));
+                    assert(rendered.html.includes(escapeText(source.note)));
+                }
+                const service = capabilityServices.find(item => item.landingSlug === config.slug);
+                assert(rendered.html.includes(escapeText(service.validation.summary)));
+                assert(rendered.html.includes(escapeText(service.validation.scope)));
+                assert(rendered.html.includes(`href="${service.validation.sourceUrl}"`));
+                const context = load('src/lib/seo/llms.ts').buildLlmsFullText();
+                assert(context.includes(service.validation.summary));
+                assert(context.includes(service.validation.scope));
+                assert.doesNotMatch(rendered.html, /sign[ -]?in|log[ -]?in|registration/i);
+            }
             for (const text of [content.h1, content.lede, ...content.steps, ...content.features, ...content.faqs.map(item => item.a), ...content.sections.flatMap(item => item.paragraphs)]) assert(rendered.html.includes(escapeText(text)), `${config.slug}/${lang}: ${text}`);
             const schema = [...rendered.head.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(match => JSON.parse(match[1]));
             const application = schema.find(item => item['@type'] === 'WebPage').mainEntity;
@@ -163,7 +186,11 @@ test('six focused landing pages have usable SSR, accurate schemas and deliberate
             assert.deepEqual(application.featureList, content.features);
             assert.equal(schema.find(item => item['@type'] === 'HowTo').totalTime, undefined);
             assert.deepEqual(schema.find(item => item['@type'] === 'FAQPage').mainEntity.map(item => item.acceptedAnswer.text), content.faqs.map(item => item.a));
-            assert(xml.includes(`<loc>https://freesavevideo.online/${lang}/download/${config.slug}</loc>`));
+            assert.equal(
+                xml.includes(`<loc>https://freesavevideo.online/${lang}/download/${config.slug}</loc>`),
+                !['loom', 'tumblr'].includes(config.id),
+                `${config.slug} must respect the focused sitemap selection`,
+            );
             const directory = await load('src/routes/[lang]/download/+page.ts').load({ params: { lang } });
             assert(directory.cards.some(item => item.slug === config.slug));
         }
@@ -447,7 +474,7 @@ test('alternative articles replace the combined URL with independent indexable p
     const articleComponent = await component('src/routes/[lang]/learn/[slug]/+page.svelte');
     const sitemap = await load('src/routes/sitemap.xml/+server.ts').GET().text();
     assert(!sitemap.includes(`/learn/${legacySlug}`));
-    for (const slug of ['cobalt-tools-alternative', 'savefrom-alternative']) {
+    for (const slug of ['cobalt-tools-alternative', 'savefrom-alternative', '9xbuddy-alternative', 'jdownloader-online-alternative']) {
         const article = getLearnPage(slug);
         assert(article);
         assert(!sitemap.includes(`/en/learn/${slug}</loc>`));
@@ -455,6 +482,20 @@ test('alternative articles replace the combined URL with independent indexable p
         assert.equal(result.article, article);
         const rendered = articleComponent.render({ data: result });
         assert(rendered.html.includes(article.title));
+        if (article.alternativeLanding) {
+            assert(rendered.html.includes('href="/en/about/general" rel="author"'));
+            assert.doesNotMatch(rendered.html, /credits?|download points|points (?:required|balance|usage)|\b(?:sign[ -]?in|log[ -]?in|registration)\b/i);
+            assert(rendered.html.includes(escapeText(article.alternativeLanding.intro)));
+            assert(rendered.html.includes(`href="${article.alternativeLanding.downloadHref}"`));
+            assert(rendered.html.includes(escapeText(article.alternativeLanding.action)));
+            assert(!rendered.html.includes('A SaveFrom alternative with no pop-up ads. Paste your link'));
+            for (const source of article.sources) assert(rendered.html.includes(`href="${source.href}"`));
+            for (const section of article.sections) {
+                assert(rendered.html.includes(escapeText(section.heading)));
+                for (const paragraph of section.body) assert(rendered.html.includes(escapeText(paragraph)));
+            }
+            await assert.rejects(route.load({ params: { lang: 'zh', slug } }), { status: 404 });
+        }
         const other = slug === 'cobalt-tools-alternative' ? 'savefrom-alternative' : 'cobalt-tools-alternative';
         assert(rendered.html.includes(`href="/en/learn/${other}"`));
         const structured = [...rendered.head.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)]

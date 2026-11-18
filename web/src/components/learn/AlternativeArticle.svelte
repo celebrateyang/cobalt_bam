@@ -6,11 +6,12 @@
     export let relatedDownloads: Array<{ slug: string; title: string; description: string }> = [];
 
     $: isCobalt = article.slug === 'cobalt-tools-alternative';
-    $: intro = isCobalt
+    $: intro = article.alternativeLanding?.intro ?? (isCobalt
         ? 'Your YouTube workflow, back on track. Save public videos, extract audio, or work through a playlist in your browser.'
-        : 'A SaveFrom alternative with no pop-up ads. Paste your link, choose your output, and save. No ad clicks required.';
-    $: downloadHref = isCobalt ? '/en/download/youtube-download' : '/en';
-    $: sectionLabels = isCobalt
+        : 'A SaveFrom alternative with no pop-up ads. Paste your link, choose your output, and save. No ad clicks required.');
+    $: downloadHref = article.alternativeLanding?.downloadHref ?? (isCobalt ? '/en/download/youtube-download' : '/en');
+    $: downloadAction = article.alternativeLanding?.action ?? (isCobalt ? 'Open YouTube downloader' : 'Open downloader');
+    $: sectionLabels = article.alternativeLanding ? [] : isCobalt
         ? ['The YouTube support gap', 'Video and audio formats', 'Work with playlists', 'Save your file', 'Is it right for you?']
         : ['Why switch?', 'Download a video', 'Save on your phone', 'Platforms and batch tasks', 'Is it right for you?'];
 </script>
@@ -19,7 +20,7 @@
     <nav class="breadcrumbs" aria-label="Breadcrumb">
         <a href="/en">Home</a><span aria-hidden="true">/</span>
         <a href="/en/learn">Learn</a><span aria-hidden="true">/</span>
-        <span>{isCobalt ? 'Cobalt.tools alternative' : 'SaveFrom alternative'}</span>
+        <span>{article.alternativeLanding?.name ?? (isCobalt ? 'Cobalt.tools alternative' : 'SaveFrom alternative')}</span>
     </nav>
 
     <article>
@@ -29,10 +30,10 @@
                 <h1>{article.title}</h1>
                 <p class="intro">{intro}</p>
                 <div class="hero-actions">
-                    <a class="cta" href={downloadHref}>{isCobalt ? 'Open YouTube downloader' : 'Open downloader'} <span aria-hidden="true">&rarr;</span></a>
+                    <a class="cta" href={downloadHref}>{downloadAction} <span aria-hidden="true">&rarr;</span></a>
                     <a class="text-link" href="#how-it-works">See how it works <span aria-hidden="true">&darr;</span></a>
                 </div>
-                <div class="byline"><span class="author-mark" aria-hidden="true">F</span><span>FreeSaveVideo Learn</span><span class="separator" aria-hidden="true">&middot;</span><span>{article.readingTime}</span><span class="date">Updated <time datetime={article.updatedAt}>{article.updatedAt}</time></span></div>
+                <div class="byline"><span class="author-mark" aria-hidden="true">F</span><a href="/en/about/general" rel="author">FreeSaveVideo Learn</a><span class="separator" aria-hidden="true">&middot;</span><span>{article.readingTime}</span><span class="date">Updated <time datetime={article.updatedAt}>{article.updatedAt}</time></span></div>
             </div>
 
             <div class="workflow" aria-label="Download workflow: paste a public link, choose your output, save your file">

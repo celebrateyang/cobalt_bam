@@ -340,6 +340,8 @@ export const isDownloadAvailableInLanguage = (slug: string, lang: string): boole
 
 export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
     ...Object.fromEntries(platformDownloadConfigs.map(item => [item.slug, platformDownloadConfigs.filter(other => other.id !== item.id).map(other => other.slug)])),
+    'loom-video-downloader': ['google-drive-video-downloader', 'vimeo-video-download', 'youtube-download'],
+    'tumblr-video-downloader': ['reddit-video-download', 'twitter-x-video-download', 'bluesky-video-downloader', 'pinterest-video-download'],
     'aparat-video-downloader': ['dailymotion-video-downloader', 'playlist-downloader', 'vimeo-video-download'],
     'google-drive-video-downloader': ['vimeo-video-download', 'dailymotion-video-downloader', 'youtube-download'],
     'dailymotion-video-downloader': ['vimeo-video-download', 'youtube-download', 'batch-video-downloader', 'playlist-downloader'],

@@ -11,6 +11,21 @@ export function parsePlatformDownloadInput(platform: DownloadPlatform, input: st
         const path = url.pathname;
         let valid = false;
         switch (platform) {
+            case 'loom':
+                valid = ['loom.com', 'www.loom.com'].includes(host)
+                    && /^\/(?:share|embed)\/(?:[a-z0-9_-]+-)?[a-f0-9]{32}\/?$/i.test(path);
+                break;
+            case 'tumblr': {
+                const blog = '[a-z0-9][a-z0-9-]{0,62}';
+                const post = '[0-9]{1,24}';
+                const suffix = '(?:/[^/]+)?/?';
+                valid = (['tumblr.com', 'www.tumblr.com'].includes(host)
+                    && new RegExp(`^/(?:blog/view/)?${blog}/${post}${suffix}$`, 'i').test(path))
+                    || (new RegExp(`^${blog}\\.tumblr\\.com$`, 'i').test(host)
+                        && !['www.tumblr.com', 'assets.tumblr.com', 'media.tumblr.com', 'static.tumblr.com'].includes(host)
+                        && new RegExp(`^/post/${post}${suffix}$`, 'i').test(path));
+                break;
+            }
             case 'rutube':
                 valid = ['rutube.ru', 'www.rutube.ru'].includes(host)
                     && /^\/(?:video|shorts|play\/embed)\/[a-f0-9]{32}\/?$/i.test(path);

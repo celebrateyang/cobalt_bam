@@ -1,3 +1,5 @@
+import { alternativeLandings } from './alternative-landings';
+
 export type LearnFaq = {
     q: string;
     a: string;
@@ -34,10 +36,12 @@ export type LearnPage = {
     relatedArticles?: string[];
     sources?: Array<{ title: string; href: string; note: string }>;
     workflows?: Array<{ title: string; description: string; href: string; action: string }>;
+    alternativeLanding?: { name: string; intro: string; downloadHref: string; action: string };
     keywords: string[];
 };
 
 export const learnPages: LearnPage[] = [
+    ...alternativeLandings,
     {
         slug: 'save-online-videos-offline-study',
         title: 'How to save online videos for offline study',
@@ -892,7 +896,7 @@ export const learnPages: LearnPage[] = [
         ],
         relatedDownloads: ['youtube-playlist-downloader', 'youtube-download', 'playlist-downloader'],
         relatedGuides: ['youtube-download-guide'],
-        relatedArticles: ['savefrom-alternative', 'youtube-playlist-only-one-video-fix'],
+        relatedArticles: ['savefrom-alternative', '9xbuddy-alternative', 'jdownloader-online-alternative', 'youtube-playlist-only-one-video-fix'],
         workflows: [
             { title: 'YouTube video and Shorts', description: 'Paste a public URL or search for a video. Choose MP4 with sound, audio only, or muted video; request the source quality you need.', href: '/en/download/youtube-download', action: 'Open YouTube workspace' },
             { title: 'Audio for listening', description: 'Choose MP3, M4A / Opus, Opus, or WAV in the YouTube workspace. MP3 offers 128, 256, and 320 kbps settings.', href: '/en/download/youtube-download', action: 'Choose an audio output' },
@@ -1001,7 +1005,7 @@ export const learnPages: LearnPage[] = [
         ],
         relatedDownloads: ['youtube-download', 'facebook-video-download', 'instagram-video-download'],
         relatedGuides: ['youtube-download-guide', 'facebook-download-guide', 'instagram-download-guide'],
-        relatedArticles: ['cobalt-tools-alternative'],
+        relatedArticles: ['cobalt-tools-alternative', '9xbuddy-alternative', 'jdownloader-online-alternative'],
         workflows: [
             { title: 'YouTube videos, Shorts and audio', description: 'Use the dedicated workspace for public YouTube links, video search, MP4 quality choices, and audio outputs.', href: '/en/download/youtube-download', action: 'Open YouTube downloader' },
             { title: 'Social video and photo posts', description: 'Find platform-specific flows for Facebook, Instagram, TikTok, X, Reddit, Vimeo, and more. Outputs depend on the source.', href: '/en/download', action: 'Browse supported platforms' },

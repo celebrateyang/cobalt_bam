@@ -1,5 +1,6 @@
 import { personalAgentDiscovery } from './agent-discovery';
 import { platformDownloadConfigs } from './platform-download-landings';
+import { getDownloadEvidence, type DownloadEvidence } from './download-evidence';
 
 export type CapabilityService = {
     id: string;
@@ -15,6 +16,7 @@ export type CapabilityService = {
     searchIntents?: string[];
     unsupportedCases?: string[];
     notes: string[];
+    validation?: DownloadEvidence;
 };
 
 export type ToolCapability = {
@@ -128,18 +130,25 @@ export const capabilityServices: CapabilityService[] = [
         name: config.name,
         category: 'video' as const,
         publicOnly: true,
-        audioMode: !['vk'].includes(config.id),
+        audioMode: !['vk', 'loom'].includes(config.id),
         noWatermark: false,
         batchFriendly: true,
         collectionFriendly: false,
         landingSlug: config.slug,
+        validation: getDownloadEvidence(config.id),
         notes: [
             `The focused ${config.name} page accepts one specific public source link. Available media and quality depend on the source.`,
             ...(config.id === 'twitch' ? ['Only individual Clips are supported; live streams, full VODs and channel archives are outside this workflow.'] : []),
             ...(config.id === 'bluesky' ? ['Native video, photo attachments and supported Tenor GIF embeds return distinct media types; arbitrary external videos are not native uploads.'] : []),
+            ...(config.id === 'loom' ? ['Public share and embed recording links, including title-prefixed IDs. Available MP4 output; no workspace export or promise of transcripts and interactive page features.'] : []),
+            ...(config.id === 'tumblr' ? ['Native Tumblr video and audio in one public post or accessible reblog trail. External video embeds, photo/GIF galleries and whole-blog archives are outside this workflow.'] : []),
         ],
         searchIntents: [`${config.name} video downloader`],
-        unsupportedCases: [...defaultUnsupportedCases, 'profile or feed URLs', 'whole-channel or playlist expansion on this page'],
+        unsupportedCases: [
+            ...defaultUnsupportedCases, 'profile or feed URLs', 'whole-channel or playlist expansion on this page',
+            ...(config.id === 'loom' ? ['workspace exports', 'interactive Loom features and guaranteed transcript export'] : []),
+            ...(config.id === 'tumblr' ? ['photo or GIF galleries', 'arbitrary external video embeds', 'whole-blog archives'] : []),
+        ],
     })),
     {
         id: 'dailymotion',

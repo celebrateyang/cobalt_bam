@@ -78,7 +78,7 @@ assert(
     'The retired article must permanently redirect to the Cobalt article',
 );
 const learnHub = readOutput('en', 'learn.html');
-for (const slug of ['cobalt-tools-alternative', 'savefrom-alternative']) {
+for (const slug of ['cobalt-tools-alternative', 'savefrom-alternative', '9xbuddy-alternative', 'jdownloader-online-alternative']) {
     const path = `/en/learn/${slug}`;
     const html = readOutput('en', 'learn', `${slug}.html`);
     assert(!sitemapLocs.has(`https://freesavevideo.online${path}`), `${slug} should be excluded from the focused sitemap`);
@@ -88,6 +88,33 @@ for (const slug of ['cobalt-tools-alternative', 'savefrom-alternative']) {
         .map(([, json]) => JSON.parse(json));
     assert(data.some(item => item['@type'] === 'Article' && item.mainEntityOfPage === `https://freesavevideo.online${path}`), `${slug} has incorrect article schema`);
     assert(data.some(item => item['@type'] === 'FAQPage'), `${slug} is missing FAQ schema`);
+}
+for (const platform of ['loom', 'tumblr']) {
+    const slug = `${platform}-video-downloader`;
+    const path = `/en/download/${slug}`;
+    const canonical = `https://freesavevideo.online${path}`;
+    const html = readOutput('en', 'download', `${slug}.html`);
+    assert(!sitemapLocs.has(canonical), `${slug} should be excluded from the focused sitemap`);
+    assert(html.includes(`rel="canonical" href="${canonical}"`), `${slug} canonical`);
+    assert(html.includes('name="robots" content="index,follow"'), `${slug} must be indexable`);
+    assert(html.includes(`id="${platform}-source-url"`), `${slug} missing download form`);
+    for (const text of ['Quick answer', 'What we checked', 'decoded successfully', 'Browser saving was not tested in this check']) {
+        assert(html.includes(text), `${slug} missing visible answer/evidence: ${text}`);
+    }
+    assert(html.includes('href="/en/about/privacy"'), `${slug} missing privacy policy`);
+    assert(html.includes('href="/en/support"'), `${slug} missing support`);
+    assert((html.match(/<h1\b/g) || []).length === 1, `${slug} requires one h1`);
+    assert(!/hreflang="(?:zh|ru|de|th)"/.test(html), `${slug} advertises untranslated pages`);
+    assert(readOutput('en', 'download.html').includes(`href="${path}"`), `${slug} missing from directory`);
+    assert(html.includes('<time datetime="2026-11-11">2026-11-11</time>'), `${slug} needs its actual content date`);
+}
+const capabilityData = JSON.parse(readOutput('capabilities.json'));
+const aiContext = readOutput('llms-full.txt');
+for (const platform of ['loom', 'tumblr']) {
+    const evidence = capabilityData.services.find(service => service.id === platform)?.validation;
+    assert(evidence?.checkedAt === '2026-11-11', `${platform} missing dated capability evidence`);
+    assert(aiContext.includes(evidence.summary) && aiContext.includes(evidence.scope), `${platform} evidence differs across discovery files`);
+    assert(readOutput('en', 'download', `${platform}-video-downloader.html`).includes(evidence.summary), `${platform} evidence not visible to people`);
 }
 const sitemapAlternates = [
     ...sitemap.matchAll(/<xhtml:link[^>]+href="([^"]+)"[^>]*\/>/g),

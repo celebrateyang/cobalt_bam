@@ -9,6 +9,7 @@
     export let content: SeoLandingLocaleContent;
     export let lang: string;
     export let related: Array<{ slug: string; name: string }> = [];
+    export let guides: Array<{ slug: string; title: string; description: string }> = [];
 
     let input = '';
     let busy = false;
@@ -91,6 +92,14 @@
         </section>
     </header>
 
+    {#if content.quickAnswer}
+        <section class="quick-answer" aria-labelledby="quick-answer-title">
+            <h2 id="quick-answer-title">Quick answer</h2>
+            <p>{content.quickAnswer}</p>
+            {#if content.reviewedAt}<p class="review-date">Reviewed <time datetime={content.reviewedAt}>{content.reviewedAt}</time> by <a href={`/${lang}/about/general`} rel="author">FreeSaveVideo</a></p>{/if}
+        </section>
+    {/if}
+
     <section class="source-section" aria-labelledby="source-heading">
         <div class="section-label"><span>01</span><h2 id="source-heading">{content.supportedLinksTitle}</h2></div>
         <div class="source-grid">
@@ -123,6 +132,18 @@
         <div class="section-label"><span>03</span><h2 id="questions-heading">{content.faqTitle}</h2></div>
         {#each content.faqs as faq}<details><summary>{faq.q}<span aria-hidden="true">+</span></summary><p>{faq.a}</p></details>{/each}
     </section>
+    {#if content.sources?.length}
+        <section class="sources" aria-labelledby="sources-title">
+            <h2 id="sources-title">Sources and checks</h2>
+            <ul>{#each content.sources as source}<li><a href={source.href} rel="noreferrer noopener">{source.title}</a><p>{source.note}</p></li>{/each}</ul>
+        </section>
+    {/if}
+    {#if guides.length}
+        <section class="related-guides" aria-labelledby="related-guides-title">
+            <h2 id="related-guides-title">Related guides</h2>
+            <ul>{#each guides as guide}<li><a href={`/en/learn/${guide.slug}`}>{guide.title}</a><p>{guide.description}</p></li>{/each}</ul>
+        </section>
+    {/if}
     <footer>
         {#if related.length}
             <nav aria-label={isRu ? 'Другие платформы' : 'Other platforms'}>{#each related as link}<a href={`/${lang}/download/${link.slug}`}>{link.name} <span aria-hidden="true">↗</span></a>{/each}</nav>
@@ -134,6 +155,12 @@
 <style>
     .platform-page { width:100%; max-width:1160px; box-sizing:border-box; padding:30px 26px 64px; color:var(--text); font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
     .platform-page :global(*) { font-family:inherit; }
+    .quick-answer { padding:24px; margin:0 0 30px; border-left:3px solid var(--platform-accent); background:var(--popup-bg); border-radius:0 10px 10px 0; }
+    .quick-answer p,.sources p,.related-guides p { line-height:1.8; color:var(--subtext); overflow-wrap:anywhere; }
+    .quick-answer p { margin:0; } .quick-answer .review-date { margin-top:14px; font-size:12px; }
+    .sources,.related-guides { border-top:1px solid var(--button-stroke); padding:30px 0; }
+    .sources ul,.related-guides ul { margin:0; padding-left:20px; } .sources li,.related-guides li { padding:8px 0; line-height:1.8; }
+    .sources p,.related-guides p { font-size:13px; margin:6px 0 0; }
     .breadcrumb { display:flex; gap:12px; flex-wrap:wrap; color:var(--subtext); font-size:12px; line-height:1.7; }
     a { color:inherit; text-underline-offset:4px; }
     .breadcrumb a { text-decoration:none; }

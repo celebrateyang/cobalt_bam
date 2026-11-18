@@ -1,6 +1,7 @@
 import type { SeoLandingPage, SeoLandingLocaleContent } from './landing-pages';
+import { longTailPlatformContent } from './long-tail-platform-content';
 
-export type DownloadPlatform = 'rutube' | 'bluesky' | 'vk' | 'threads' | 'streamable' | 'twitch';
+export type DownloadPlatform = 'rutube' | 'bluesky' | 'vk' | 'threads' | 'streamable' | 'twitch' | 'loom' | 'tumblr';
 export type PlatformDownloadConfig = {
     id: DownloadPlatform;
     name: string;
@@ -9,9 +10,12 @@ export type PlatformDownloadConfig = {
     accent: string;
     placeholder: string;
     formats: string[];
+    updatedAt?: string;
 };
 
 export const platformDownloadConfigs: PlatformDownloadConfig[] = [
+    { id: 'loom', name: 'Loom', slug: 'loom-video-downloader', languages: ['en'], accent: '#6254cc', placeholder: 'https://www.loom.com/share/VIDEO_ID', formats: ['loom.com/share/VIDEO_ID', 'loom.com/embed/VIDEO_ID'], updatedAt: '2026-11-11' },
+    { id: 'tumblr', name: 'Tumblr', slug: 'tumblr-video-downloader', languages: ['en'], accent: '#4779a8', placeholder: 'https://www.tumblr.com/BLOG/POST_ID', formats: ['tumblr.com/BLOG/POST_ID', 'BLOG.tumblr.com/post/POST_ID', 'tumblr.com/blog/view/BLOG/POST_ID'], updatedAt: '2026-11-11' },
     { id: 'rutube', name: 'RUTUBE', slug: 'rutube-video-downloader', languages: ['en', 'ru'], accent: '#356fc5', placeholder: 'https://rutube.ru/video/0123456789abcdef0123456789abcdef/', formats: ['rutube.ru/video/VIDEO_ID/', 'rutube.ru/shorts/VIDEO_ID/', 'rutube.ru/play/embed/VIDEO_ID'], },
     { id: 'bluesky', name: 'Bluesky', slug: 'bluesky-video-downloader', languages: ['en'], accent: '#1682d4', placeholder: 'https://bsky.app/profile/handle.bsky.social/post/POST_ID', formats: ['bsky.app/profile/HANDLE/post/POST_ID', 'bsky.app/profile/did:plc:IDENTIFIER/post/POST_ID'], },
     { id: 'vk', name: 'VK Video', slug: 'vk-video-downloader', languages: ['en', 'ru'], accent: '#2874cf', placeholder: 'https://vkvideo.ru/video-123456_456789', formats: ['vkvideo.ru/videoOWNER_ID_VIDEO_ID', 'vk.com/videoOWNER_ID_VIDEO_ID', 'vk.ru/clipOWNER_ID_VIDEO_ID'], },
@@ -275,6 +279,7 @@ const vkRu: SeoLandingLocaleContent = {
 };
 
 const contents: Record<DownloadPlatform, Record<string, SeoLandingLocaleContent>> = {
+    ...longTailPlatformContent,
     rutube: { en: rutube, ru: rutubeRu }, bluesky: { en: bluesky }, vk: { en: vk, ru: vkRu },
     threads: { en: threads }, streamable: { en: streamable }, twitch: { en: twitch },
 };

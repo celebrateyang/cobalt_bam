@@ -42,6 +42,9 @@ export type SeoLandingLocaleContent = {
     exampleResult?: string;
     exampleActions?: string[];
     sections?: Array<{ title: string; paragraphs: string[] }>;
+    quickAnswer?: string;
+    reviewedAt?: string;
+    sources?: Array<{ title: string; href: string; note: string }>;
 };
 
 export type SeoLandingPage = {

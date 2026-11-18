@@ -85,12 +85,13 @@ function generateSitemap(): string {
 
     for (const slug of featuredLandingSlugs) {
         const availableLanguages = getDownloadSeoLanguages(slug);
+        const platformConfig = getPlatformDownloadConfig(slug);
         for (const lang of availableLanguages) {
             const path = `/${lang}/download/${slug}`;
             urls.push(
                 urlEntry(
                     `${site}${path}`,
-                    getPlatformDownloadConfig(slug) ? '2026-10-27' : slug === 'aparat-video-downloader' ? '2026-10-25' : isTiktokLanding(slug)
+                    platformConfig ? platformConfig.updatedAt ?? '2026-10-27' : slug === 'aparat-video-downloader' ? '2026-10-25' : isTiktokLanding(slug)
                         ? tiktokContentUpdatedAt
                         : slug === 'dailymotion-video-downloader'
                         ? '2026-10-11'

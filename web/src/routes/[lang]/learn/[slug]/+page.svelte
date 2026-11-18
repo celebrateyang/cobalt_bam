@@ -104,7 +104,7 @@
     {/each}
 </svelte:head>
 
-{#if ['cobalt-tools-alternative', 'savefrom-alternative'].includes(data.article.slug)}
+{#if data.article.alternativeLanding || ['cobalt-tools-alternative', 'savefrom-alternative'].includes(data.article.slug)}
     <AlternativeArticle article={data.article} {relatedArticles} {relatedDownloads} />
 {:else}
 <main class="article-page" tabindex="-1" data-first-focus data-focus-ring-hidden>

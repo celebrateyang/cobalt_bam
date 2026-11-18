@@ -53,6 +53,8 @@ export const buildLlmsFullText = (): string => {
             flags.length ? `  Capabilities: ${flags.join(', ')}.` : null,
             service.searchIntents?.length ? `  Search intents: ${service.searchIntents.join(', ')}.` : null,
             urls.length ? `  Pages: ${urls.join('; ')}.` : null,
+            service.unsupportedCases?.length ? `  Not supported: ${service.unsupportedCases.join('; ')}.` : null,
+            service.validation ? `  Sample check (${service.validation.checkedAt}): ${service.validation.summary}\n  Scope: ${service.validation.scope}\n  Public sample: ${service.validation.sourceUrl}` : null,
         ]
             .filter(Boolean)
             .join('\n');

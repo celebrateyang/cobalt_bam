@@ -593,6 +593,10 @@
                 </button>
             {/if}
 
+            {#if subtitleSourceUrl}
+                <SubtitleDownload url={subtitleSourceUrl} {filename} inActionBar />
+            {/if}
+
             <button
                 type="button"
                 class="button elevated"
@@ -603,9 +607,6 @@
                 {copied ? $t("button.copied") : $t("button.copy")}
             </button>
         </div>
-        {#if subtitleSourceUrl}
-            <SubtitleDownload url={subtitleSourceUrl} {filename} />
-        {/if}
     </div>
 </DialogContainer>
 
@@ -625,6 +626,16 @@
         justify-content: space-between;
         gap: 12px;
         color: var(--text);
+    }
+
+    .header,
+    .preview-frame,
+    .progress-area,
+    .actions {
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+        flex-shrink: 0;
     }
 
     .header h2 {
@@ -762,8 +773,11 @@
     }
 
     .actions {
+        --subtitle-action-height: 36px;
+        --subtitle-action-padding: 7px 12px;
         display: flex;
         justify-content: flex-end;
+        align-items: center;
         flex-wrap: wrap;
         gap: 8px;
     }
@@ -772,6 +786,7 @@
         display: inline-flex;
         align-items: center;
         gap: 6px;
+        min-height: var(--subtitle-action-height);
     }
 
     .actions .button :global(svg) {

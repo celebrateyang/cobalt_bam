@@ -289,7 +289,7 @@
             <div class="processing-type">
                 <MediaTypeIcon />
             </div>
-            <span class="filename">
+            <span class="filename" title={info.filename}>
                 {info.filename}
             </span>
         </div>
@@ -361,7 +361,7 @@
             {/if}
             {#if info.mediaType === "video" && info.originalRequest?.url && !info.originalRequest.batch}
                 {#key info.originalRequest.url}
-                    <SubtitleDownload url={info.originalRequest.url} filename={info.filename} />
+                    <SubtitleDownload url={info.originalRequest.url} filename={info.filename} inActionBar />
                 {/key}
             {/if}
             {#if info.autoSave?.state !== "saved"}
@@ -472,6 +472,18 @@
         background-color: color-mix(in srgb, var(--secondary) 10%, transparent);
     }
 
+    .processing-item.done {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        align-items: start;
+    }
+
+    .processing-item.done .file-actions {
+        flex-wrap: wrap;
+        gap: 6px;
+        min-width: 0;
+    }
+
     .processing-type {
         display: flex;
     }
@@ -558,6 +570,8 @@
 
     .status-text {
         line-break: normal;
+        overflow-wrap: anywhere;
+        min-width: 0;
     }
 
     /*

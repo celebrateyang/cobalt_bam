@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onDestroy } from "svelte";
+    import IconChevronDown from "@tabler/icons-svelte/IconChevronDown.svelte";
     import API, { type SubtitleTrack } from "$lib/api/api";
     import { device } from "$lib/device";
     import { saveWithFeedback } from "$lib/download";
@@ -7,6 +8,7 @@
 
     export let url: string;
     export let filename: string;
+    export let inActionBar = false;
 
     let expanded = false;
     let status: "idle" | "loading" | "unsupported" | "error" | "ready" = "idle";
@@ -75,9 +77,10 @@
     }
 </script>
 
-<div class="subtitle-download">
-    <button type="button" class="button elevated" aria-expanded={expanded} on:click={toggle}>
+<div class="subtitle-download" class:in-action-bar={inActionBar}>
+    <button type="button" class="button elevated subtitle-toggle" aria-expanded={expanded} on:click={toggle}>
         {$t("subtitles.open")}
+        <span class="chevron" class:expanded aria-hidden="true"><IconChevronDown /></span>
     </button>
     {#if expanded}
         <div class="subtitle-options">
@@ -110,6 +113,40 @@
 <style>
     .subtitle-download { max-width: 100%; }
     .subtitle-options { margin-top: 8px; }
+    .in-action-bar { display: contents; }
+    .subtitle-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .chevron { display: inline-flex; }
+    .chevron.expanded { transform: rotate(180deg); }
+    .chevron :global(svg) { width: 14px; height: 14px; }
+    .in-action-bar .subtitle-toggle {
+        min-height: var(--subtitle-action-height, 32px);
+        padding: var(--subtitle-action-padding, 6px 10px);
+        font-size: 12px;
+        box-shadow: none;
+    }
+    .in-action-bar .subtitle-toggle[aria-expanded="true"] {
+        background: var(--button-hover);
+        color: var(--text);
+    }
+    .in-action-bar .subtitle-options {
+        order: 1;
+        flex: 0 0 100%;
+        min-width: 0;
+        box-sizing: border-box;
+        margin-top: 2px;
+        padding: 8px 10px;
+        border-radius: 8px;
+        border: 1px solid var(--button-stroke);
+        background: var(--button);
+        font-size: 12px;
+        line-height: 1.45;
+        color: var(--gray);
+        overflow-wrap: anywhere;
+    }
     ul { list-style: none; padding: 0; margin: 0; max-height: min(28vh, 220px); overflow: auto; }
     li { display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding-block: 4px; }
     p { margin: 4px 0; }

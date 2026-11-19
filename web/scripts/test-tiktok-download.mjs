@@ -15,7 +15,7 @@ const compile = source => ts.transpileModule(source, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
 
-function dialog(fetch) {
+function dialog(fetch, { ios = false, outcome = 'shared', directDownload = true } = {}) {
     let source = readFileSync(new URL('src/components/dialog/TikTokDownloadDialog.svelte', root), 'utf8')
         .split('<script lang="ts">')[1].split('</script>')[0].replace(/export let /g, 'let ');
     const ast = ts.createSourceFile('dialog.ts', source, ts.ScriptTarget.Latest, true);
@@ -24,16 +24,49 @@ function dialog(fetch) {
             source = source.slice(0, node.pos) + source.slice(node.end);
         }
     }
-    source += '\nexports.api = { start, save, downloadFromUrl, state: () => ({status, file, saveStarted}), setUrls: value => {urls = value;} };';
-    const exports = {}, saved = [];
+    source += '\nexports.api = { start, save, downloadFromUrl, state: () => ({status, file, saveStarted, statusText, previewFailed}), setUrls: value => {urls = value;}, failPreview: () => {previewFailed = true;} };';
+    const exports = {}, saved = [], shares = [];
     vm.runInNewContext(compile(source), {
         exports, fetch, File, Blob, TextDecoder, Uint8Array, AbortController,
         URL: { createObjectURL: () => 'blob:video', revokeObjectURL() {} },
         get: value => value, t: key => key, onMount() {}, onDestroy() {},
+        device: { is: { iOS: ios }, supports: { directDownload, share: true } },
+        saveWithFeedback: async (method, { file }) => { shares.push({ method, file }); return outcome; },
         openFile: file => saved.push(file), console: { warn() {} },
     });
-    return { ...exports.api, saved };
+    return { ...exports.api, saved, shares };
 }
+
+test('TikTok iOS waits for a tap, recovers blob preview, and shares the downloaded file', async () => {
+    const d = dialog(async () => new Response(mp4(), { headers: { 'content-type': 'video/mp4' } }), { ios: true });
+    d.failPreview();
+    await d.downloadFromUrl('https://v16.tokcdn.com/video', new AbortController().signal);
+    assert.equal(d.saved.length, 0);
+    assert.equal(d.state().saveStarted, false);
+    assert.equal(d.state().previewFailed, false);
+    await d.save('share');
+    assert.equal(d.shares[0].method, 'share');
+    assert.equal(d.shares[0].file, d.state().file);
+    assert.equal(d.state().statusText, 'save.result.shared');
+});
+
+test('TikTok retains the ready file after cancelled sharing and allows Files retry', async () => {
+    const d = dialog(async () => new Response(mp4()), { ios: true, outcome: 'cancelled' });
+    await d.downloadFromUrl('https://v16.tokcdn.com/video', new AbortController().signal);
+    await d.save('share');
+    assert.equal(d.state().saveStarted, false);
+    assert.equal(d.state().statusText, 'save.result.cancelled');
+    await d.save();
+    assert.equal(d.shares[1].method, 'download');
+});
+
+test('TikTok installed iOS uses native file sharing instead of unsupported blob download', async () => {
+    const d = dialog(async () => new Response(mp4()), { ios: true, directDownload: false });
+    await d.downloadFromUrl('https://v16.tokcdn.com/video', new AbortController().signal);
+    await d.save();
+    assert.equal(d.saved.length, 0);
+    assert.equal(d.shares[0].method, 'share');
+});
 
 test('TikTok cannot save an unchecked remote URL after a failed download', () => {
     const d = dialog(() => { throw new Error('unexpected request'); });

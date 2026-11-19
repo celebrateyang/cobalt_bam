@@ -2,7 +2,8 @@
     import { onDestroy, onMount } from "svelte";
     import { get } from "svelte/store";
     import { t } from "$lib/i18n/translations";
-    import { copyURL, openFile } from "$lib/download";
+    import { copyURL, openFile, saveWithFeedback } from "$lib/download";
+    import { device } from "$lib/device";
     import { offerReferralGift } from "$lib/state/referral-gift";
     import {
         detectFreeSaveVideoExtensionInstalled,
@@ -47,6 +48,7 @@
     let copied = false;
     let extensionStarted = false;
     let saveStarted = false;
+    let saving = false;
     let extensionCandidateUrls: string[] = [];
     let previewFailed = false;
     let extensionInstalled = false;
@@ -368,11 +370,14 @@
         });
         if (filePreviewUrl) URL.revokeObjectURL(filePreviewUrl);
         filePreviewUrl = URL.createObjectURL(file);
+        previewFailed = false;
         progress = 100;
         status = "done";
-        statusText = tt("dialog.tiktok_download.status.complete");
-        saveStarted = true;
-        openFile(file, giftKey);
+        statusText = tt("save.result.ready");
+        if (!device.is.iOS) {
+            saveStarted = true;
+            openFile(file, giftKey);
+        }
     };
 
     const start = async () => {
@@ -430,10 +435,19 @@
         showBlockedError();
     };
 
-    const save = () => {
+    const save = async (method: "download" | "share" = "download") => {
+        if (saving) return;
         if (file) {
-            saveStarted = true;
-            openFile(file, giftKey);
+            saving = true;
+            try {
+                const savingMethod = method === "download" && device.is.iOS
+                    && !device.supports.directDownload && device.supports.share ? "share" : method;
+                const outcome = await saveWithFeedback(savingMethod, { file });
+                saveStarted = outcome === "download" || outcome === "shared";
+                statusText = tt(`save.result.${outcome}`);
+            } finally {
+                saving = false;
+            }
             return;
         }
         // Failed CDN responses must never be saved through an unchecked link.
@@ -549,6 +563,10 @@
             />
         {/if}
 
+        {#if device.is.iOS && file}
+            <p class="media-notice" role="note">{$t("save.ios_help")}</p>
+        {/if}
+
         {#if saveStarted}
             <SaveLocationHint afterClick compact />
         {/if}
@@ -576,11 +594,19 @@
                 <button
                     type="button"
                     class="button elevated"
-                    disabled={status !== "done" || extensionStarted}
-                    on:click={save}
+                    disabled={status !== "done" || extensionStarted || saving}
+                    on:click={() => save()}
                 >
                     <IconDownload />
-                    {$t("button.download")}
+                    {$t(device.is.iOS && file
+                        ? device.supports.directDownload ? "save.action.files" : "save.action.share"
+                        : "button.download")}
+                </button>
+            {/if}
+
+            {#if device.is.iOS && file && device.supports.share && device.supports.directDownload}
+                <button type="button" class="button elevated" disabled={saving} on:click={() => save("share")}>
+                    {$t("save.action.share")}
                 </button>
             {/if}
 
@@ -598,6 +624,12 @@
 </DialogContainer>
 
 <style>
+    .media-notice {
+        color: var(--subtext);
+        font-size: .88rem;
+        line-height: 1.5;
+    }
+
     .tiktok-download-dialog {
         width: min(720px, calc(100vw - 32px));
         max-height: min(860px, calc(100vh - 32px));

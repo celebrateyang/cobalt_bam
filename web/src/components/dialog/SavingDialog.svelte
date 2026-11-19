@@ -33,7 +33,7 @@
     let outcome: SaveOutcome | undefined;
     let attempted = false;
 
-    const save = async () => {
+    const save = async (requestedMethod: "download" | "share" = "download") => {
         if (saving) return;
         saving = true;
         const repeat = attempted || saveContext.repeat;
@@ -42,7 +42,7 @@
             // Installed iOS apps save files through the native sheet.
             const method = device.is.iOS && file && !device.supports.directDownload
                 && device.supports.share ? "share" : "download";
-            outcome = await saveWithFeedback(method, {
+            outcome = await saveWithFeedback(requestedMethod === "share" ? "share" : method, {
                 file, url, urlType, onSaveResult,
                 saveContext: { ...saveContext, repeat },
             });
@@ -88,10 +88,17 @@
                 </div>
             {/if}
 
-            <button type="button" id="save-download" class="button active download-button" disabled={saving} on:click={save}>
+            <button type="button" id="save-download" class="button active download-button" disabled={saving} on:click={() => save()}>
                 <IconDownload />
-                {$t(device.is.iOS && file ? "save.action.files" : file ? "button.download" : "dialog.saving.allow_popup_download")}
+                {$t(device.is.iOS && file
+                    ? device.supports.directDownload ? "save.action.files" : "save.action.share"
+                    : file ? "button.download" : "dialog.saving.allow_popup_download")}
             </button>
+            {#if device.is.iOS && file && device.supports.share && device.supports.directDownload}
+                <button type="button" id="save-share" class="button active download-button" disabled={saving} on:click={() => save("share")}>
+                    {$t("save.action.share")}
+                </button>
+            {/if}
         </div>
     </div>
 </DialogContainer>

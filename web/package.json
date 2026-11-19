@@ -22,7 +22,7 @@
         "test:collection-selection": "node --test ./scripts/test-collection-selection.mjs",
         "test:bmc-translations": "node ./scripts/test-bmc-translations.mjs",
         "test:bmc-checkout": "node --test ./scripts/test-bmc-checkout.mjs ./scripts/test-bmc-feedback.mjs",
-        "test:saving": "node --test ./scripts/test-download-saving.mjs",
+        "test:saving": "node --test ./scripts/test-download-saving.mjs ./scripts/test-preview-saving.mjs",
         "test:download-protection": "node --test ./scripts/test-download-protection.mjs ./scripts/test-user-points.mjs ./scripts/test-points-offers.mjs ./scripts/test-download-saving.mjs",
         "test:tiktok": "node --test ./scripts/test-tiktok-download.mjs",
         "test:referral-gift": "node --test ./scripts/test-referral-gift.mjs",

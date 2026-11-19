@@ -1,7 +1,9 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte";
+    import { get } from "svelte/store";
     import { t } from "$lib/i18n/translations";
-    import { copyURL, openFile } from "$lib/download";
+    import { copyURL, openFile, saveWithFeedback } from "$lib/download";
+    import { device } from "$lib/device";
     import { offerReferralGift } from "$lib/state/referral-gift";
     import AmazonWorker from "$lib/download/amazon-worker?worker";
     import { downloadAmazonMp4 } from "@freesavevideo/amazon-direct/runner";
@@ -57,6 +59,8 @@
     let extensionStarted = false;
     let autoSaved = false;
     let saveStarted = false;
+    let saving = false;
+    let previewFailed = false;
     let extensionInstalled = false;
     let extensionCheckComplete = false;
     let extensionPromptDismissed = false;
@@ -342,12 +346,15 @@
             throw new Error("size_mismatch");
         }
 
+        // Generic CDN MIME types are suitable for transport, but WebKit needs
+        // the actual media type for blob playback and the native share sheet.
+        const genericContentType = !contentType || /^(?:application|binary)\/octet-stream(?:;|$)/i.test(contentType);
         const blob = new Blob(chunks, {
-            type: contentType || (
+            type: genericContentType ? (
                 mediaType === "audio" ? "audio/mpeg" :
                 mediaType === "image" ? "image/jpeg" :
                 "video/mp4"
-            ),
+            ) : contentType,
         });
 
         if (blob.size < 1024) {
@@ -363,11 +370,14 @@
         file = downloadedFile;
         if (filePreviewUrl) URL.revokeObjectURL(filePreviewUrl);
         filePreviewUrl = URL.createObjectURL(file);
+        previewFailed = false;
         progress = 100;
         status = "done";
-        statusText = "Download complete. Preview the file, then save it.";
+        statusText = get(t)("save.result.ready");
 
-        if (autoSave && !autoSaved) {
+        // iOS needs a fresh tap after the asynchronous transfer. Keep the ready
+        // file available for both Files download and native Save Video sharing.
+        if (autoSave && !autoSaved && !device.is.iOS) {
             autoSaved = true;
             saveStarted = true;
             openFile(file, giftKey);
@@ -379,6 +389,7 @@
         controller = new AbortController();
         const signal = controller.signal;
         file = null;
+        previewFailed = false;
         autoSaved = false;
         saveStarted = false;
         if (filePreviewUrl) {
@@ -429,13 +440,25 @@
         startedAt = 0;
     };
 
-    const save = () => {
-        saveStarted = true;
+    const save = async (method: "download" | "share" = "download") => {
+        if (saving) return;
         if (file) {
-            openFile(file, giftKey);
+            saving = true;
+            try {
+                const savingMethod = method === "download" && device.is.iOS
+                    && !device.supports.directDownload && device.supports.share ? "share" : method;
+                const outcome = await saveWithFeedback(savingMethod, { file });
+                saveStarted = outcome === "download" || outcome === "shared";
+                statusText = get(t)(`save.result.${outcome}`);
+            } finally {
+                saving = false;
+            }
         } else {
             const url = primaryUrl || activeUrl;
-            if (url) openDirectDownload(url);
+            if (url) {
+                openDirectDownload(url);
+                statusText = get(t)("save.result.download");
+            }
         }
     };
 
@@ -504,11 +527,18 @@
             {:else if mediaType === "image" && (filePreviewUrl || activeUrl)}
                 <img src={filePreviewUrl || activeUrl} alt={filename} referrerpolicy="no-referrer" />
             {:else if filePreviewUrl || activeUrl}
-                <video src={filePreviewUrl || activeUrl} controls playsinline muted></video>
+                <video src={filePreviewUrl || activeUrl} controls playsinline muted on:error={() => previewFailed = true}></video>
             {:else}
                 <div class="preview-placeholder">Preparing preview...</div>
             {/if}
         </div>
+
+        {#if device.is.iOS}
+            <p class="media-notice" role="note">{$t("save.ios_help")}</p>
+        {/if}
+        {#if previewFailed}
+            <p class="media-notice" role="status">{$t("save.result.failed")}</p>
+        {/if}
 
         <div class="progress-area">
             <div class="progress-label">
@@ -537,7 +567,7 @@
 
         <div class="actions">
             {#if status === "fallback" || status === "error"}
-                <button type="button" class="button elevated" on:click={save}>
+                <button type="button" class="button elevated" on:click={() => save()}>
                     <IconDownload />
                     {amazonHls ? "Open media playlist" : $t("button.download")}
                 </button>
@@ -545,11 +575,19 @@
                 <button
                     type="button"
                     class="button elevated"
-                    disabled={status !== "done" || extensionStarted}
-                    on:click={save}
+                    disabled={status !== "done" || extensionStarted || saving}
+                    on:click={() => save()}
                 >
                     <IconDownload />
-                    {$t("button.download")}
+                    {$t(device.is.iOS && file
+                        ? device.supports.directDownload ? "save.action.files" : "save.action.share"
+                        : "button.download")}
+                </button>
+            {/if}
+
+            {#if device.is.iOS && file && device.supports.share && device.supports.directDownload}
+                <button type="button" class="button elevated" disabled={saving} on:click={() => save("share")}>
+                    {$t("save.action.share")}
                 </button>
             {/if}
 

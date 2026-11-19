@@ -150,6 +150,22 @@ test('Amazon Direct Bridge opens a download dialog without a queue task', async 
     assert.deepEqual(Array.from(f.dialogs[0].urls), [url]);
 });
 
+test('all preview Direct Bridge platforms retain the shared manual saving UI on mobile', async () => {
+    const services = ['amazon', 'youporn', 'aparat', 'deeplearningai', 'magnific', 'bilibili',
+        'bilibili_cdn', 'douyin', 'tencent_video', 'twitter', 'wechat_channels', 'xiaohongshu'];
+    for (const service of services) {
+        const f = tunnelFixture(true);
+        const url = 'https://cdn.example.com/video.mp4';
+        await f.savingHandler({
+            request: { url: `https://example.com/${service}`, localProcessing: 'never' },
+            response: { status: 'redirect', service, url, directUrl: url, filename: 'video.mp4' },
+        });
+        assert.equal(f.dialogs.length, 1, service);
+        assert.equal(f.dialogs[0].type, 'preview-download', service);
+        assert.equal(f.downloads.length, 0, `${service} must use the dialog's saving actions`);
+    }
+});
+
 test('server processing tunnels enter the visible queue without opening a blank tab', async () => {
     for (const type of ['remux', 'merge', 'mute', 'audio', 'gif']) {
         const f = tunnelFixture();

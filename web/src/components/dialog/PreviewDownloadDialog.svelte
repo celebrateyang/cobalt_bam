@@ -16,6 +16,7 @@
 
     import DialogContainer from "$components/dialog/DialogContainer.svelte";
     import ExtensionInstallPrompt from "$components/dialog/ExtensionInstallPrompt.svelte";
+    import SubtitleDownload from "$components/save/SubtitleDownload.svelte";
     import SaveLocationHint from "$components/save/SaveLocationHint.svelte";
 
     import IconCheck from "@tabler/icons-svelte/IconCheck.svelte";
@@ -29,6 +30,7 @@
     export let dismissable = true;
     export let title = "Video preview and download";
     export let filename: string;
+    export let subtitleSourceUrl: string | undefined = undefined;
     export let urls: string[] = [];
     export let extensionUrls: string[] = [];
     export let mediaType: "video" | "audio" | "image" = "video";
@@ -601,6 +603,9 @@
                 {copied ? $t("button.copied") : $t("button.copy")}
             </button>
         </div>
+        {#if subtitleSourceUrl}
+            <SubtitleDownload url={subtitleSourceUrl} {filename} />
+        {/if}
     </div>
 </DialogContainer>
 
@@ -611,6 +616,7 @@
         display: flex;
         flex-direction: column;
         gap: 16px;
+        overflow-y: auto;
     }
 
     .header {

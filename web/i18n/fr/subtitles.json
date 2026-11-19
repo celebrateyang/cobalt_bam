@@ -1,0 +1,14 @@
+{
+    "open": "Télécharger les sous-titres",
+    "loading": "Recherche de sous-titres…",
+    "unsupported": "Le téléchargement de sous-titres est indisponible pour cette plateforme.",
+    "empty": "Cette vidéo ne propose pas de sous-titres téléchargeables.",
+    "error": "Impossible de rechercher les sous-titres.",
+    "retry": "Réessayer",
+    "automatic": "Générés automatiquement",
+    "preparing": "Préparation…",
+    "save": "Enregistrer",
+    "file_error": "Impossible d’enregistrer le fichier de sous-titres.",
+    "started": "Téléchargement de la vidéo lancé",
+    "close": "Fermer"
+}

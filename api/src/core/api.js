@@ -25,6 +25,7 @@ import { getHeaders } from "../stream/shared.js";
 import { safeDestroyStream } from "../stream/safe-destroy.js";
 import { expandURL } from "../processing/expand.js";
 import { searchYouTube, YouTubeSearchError } from "../processing/youtube-search.js";
+import { parseSubtitleSource, readSubtitleTracks, readSubtitleFile } from "../processing/video-subtitles.js";
 import extractGeneric, {
     canAttemptGenericURL,
     getGenericServiceHost,
@@ -764,7 +765,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         });
     }
 
-    app.post(['/', '/expand', '/youtube/search'], (req, res, next) => {
+    app.post(['/', '/expand', '/youtube/search', '/subtitles'], (req, res, next) => {
         if (!acceptRegex.test(req.header('Accept'))) {
             return fail(res, "error.api.header.accept");
         }
@@ -774,7 +775,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         next();
     });
 
-    app.post(['/', '/expand', '/youtube/search'], (req, res, next) => {
+    app.post(['/', '/expand', '/youtube/search', '/subtitles'], (req, res, next) => {
         if (!env.apiKeyURL) {
             return next();
         }
@@ -802,7 +803,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         return next();
     });
 
-    app.post(['/', '/expand', '/youtube/search'], (req, res, next) => {
+    app.post(['/', '/expand', '/youtube/search', '/subtitles'], (req, res, next) => {
         if (!env.sessionEnabled || req.rateLimitKey) {
             return next();
         }
@@ -834,12 +835,19 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         next();
     });
 
-    app.post(['/', '/expand', '/youtube/search'], apiLimiter);
+    app.post(['/', '/expand', '/youtube/search', '/subtitles'], apiLimiter);
     const youtubeSearchLimiter = rateLimit({
         windowMs: 60_000,
         limit: 12,
         keyGenerator,
         store: await createStore('youtube-search'),
+        handler: handleRateExceeded,
+    });
+    const subtitleLimiter = rateLimit({
+        windowMs: 60_000,
+        limit: 12,
+        keyGenerator,
+        store: await createStore('subtitles'),
         handler: handleRateExceeded,
     });
     app.use('/', express.json({ limit: "32kb" }));
@@ -911,6 +919,32 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 status: 'error',
                 error: { code: known ? error.code : 'error.api.youtube.search.unavailable' },
             });
+        }
+    });
+
+    app.post('/subtitles', subtitleLimiter, async (req, res) => {
+        res.set("Cache-Control", "no-store");
+        const source = parseSubtitleSource(req.body?.url);
+        if (!source) return res.json({ status: "unsupported" });
+        const allowed = APIKeys.getAllowedServices(req.rateLimitKey) || env.enabledServices;
+        if (!env.enabledServices.has(source.platform) || !allowed.has(source.platform)) {
+            return res.json({ status: "unsupported" });
+        }
+        const trackId = req.body?.trackId;
+        if (trackId !== undefined && (typeof trackId !== "string" || !/^(?:manual|auto):[\w-]{1,64}$/.test(trackId))) {
+            return res.status(400).json({ status: "error" });
+        }
+        try {
+            const tracks = await readSubtitleTracks(source);
+            if (trackId === undefined) {
+                return res.json({ status: "ok", tracks: tracks.map(({ file, ...track }) => track) });
+            }
+            const track = tracks.find(item => item.id === trackId);
+            if (!track) return res.status(404).json({ status: "error" });
+            const text = await readSubtitleFile(source.platform, track);
+            return res.json({ status: "ok", text });
+        } catch {
+            return res.status(502).json({ status: "error" });
         }
     });
 

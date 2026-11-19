@@ -8,6 +8,7 @@ import lazySettingGetter from "$lib/settings/lazy-get";
 import { get } from "svelte/store";
 import { loadTranslations, t } from "$lib/i18n/translations";
 import { downloadFile } from "$lib/download";
+import { subtitleDownloadNotice } from "$lib/state/subtitle-download";
 import { createDialog } from "$lib/state/dialogs";
 import { downloadButtonState } from "$lib/state/omnibox";
 import { createDirectCdnPipeline, createSavePipeline } from "$lib/task-manager/queue";
@@ -169,6 +170,7 @@ const openPreviewDownloadDialog = (
     mediaUrls: string[],
     response: { filename: string; service?: string },
     extensionUrls?: string[],
+    subtitleSourceUrl?: string,
 ) => {
     const mediaType = /\.(?:jpe?g|png|webp|gif|avif)$/i.test(response.filename)
         ? "image"
@@ -200,6 +202,7 @@ const openPreviewDownloadDialog = (
         urls: mediaUrls,
         extensionUrls,
         mediaType,
+        subtitleSourceUrl: mediaType === "video" ? subtitleSourceUrl : undefined,
         autoSave: true,
         amazonHls: response.service === "amazon" || response.service === "youporn",
         ...extensionPrompt,
@@ -563,6 +566,13 @@ export const savingHandler = async ({
     // Every browser launch gets a stable logical identity. Queue retries keep
     // this value so the API can reuse the same points hold.
     selectedRequest.queueId ||= effectiveTaskId;
+    const showSubtitleNotice = (filename: string) => {
+        if (!selectedRequest.batch && !isYouTubeDownloadPageRoute()
+            && /\.(?:mp4|webm|mov|mkv|m4v)$/i.test(filename)) {
+            subtitleDownloadNotice.set({ url: selectedRequest.url, filename });
+        }
+    };
+    if (!selectedRequest.batch) subtitleDownloadNotice.set(null);
 
     const showRedditPhotoHandoff = async (confirmedPhotos: boolean, errorText = '') => {
         if (shouldSuppressError('error.api.reddit.browser_required')) return;
@@ -871,6 +881,7 @@ export const savingHandler = async ({
                 directMediaUrls.length ? directMediaUrls : directCandidates,
                 response,
                 directCandidates,
+                selectedRequest.batch ? undefined : selectedRequest.url,
             );
             return response;
         }
@@ -939,6 +950,7 @@ export const savingHandler = async ({
             url: redirectUrl,
             urlType: "redirect",
         });
+        showSubtitleNotice(response.filename);
         return response;
     }
 
@@ -983,6 +995,7 @@ export const savingHandler = async ({
             downloadFile({
                 url: tunnelUrl,
             });
+            showSubtitleNotice(response.filename);
             return response;
         } else {
             downloadButtonState.set("error");

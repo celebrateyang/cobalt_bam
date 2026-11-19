@@ -334,7 +334,42 @@ const searchYouTube = async (query: string, signal?: AbortSignal, justRetried = 
     }
 };
 
+export type SubtitleTrack = {
+    id: string;
+    language: string;
+    name?: string;
+    automatic: boolean;
+    format: "srt" | "vtt";
+};
+
+type SubtitleResponse = CobaltErrorResponse | { status: "unsupported" }
+    | { status: "ok"; tracks: SubtitleTrack[] }
+    | { status: "ok"; text: string };
+
+const subtitles = async (body: { url: string; trackId?: string }, retried = false): Promise<SubtitleResponse> => {
+    if (!await getServerInfo()) throw new Error("API unavailable");
+    const authorization = await getAuthorization();
+    if (authorization && typeof authorization !== "string") return authorization;
+    const response: SubtitleResponse = await fetch(`${currentApiURL()}/subtitles`, {
+        method: "POST",
+        redirect: "error",
+        signal: AbortSignal.timeout(55000),
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            ...(authorization ? { Authorization: authorization } : {}),
+        },
+        body: JSON.stringify(body),
+    }).then(result => result.json());
+    if (response.status === "error" && response.error?.code === "error.api.auth.jwt.invalid" && !retried) {
+        resetSession();
+        return subtitles(body, true);
+    }
+    return response;
+};
+
 export default {
+    subtitles,
     request,
     expand,
     searchYouTube,

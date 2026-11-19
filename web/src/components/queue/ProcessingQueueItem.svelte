@@ -3,6 +3,7 @@
     import { page } from "$app/stores";
     import { formatFileSize, uuid } from "$lib/util";
     import { saveQueueFile } from "$lib/task-manager/save-file";
+    import SubtitleDownload from "$components/save/SubtitleDownload.svelte";
     import SupportLink from "$components/save/SupportLink.svelte";
     import { getProgress } from "$lib/task-manager/queue";
     import { savingHandler } from "$lib/api/saving-handler";
@@ -357,6 +358,11 @@
                         {$t("button.save")}
                     {/if}
                 </button>
+            {/if}
+            {#if info.mediaType === "video" && info.originalRequest?.url && !info.originalRequest.batch}
+                {#key info.originalRequest.url}
+                    <SubtitleDownload url={info.originalRequest.url} filename={info.filename} />
+                {/key}
             {/if}
             {#if info.autoSave?.state !== "saved"}
                 <button

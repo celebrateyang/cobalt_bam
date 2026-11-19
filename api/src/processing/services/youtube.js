@@ -776,7 +776,7 @@ const buildFilenameAttributes = ({
     };
 };
 
-const runYtDlp = async ({ id, requestClientIp, cookieHeader, traceId }) => {
+const runYtDlp = async ({ id, requestClientIp, cookieHeader, traceId, subtitles = false }) => {
     const runnerStartedAt = Date.now();
     const runner = await resolveYtDlpCommand();
     const runnerWaitMs = Date.now() - runnerStartedAt;
@@ -784,11 +784,12 @@ const runYtDlp = async ({ id, requestClientIp, cookieHeader, traceId }) => {
         return { error: "fetch.fail", message: "yt-dlp executable not found" };
     }
 
-    const timeoutMs = (() => {
+    const configuredTimeout = (() => {
         const parsed = parseInt(String(process.env.YTDLP_TIMEOUT_MS || ""), 10);
         if (Number.isFinite(parsed) && parsed > 0) return parsed;
         return DEFAULT_TIMEOUT_MS;
     })();
+    const timeoutMs = subtitles ? Math.min(configuredTimeout, 20000) : configuredTimeout;
     const forceIpv4 = (() => {
         const raw = String(process.env.YTDLP_FORCE_IPV4 || "true").trim().toLowerCase();
         return !["0", "false", "no", "off"].includes(raw);
@@ -805,6 +806,7 @@ const runYtDlp = async ({ id, requestClientIp, cookieHeader, traceId }) => {
         "--no-warnings",
         "--retries", "2",
         "--socket-timeout", "15",
+        ...(subtitles ? ["--simulate", "--ignore-no-formats-error", "--write-subs", "--write-auto-subs"] : []),
     ];
 
     if (forceIpv4) {
@@ -865,6 +867,17 @@ const runYtDlp = async ({ id, requestClientIp, cookieHeader, traceId }) => {
             await rm(cookieBundle.tempDir, { recursive: true, force: true }).catch(() => {});
         }
     }
+};
+
+export const youtubeSubtitleMetadata = async (id) => {
+    const anonymous = await runYtDlp({ id, subtitles: true });
+    if (anonymous.info) return anonymous.info;
+    const cookieHeader = getCookie("youtube")?.toString();
+    if (cookieHeader) {
+        const authenticated = await runYtDlp({ id, cookieHeader, subtitles: true });
+        if (authenticated.info) return authenticated.info;
+    }
+    throw new Error("Unable to extract YouTube subtitles");
 };
 
 export const buildYoutubeResult = ({

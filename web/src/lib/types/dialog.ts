@@ -93,6 +93,7 @@ type TikTokDownloadDialog = Dialog & {
 
 type PreviewDownloadDialog = Dialog & {
     type: "preview-download",
+    subtitleSourceUrl?: string,
     title?: string,
     filename: string,
     urls: string[],

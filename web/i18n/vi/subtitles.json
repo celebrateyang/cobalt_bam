@@ -1,0 +1,14 @@
+{
+    "open": "Tải phụ đề",
+    "loading": "Đang tìm phụ đề…",
+    "unsupported": "Hiện chưa hỗ trợ tải phụ đề từ nền tảng này.",
+    "empty": "Video này không có phụ đề để tải xuống.",
+    "error": "Không thể kiểm tra phụ đề.",
+    "retry": "Thử lại",
+    "automatic": "Tạo tự động",
+    "preparing": "Đang chuẩn bị…",
+    "save": "Lưu",
+    "file_error": "Không thể lưu tệp phụ đề.",
+    "started": "Đã bắt đầu tải video",
+    "close": "Đóng"
+}

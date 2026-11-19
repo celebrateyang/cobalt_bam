@@ -1,0 +1,14 @@
+{
+    "open": "Download subtitles",
+    "loading": "Looking for subtitles…",
+    "unsupported": "Subtitle downloads are currently unavailable for this platform.",
+    "empty": "There are no downloadable subtitles for this video.",
+    "error": "Could not check for subtitles.",
+    "retry": "Retry",
+    "automatic": "Auto-generated",
+    "preparing": "Preparing…",
+    "save": "Save",
+    "file_error": "Could not save the subtitle file.",
+    "started": "Video download started",
+    "close": "Dismiss"
+}

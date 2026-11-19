@@ -1,0 +1,14 @@
+{
+    "open": "Descargar subtítulos",
+    "loading": "Buscando subtítulos…",
+    "unsupported": "La descarga de subtítulos aún no está disponible para esta plataforma.",
+    "empty": "Este vídeo no tiene subtítulos descargables.",
+    "error": "No se pudo comprobar si hay subtítulos.",
+    "retry": "Reintentar",
+    "automatic": "Generados automáticamente",
+    "preparing": "Preparando…",
+    "save": "Guardar",
+    "file_error": "No se pudo guardar el archivo de subtítulos.",
+    "started": "Descarga de vídeo iniciada",
+    "close": "Cerrar"
+}

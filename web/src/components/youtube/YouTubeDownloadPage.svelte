@@ -1,4 +1,5 @@
 <script lang="ts">
+    import SubtitleDownload from "$components/save/SubtitleDownload.svelte";
     import { onMount, onDestroy, tick } from 'svelte';
     import { page } from '$app/stores';
     import { getYouTubeCopy } from '$lib/youtube/copy';
@@ -315,6 +316,9 @@
                 </div>
                 <p class="muted">{copy.sourceNote}</p>
                 <div class="download-actions"><button class="primary" disabled={downloadBusy} aria-busy={downloadBusy} on:click={downloadSelected}>{downloadBusy ? downloadLabel : copy.download}{#if downloadBusy}<span class="download-spinner" aria-hidden="true"></span>{:else}<span aria-hidden="true">↓</span>{/if}</button><a href={selected.url} target="_blank" rel="noopener noreferrer nofollow">{copy.watch} ↗</a></div>
+                {#key selected.id}
+                    <SubtitleDownload url={selected.url} filename={selected.title.replace(/[\/:*?"<>|]/g, "-") + ".mp4"} />
+                {/key}
                 {#if downloadBusy}<p class="sr-only" role="status">{copy.downloadStages[downloadStage]}</p>{/if}
                 {#if downloadBusy && downloadStage === 'resolving' && stageSeconds >= 15}<p class="muted" role="status">{copy.longWait}</p>{/if}
                 {#if notice}<p class="notice" role="status">{notice}</p>{/if}

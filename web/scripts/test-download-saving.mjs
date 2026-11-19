@@ -62,7 +62,7 @@ const fixture = (pref = "download", browserWindow) => {
 
 const tunnelFixture = (mobile = false) => {
     const pipelines = [], downloads = [], states = [], dialogs = [];
-    const releases = [];
+    const releases = [], subtitleNotices = [];
     let probes = 0;
     const source = readFileSync(new URL('src/lib/api/saving-handler.ts', root), 'utf8');
     const compiled = ts.transpileModule(source, {
@@ -83,6 +83,7 @@ const tunnelFixture = (mobile = false) => {
         '$lib/download': { downloadFile: (...args) => downloads.push(args) },
         '$lib/history': { addToHistory: () => {} },
         '$lib/state/dialogs': { createDialog: dialog => dialogs.push(dialog) },
+        '$lib/state/subtitle-download': { subtitleDownloadNotice: { set: value => subtitleNotices.push(value) } },
         '$lib/util': { uuid: () => 'task-test' },
         '$lib/api/api-url': { currentApiURL: () => 'https://api.example.com/' },
         '$lib/api/api': { default: { probeCobaltTunnel: async () => { probes++; return 200; } } },
@@ -92,7 +93,7 @@ const tunnelFixture = (mobile = false) => {
         window: { location: { origin: 'https://example.com' } },
         require: name => dependencies[name] || {},
     });
-    return { savingHandler: exports.savingHandler, pipelines, downloads, states, dialogs, releases, probes: () => probes };
+    return { savingHandler: exports.savingHandler, pipelines, downloads, states, dialogs, releases, subtitleNotices, probes: () => probes };
 };
 
 const mobileLargeArgs = {
@@ -162,6 +163,7 @@ test('all preview Direct Bridge platforms retain the shared manual saving UI on 
         });
         assert.equal(f.dialogs.length, 1, service);
         assert.equal(f.dialogs[0].type, 'preview-download', service);
+        assert.equal(f.dialogs[0].subtitleSourceUrl, `https://example.com/${service}`);
         assert.equal(f.downloads.length, 0, `${service} must use the dialog's saving actions`);
     }
 });
@@ -189,6 +191,7 @@ test('ordinary proxy tunnels retain the existing browser handoff', async () => {
     assert.equal(f.pipelines.length, 0);
     assert.equal(f.downloads.length, 1);
     assert.equal(f.probes(), 1);
+    assert.equal(f.subtitleNotices.at(-1)?.url, 'https://example.com/video');
 });
 
 test("CDN downloads open once without a false blocked-popup dialog or Referer", async () => {

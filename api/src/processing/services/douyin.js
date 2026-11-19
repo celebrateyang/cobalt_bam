@@ -315,7 +315,7 @@ const requestUpstreamCobalt = async (targetUrl, options = {}) => {
     return null;
 };
 
-const resolveShortLinkFinalUrl = async (shortLink) => {
+const resolveShortLinkFinalUrl = async (shortLink, followRedirects = true) => {
     const baseUrl = `https://v.douyin.com/${shortLink}/`;
     const cookie = getDouyinCookie();
 
@@ -353,6 +353,8 @@ const resolveShortLinkFinalUrl = async (shortLink) => {
         // ignore
     }
 
+    if (!followRedirects) return null;
+
     const res = await fetch(baseUrl, {
         method: "HEAD",
         redirect: "follow",
@@ -386,6 +388,12 @@ const extractResolvedDouyinId = (urlString) => {
     if (mid) return mid;
 
     return null;
+};
+
+export const resolveSubtitleVideoId = async (shortLink) => {
+    const resolved = await resolveShortLinkFinalUrl(shortLink, false);
+    const match = resolved && /^https:\/\/(?:www\.|m\.)?(?:ies)?douyin\.com\/(?:share\/)?video\/(\d{8,24})(?:[/?#]|$)/i.exec(resolved);
+    return match?.[1];
 };
 
 const isUserProfileUrl = (urlString) => {
@@ -509,6 +517,41 @@ const fetchAppAwemeDetail = async (videoId) => {
     } catch {
         return null;
     }
+};
+
+const readShareRouterData = (html) => {
+    const router = html.match(/window\._ROUTER_DATA\s*=\s*(.*?)(?=<\/script>)/s);
+    if (router) return JSON.parse(router[1].trim());
+    const render = html.match(/window\._RENDER_DATA\s*=\s*(.*?)(?=<\/script>)/s);
+    return render ? JSON.parse(decodeURIComponent(render[1].trim())) : null;
+};
+
+const fetchShareSubtitleDetail = async (videoId) => {
+    try {
+        const cookie = getDouyinCookie();
+        const response = await fetch(`https://www.iesdouyin.com/share/video/${videoId}`, {
+            headers: withDouyinCookie({ "user-agent": MOBILE_UA }, cookie),
+            signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
+        });
+        updateCookie(cookie, response.headers);
+        if (!response.ok) return null;
+        const loader = readShareRouterData(await response.text())?.loaderData || {};
+        const key = Object.keys(loader).find(key => key.startsWith("video_") && key.includes("/page"));
+        const info = loader[key]?.videoInfoRes;
+        return info?.aweme_details?.[0] || info?.item_list?.[0] || null;
+    } catch {
+        return null;
+    }
+};
+
+export const fetchDouyinSubtitleDetails = async (videoId) => {
+    const details = (await Promise.all([
+        fetchAppAwemeDetail(videoId),
+        fetchWebAwemeDetail(videoId),
+        fetchShareSubtitleDetail(videoId),
+    ])).filter(item => item?.video && String(item.aweme_id) === videoId);
+    if (!details.length) throw new Error("Unable to retrieve Douyin video details");
+    return details;
 };
 
 const parseTotalLength = (headers) => {
@@ -1672,16 +1715,7 @@ export default async function(obj) {
     // Extract _ROUTER_DATA
     let data;
     try {
-        const jsonStr = html.match(/window\._ROUTER_DATA\s*=\s*(.*?)(?=<\/script>)/s);
-        if (jsonStr) {
-            data = JSON.parse(jsonStr[1].trim());
-        } else {
-            // Fallback for RENDER_DATA
-            const renderStr = html.match(/window\._RENDER_DATA\s*=\s*(.*?)(?=<\/script>)/s);
-            if (renderStr) {
-                data = JSON.parse(decodeURIComponent(renderStr[1].trim()));
-            }
-        }
+        data = readShareRouterData(html);
         
         if (!data) throw new Error("no router data found in html");
     } catch (e) {

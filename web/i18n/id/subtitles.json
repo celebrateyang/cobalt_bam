@@ -1,0 +1,14 @@
+{
+    "open": "Unduh subtitel",
+    "loading": "Mencari subtitel…",
+    "unsupported": "Unduhan subtitel belum tersedia untuk platform ini.",
+    "empty": "Video ini tidak memiliki subtitel yang bisa diunduh.",
+    "error": "Tidak dapat memeriksa subtitel.",
+    "retry": "Coba lagi",
+    "automatic": "Dibuat otomatis",
+    "preparing": "Menyiapkan…",
+    "save": "Simpan",
+    "file_error": "File subtitel tidak dapat disimpan.",
+    "started": "Unduhan video dimulai",
+    "close": "Tutup"
+}

@@ -1,0 +1,14 @@
+{
+    "open": "下载字幕",
+    "loading": "正在查找字幕…",
+    "unsupported": "暂不支持从此平台下载字幕。",
+    "empty": "此视频没有可下载的字幕。",
+    "error": "暂时无法获取字幕。",
+    "retry": "重试",
+    "automatic": "自动生成",
+    "preparing": "正在准备…",
+    "save": "保存",
+    "file_error": "无法保存字幕文件。",
+    "started": "已发起视频下载",
+    "close": "关闭"
+}

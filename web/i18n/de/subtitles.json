@@ -1,0 +1,14 @@
+{
+    "open": "Untertitel herunterladen",
+    "loading": "Untertitel werden gesucht…",
+    "unsupported": "Für diese Plattform sind Untertitel-Downloads derzeit nicht verfügbar.",
+    "empty": "Für dieses Video sind keine Untertitel zum Download verfügbar.",
+    "error": "Untertitel konnten nicht abgefragt werden.",
+    "retry": "Erneut versuchen",
+    "automatic": "Automatisch erstellt",
+    "preparing": "Wird vorbereitet…",
+    "save": "Speichern",
+    "file_error": "Die Untertiteldatei konnte nicht gespeichert werden.",
+    "started": "Video-Download gestartet",
+    "close": "Schließen"
+}

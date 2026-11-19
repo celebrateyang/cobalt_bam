@@ -1,5 +1,8 @@
 <script lang="ts">
     import dialogs from "$lib/state/dialogs";
+    import { subtitleDownloadNotice } from "$lib/state/subtitle-download";
+    import { t } from "$lib/i18n/translations";
+    import SubtitleDownload from "$components/save/SubtitleDownload.svelte";
 
     import SmallDialog from "$components/dialog/SmallDialog.svelte";
     import DownloadOfferDialog from "$components/dialog/DownloadOfferDialog.svelte";
@@ -52,7 +55,34 @@
     <div id="dialog-backdrop" class:visible={backdropVisible}></div>
 </div>
 
+{#if $subtitleDownloadNotice && !$dialogs.length}
+    {#key $subtitleDownloadNotice}
+        <aside class="subtitle-notice" aria-label={$t("subtitles.started")}>
+            <div class="notice-header">
+                <span>{$t("subtitles.started")}</span>
+                <button class="button" type="button" aria-label={$t("subtitles.close")} on:click={() => subtitleDownloadNotice.set(null)}>×</button>
+            </div>
+            <SubtitleDownload url={$subtitleDownloadNotice.url} filename={$subtitleDownloadNotice.filename} />
+        </aside>
+    {/key}
+{/if}
+
 <style>
+    .subtitle-notice {
+        position: fixed;
+        inset-inline-end: 16px;
+        inset-block-end: max(16px, env(safe-area-inset-bottom));
+        z-index: 98;
+        width: min(330px, calc(100vw - 32px));
+        padding: 12px;
+        display: grid;
+        gap: 8px;
+        background: var(--popup-bg);
+        box-shadow: 0 0 0 1px var(--popup-stroke) inset, 0 4px 20px var(--dialog-backdrop);
+        border-radius: var(--border-radius);
+    }
+
+    .notice-header { display: flex; justify-content: space-between; align-items: center; }
     :global(dialog) {
         display: flex;
         flex-direction: column;

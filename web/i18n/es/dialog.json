@@ -25,6 +25,7 @@
     "offer.credit_body": "Suficientes puntos para esta descarga. Usa el resto en futuras descargas.",
     "offer.buy_credit": "Comprar {{ count }} puntos",
     "offer.recommended": "Recomendado",
+    "offer.review_within_24h": "El resultado de la revisión estará disponible en un plazo de 24 horas.",
     "offer.x_follow_title": "Síguenos en X y recibe 100 puntos",
     "offer.x_follow_summary": "Sigue nuestra cuenta de X y envía una captura de pantalla. Los puntos se añaden tras una revisión manual.",
     "offer.x_follow_apply": "Solicitar 100 puntos (abre una nueva pestaña)",

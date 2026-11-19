@@ -34,6 +34,9 @@
     let disposed = false;
     let scrollArea: HTMLDivElement;
     let canScrollFurther = false;
+    $: isChinese = $page.params.lang === "zh";
+    $: provider = isChinese ? "wechat" : OFFER_PROVIDER;
+    $: currency = isChinese ? "CNY" : "USD";
 
     function observeOverflow(node: HTMLDivElement) {
         const update = () => {
@@ -57,9 +60,13 @@
     const price = (product: Offer) => new Intl.NumberFormat($page.params.lang || "en", {
         style: "currency", currency: product.currency, currencyDisplay: "code",
     }).format(product.amountFen / 100);
+    const unitPrice = (product: Offer) => new Intl.NumberFormat($page.params.lang || "en", {
+        style: "currency", currency: product.currency, currencyDisplay: "code",
+        minimumFractionDigits: 2, maximumFractionDigits: 8,
+    }).format(product.amountFen / 100 / Number(product.points));
 
     async function products(kind: string) {
-        const response = await fetch(`${currentApiURL()}/payments/${kind}/products?provider=${OFFER_PROVIDER}`, {
+        const response = await fetch(`${currentApiURL()}/payments/${kind}/products?provider=${provider}`, {
             signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]),
         });
         const data = await response.json();
@@ -73,10 +80,10 @@
             products("credits"), products("memberships"), fetchCurrentUserPointsProfile(),
         ]);
         if (disposed) return;
-        credits = creditResult.status === "fulfilled" ? creditResult.value.filter((p: Offer) => isAvailableOffer(p) && Number(p.points) > 0).sort((a: Offer, b: Offer) => Number(a.points) - Number(b.points)) : [];
+        credits = creditResult.status === "fulfilled" ? creditResult.value.filter((p: Offer) => isAvailableOffer(p, currency) && !p.key.startsWith("points_test_") && Number(p.points) > 0).sort((a: Offer, b: Offer) => Number(a.points) - Number(b.points)) : [];
         // Do not offer an additional pass when membership state is unknown or active.
         passes = passResult.status === "fulfilled" && profile.status === "fulfilled" && profile.value && !profile.value.membershipActive
-            ? passResult.value.filter((p: Offer) => isAvailableOffer(p) && Number(p.durationDays) > 0 && p.billingType === "one_time").sort((a: Offer, b: Offer) => Number(a.durationDays) - Number(b.durationDays)) : [];
+            ? passResult.value.filter((p: Offer) => isAvailableOffer(p, currency) && Number(p.durationDays) > 0 && p.billingType === "one_time").sort((a: Offer, b: Offer) => Number(a.durationDays) - Number(b.durationDays)) : [];
         failed = creditResult.status === "rejected" || passResult.status === "rejected" || profile.status === "rejected" ||
             (profile.status === "fulfilled" && !profile.value);
         loading = false;
@@ -90,7 +97,7 @@
         try {
             try { trackTopupPrompt(kind === "credit" ? "topup" : "membership", "single_download", currentPoints, requiredPoints); } catch { /* Best-effort analytics. */ }
             const target = new URL(accountPath(kind === "credit" ? "topup" : "membership", redirectPath), window.location.origin);
-            target.searchParams.set("provider", OFFER_PROVIDER);
+            target.searchParams.set("provider", provider);
             target.searchParams.set("checkout_product", product.key);
             target.searchParams.set("checkout_kind", kind);
             await goto(`${target.pathname}${target.search}`);
@@ -162,10 +169,14 @@
                         </section>
                     {/each}
                     {:else}
+                    {#if credits.length}
+                        <p class="credit-benefit"><span class="credit-benefit-icon"><OfferIcon name="check" /></span><span>{$t("auth.bmc_terms")}</span></p>
+                    {/if}
                     {#each credits as credit (credit.key)}
                         <section class="plan offer-card">
                             <div class="plan-heading"><h3>{$t("dialog.offer.credit_title", { count: credit.points })}</h3>
                             <strong class="price">{price(credit)}</strong></div>
+                            <p class="unit-price">{unitPrice(credit)} / {$t("auth.points_label")}</p>
                             <button class="offer-action offer-action--primary" disabled={busy} aria-busy={busyAction === "credit"} on:click={() => buy("credit", credit)}>
                                 {#if busyAction === "credit"}<span class="offer-spinner" aria-hidden="true"></span>{/if}
                                 <span>{busyAction === "credit" ? $t("dialog.offer.opening") : $t("dialog.offer.buy_credit", { count: credit.points })}</span>
@@ -173,7 +184,7 @@
                         </section>
                     {/each}
                     {/if}
-                    {#if (selected === "membership" ? passes : credits).length}<p class="note">{$t("dialog.offer.one_time")}</p>{/if}
+                    {#if selected === "membership" && passes.length}<p class="note">{$t("dialog.offer.one_time")}</p>{/if}
                     {#if failed || !(selected === "membership" ? passes : credits).length}
                         <p role="status">{$t("dialog.offer.load_failed")}</p>
                         <button class="offer-action offer-action--link" on:click={load}>{$t("dialog.offer.retry")}</button>
@@ -181,7 +192,36 @@
                 {/if}
                 {#if purchaseError}<p role="alert">{purchaseError}</p>{/if}
                 </div>
-                {#if selected === "free"}<section class="free-option">
+                {#if selected === "free"}
+                {#if isChinese}
+                <section class="free-option">
+                    <h3><span class="reward-icon"><OfferIcon name="gift" /></span><span>{$t("dialog.offer.x_follow_title")}</span></h3>
+                    <p>{$t("dialog.offer.x_follow_summary")}</p>
+                    <p class="review-time">{$t("dialog.offer.review_within_24h")}</p>
+                    <a class="offer-action offer-action--reward" href={`/${$page.params.lang || "zh"}/free-points#x-follow-title`} target="_blank" rel="noopener noreferrer">
+                        <OfferIcon name="arrow" /><span>{$t("dialog.offer.x_follow_apply")}</span>
+                    </a>
+                </section>
+                <section class="free-option">
+                    <h3><span class="reward-icon"><OfferIcon name="gift" /></span><span>{$t("dialog.offer.wechat_title")}</span></h3>
+                    <p>{$t("auth.contact_points_subtitle")}</p>
+                    <a class="offer-action offer-action--reward" href={`/${$page.params.lang || "zh"}/free-points#chat-title`} target="_blank" rel="noopener noreferrer">
+                        <OfferIcon name="arrow" /><span>{$t("dialog.offer.wechat_action")}</span>
+                    </a>
+                </section>
+                <section class="free-option">
+                    <h3>{$t("auth.referral_title")}</h3>
+                    <p>{$t("auth.referral_subtitle")}</p>
+                    <a class="offer-action offer-action--reward" href={accountPath("referral", redirectPath)} on:click={close}>{$t("button.invite_points")}</a>
+                </section>
+                <section class="free-option">
+                    <h3>{$t("auth.promotion_title")}</h3>
+                    <p>{$t("auth.promotion_subtitle")}</p>
+                    <p class="review-time">{$t("dialog.offer.review_within_24h")}</p>
+                    <a class="offer-action offer-action--reward" href={accountPath("promotion", redirectPath)} on:click={close}>{$t("auth.promotion_title")}</a>
+                </section>
+                {:else}
+                <p class="review-time">{$t("dialog.offer.review_within_24h")}</p><section class="free-option">
                     <h3><span class="reward-icon"><OfferIcon name="gift" /></span><span>{$t("dialog.offer.x_follow_title")}</span></h3>
                     <p>{$t("dialog.offer.x_follow_summary")}</p>
                     <a class="offer-action offer-action--reward" href={`/${$page.params.lang || "en"}/free-points#x-follow-title`} target="_blank" rel="noopener noreferrer">
@@ -195,6 +235,7 @@
                         <OfferIcon name="share" /><span>{$t("dialog.offer.share_claim", { count: SHARE_REWARD_POINTS })}</span>
                     </button>
                 </section>
+                {/if}
                 {/if}
             {/if}
             </div>
@@ -231,10 +272,15 @@
     h3 { font-size: 17px; line-height: 1.4; }
     p { font-size: 13px; line-height: 1.6; }
     .balance, .note { color: var(--subtext); }
+    .credit-benefit { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--accent-strong) 30%, transparent); border-radius: 13px; background: color-mix(in srgb, var(--accent) 10%, var(--background)); color: var(--offer-ink); font-weight: 700; }
+    .credit-benefit-icon { display: flex; align-items: center; justify-content: center; flex: 0 0 26px; width: 26px; height: 26px; border-radius: 50%; background: color-mix(in srgb, var(--accent) 20%, var(--background)); }
+    .credit-benefit-icon :global(svg) { width: 17px; height: 17px; }
+    .review-time { color: var(--offer-ink); font-weight: 700; }
     .plan { position: relative; display: flex; flex-direction: column; gap: 7px; padding: 13px; border: 1px solid color-mix(in srgb, var(--text) 14%, transparent); border-radius: 15px; background: var(--background); box-shadow: 0 1px 3px rgb(0 0 0 / 4%); flex-shrink: 0; transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease; }
     .recommended { border-color: color-mix(in srgb, var(--accent-strong) 55%, transparent); background: color-mix(in srgb, var(--accent) 7%, var(--background)); }
     .badge { max-width: 100%; box-sizing: border-box; padding: 3px 8px; border: 1px solid color-mix(in srgb, var(--accent-strong) 25%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--accent) 14%, var(--background)); color: var(--offer-ink); font-size: 10.5px; line-height: 1.25; font-weight: 700; }
     .price { font-size: 23px; white-space: nowrap; font-variant-numeric: tabular-nums; letter-spacing: -.03em; }
+    .unit-price { color: var(--subtext); font-variant-numeric: tabular-nums; }
     .free-option { display: flex; flex-direction: column; flex-shrink: 0; gap: 8px; padding: 12px; border: 1px solid color-mix(in srgb, var(--accent-strong) 18%, transparent); border-radius: 15px; background: color-mix(in srgb, var(--accent) 4%, var(--popup-bg)); }
     .free-option h3 { display: flex; align-items: center; gap: 9px; color: var(--offer-ink); font-size: 16px; }
     .reward-icon { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; flex: 0 0 30px; border-radius: 9px; background: color-mix(in srgb, var(--accent) 15%, var(--popup-bg)); }

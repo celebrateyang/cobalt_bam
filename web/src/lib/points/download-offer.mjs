@@ -17,9 +17,9 @@ export const PASS_PRODUCT_KEY = "member_3day_buymeacoffee";
  * @property {string[]} [entitlements]
  * @property {{dailySuccessfulDownloads?: number}} [limits]
  */
-/** @param {OfferProduct | null | undefined} product */
-export const isAvailableOffer = (product) => Boolean(product &&
-    product.enabled === true && product.currency === "USD" &&
+/** @param {OfferProduct | null | undefined} product @param {string} [currency] */
+export const isAvailableOffer = (product, currency = "USD") => Boolean(product &&
+    product.enabled === true && product.currency === currency &&
     Number.isSafeInteger(product.amountFen) && product.amountFen > 0);
 
 /** @param {OfferProduct[]} products @param {number} gap */

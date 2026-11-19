@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { selectCreditOffer, selectPassOffer, shareWebsiteUrl, whatsappRewardUrl } from "../src/lib/points/download-offer.mjs";
+import { isAvailableOffer, selectCreditOffer, selectPassOffer, shareWebsiteUrl, whatsappRewardUrl } from "../src/lib/points/download-offer.mjs";
+
+test("availability respects the requested payment currency", () => {
+    const product = { key: "points_100", points: 100, amountFen: 100, currency: "CNY", enabled: true };
+    assert.equal(isAvailableOffer(product, "CNY"), true);
+    assert.equal(isAvailableOffer(product), false);
+    assert.equal(isAvailableOffer({ ...product, enabled: false }, "CNY"), false);
+    assert.equal(isAvailableOffer({ ...product, amountFen: 0 }, "CNY"), false);
+});
 
 test("offers only enabled products with enough credit and the advertised pass terms", () => {
     const credit = { key: "buymeacoffee_usd_199", points: 1200, amountFen: 199, currency: "USD", enabled: true };

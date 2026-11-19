@@ -274,7 +274,7 @@ export const showSingleDownloadOffer = (
   requiredPoints: number,
   redirectPath?: string | null,
 ) => {
-  if (get(page)?.params?.lang === "zh" || /^\/[^/]+\/discover(?:\/|$)/.test(get(page)?.url?.pathname || "")) {
+  if (/^\/[^/]+\/discover(?:\/|$)/.test(get(page)?.url?.pathname || "")) {
     showPointsInsufficientDialog(currentPoints, requiredPoints, null, redirectPath);
     return;
   }

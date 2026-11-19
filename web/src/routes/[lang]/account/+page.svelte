@@ -223,10 +223,9 @@
         };
     };
 
-    const getRequestedAccountSection = (): AccountSection | null => {
+    const getRequestedAccountSection = (url: URL): AccountSection | null => {
         if (!browser) return null;
-
-        const raw = new URLSearchParams(window.location.search).get("section");
+        const raw = url.searchParams.get("section");
         if (
             raw === "membership" ||
             raw === "topup" ||
@@ -239,9 +238,9 @@
         return null;
     };
 
-    const getRequestedMembershipProduct = (): MembershipProductTarget | null => {
+    const getRequestedMembershipProduct = (url: URL): MembershipProductTarget | null => {
         if (!browser) return null;
-        return new URLSearchParams(window.location.search).get("product") === "yearly"
+        return url.searchParams.get("product") === "yearly"
             ? "yearly"
             : null;
     };
@@ -295,8 +294,8 @@
     let feedbackRecords: FeedbackRecord[] = [];
     let lastRecordsUserId: string | null = null;
 
-    $: requestedAccountSection = getRequestedAccountSection();
-    $: requestedMembershipProduct = getRequestedMembershipProduct();
+    $: requestedAccountSection = getRequestedAccountSection($page.url);
+    $: requestedMembershipProduct = getRequestedMembershipProduct($page.url);
 
     $: if (requestedAccountSection === "contact") {
         contactAccordionOpen = true;
@@ -1661,6 +1660,19 @@
         const checkoutIntent = $page.url.searchParams.get("checkout");
         const requestedProduct = $page.url.searchParams.get("checkout_product");
         const requestedKind = $page.url.searchParams.get("checkout_kind");
+        if (requestedProduct && (requestedKind === "credit" || requestedKind === "membership") && isChinese && $page.url.searchParams.get("provider") === "wechat") {
+            if (selectedPaymentProvider !== "wechat" || (requestedKind === "credit" ? creditProductsLoading : membershipProductsLoading)) return;
+            const product = (requestedKind === "credit" ? creditProducts : membershipProducts).find((p) => p.key === requestedProduct && p.enabled === true && p.currency === "CNY" && !p.key.startsWith("points_test_"));
+            if (!product || purchaseLoading || activeOrder?.status === "CREATED") return;
+            checkoutIntentHandled = true;
+            const url = new URL(window.location.href);
+            url.searchParams.delete("checkout_product");
+            url.searchParams.delete("checkout_kind");
+            window.history.replaceState({}, "", url.toString());
+            if (requestedKind === "membership") void startMembershipWechatPay(product.key);
+            else void startWechatPay(product.key);
+            return;
+        }
         if (requestedProduct && (requestedKind === "credit" || requestedKind === "membership") && $page.url.searchParams.get("provider") === "buymeacoffee") {
             if (selectedPaymentProvider !== "buymeacoffee" && !isChinese) {
                 selectPaymentProvider("buymeacoffee");

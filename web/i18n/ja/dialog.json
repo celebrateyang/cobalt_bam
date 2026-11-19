@@ -25,6 +25,7 @@
     "offer.credit_body": "今回のダウンロードに十分なポイントです。残りは次回以降に使えます。",
     "offer.buy_credit": "{{ count }} ポイントを購入",
     "offer.recommended": "おすすめ",
+    "offer.review_within_24h": "審査結果は24時間以内にお知らせします。",
     "offer.x_follow_title": "X をフォローして 100 ポイント獲得",
     "offer.x_follow_summary": "X アカウントをフォローしてスクリーンショットを提出してください。担当者の確認後にポイントを付与します。",
     "offer.x_follow_apply": "100 ポイントを申請（新しいタブで開く）",

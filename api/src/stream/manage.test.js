@@ -2,7 +2,26 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { env } from "../config.js";
-import { createStream, verifyStream, getInternalTunnelFromURL, destroyInternalStream } from "./manage.js";
+import { createStream, createProxyTunnels, verifyStream, getInternalTunnelFromURL, destroyInternalStream } from "./manage.js";
+
+test("YouTube browser track tunnels survive long downloads without shortening configured lifetimes", () => {
+    const previous = env.streamLifespan;
+    try {
+        for (const configured of [1800, 18000]) {
+            env.streamLifespan = configured;
+            const before = Date.now();
+            const urls = createProxyTunnels({ service: "youtube", url: ["https://cdn.example/video", "https://cdn.example/audio"] });
+            for (const url of urls) {
+                const expires = Number(new URL(url).searchParams.get("exp"));
+                assert.ok(expires >= before + Math.max(configured, 14400) * 1000);
+            }
+            const other = createProxyTunnels({ service: "vimeo", url: "https://cdn.example/video" });
+            assert.ok(Number(new URL(other[0]).searchParams.get("exp")) < before + (configured + 2) * 1000);
+        }
+    } finally {
+        env.streamLifespan = previous;
+    }
+});
 
 test("Rutube HLS processing reads the original playlist so relative segments resolve", async () => {
     const source = 'https://cdn.example.com/hls/video.m3u8?token=test';

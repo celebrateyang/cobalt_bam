@@ -138,6 +138,11 @@ export function createProxyTunnels(info) {
         type: "proxy",
         headers: info?.headers,
         requestIP: info?.requestIP,
+        // Browser downloads fetch separate tracks serially and can exceed the
+        // default 30-minute upstream lifetime before requesting the next chunk.
+        ...(info?.service === "youtube"
+            ? { lifespanSec: Math.max(env.streamLifespan, 4 * 60 * 60) }
+            : {}),
     }
 
     const streamSelectionHint =

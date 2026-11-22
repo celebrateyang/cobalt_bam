@@ -8,6 +8,14 @@ import { env } from "../../config.js";
 const mediaUrl = (itag) =>
     `https://rr.example.googlevideo.com/videoplayback?itag=${itag}&c=VISIONOS`;
 
+test("rejects active and upcoming live streams without rejecting completed broadcasts", () => {
+    for (const info of [{ is_live: true }, { live_status: "is_live" }, { live_status: "is_upcoming" }]) {
+        assert.equal(buildYoutubeResult({ info, o: { id: "video-id" } }).error, "content.video.live");
+    }
+    const completed = buildYoutubeResult({ info: { live_status: "was_live", formats: [] }, o: { id: "video-id" }, targetQuality: 1080 });
+    assert.notEqual(completed.error, "content.video.live");
+});
+
 const hlsUrl = (itag) =>
     `https://manifest.googlevideo.com/api/manifest/hls_playlist/itag/${itag}/playlist/index.m3u8`;
 

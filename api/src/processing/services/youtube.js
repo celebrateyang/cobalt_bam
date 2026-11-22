@@ -887,6 +887,9 @@ export const buildYoutubeResult = ({
     targetQuality,
 }) => {
     const allFormats = Array.isArray(info.formats) ? info.formats : [];
+    if (info.is_live === true || info.live_status === "is_live" || info.live_status === "is_upcoming") {
+        return { error: "content.video.live" };
+    }
     const duration = parseNumber(info.duration);
     if (exceedsYoutubeDurationLimit(duration)) {
         return { error: "content.too_long" };

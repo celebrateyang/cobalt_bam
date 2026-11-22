@@ -18,10 +18,18 @@ test('YouTube tunnel resumes without repeating the prefix and preserves HTTP ran
     const source = createServer((req, res) => {
         res.setHeader('Content-Type', 'video/mp4');
         if (req.method === 'HEAD') {
+            if (sourceMode === 'unknown-total' || sourceMode === 'probe-total') return res.end();
             res.setHeader('Content-Length', media.length);
             return res.end();
         }
         sourceRanges.push(req.headers.range);
+        if ((sourceMode === 'unknown-total' || sourceMode === 'probe-total') && req.headers.range === 'bytes=0-0') {
+            res.writeHead(206, {
+                'Content-Length': 1,
+                ...(sourceMode === 'probe-total' ? { 'Content-Range': `bytes 0-0/${media.length}` } : {}),
+            });
+            return res.end(media.subarray(0, 1));
+        }
         if (sourceMode === 'ignore-range') {
             res.setHeader('Content-Length', media.length);
             return res.end(media);
@@ -101,6 +109,17 @@ test('YouTube tunnel resumes without repeating the prefix and preserves HTTP ran
     const retry = await get(`bytes=${prefix.length}-`);
     assert.equal(retry.response.status, 206);
     assert.deepEqual(Buffer.concat([prefix, retry.bytes]), media);
+
+    sourceMode = 'unknown-total';
+    const unknown = await get('bytes=100-199');
+    assert.equal(unknown.response.status, 502);
+    assert.equal(unknown.bytes.length, 0);
+    assert.notEqual(unknown.response.headers.get('content-range'), 'bytes */1');
+
+    sourceMode = 'probe-total';
+    const probed = await get('bytes=100-199');
+    assert.equal(probed.response.status, 206);
+    assert.deepEqual(probed.bytes, media.subarray(100, 200));
 
     for (const mode of ['ignore-range', 'wrong-offset']) {
         sourceMode = mode;

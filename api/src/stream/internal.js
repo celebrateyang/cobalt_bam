@@ -361,7 +361,11 @@ async function handleChunkedStream(streamInfo, res) {
                 responseContentType = probeResponse.headers.get("content-type") || responseContentType;
 
                 const totalFromRange = parseContentRangeTotal(probeResponse.headers.get("content-range"));
-                size = totalFromRange || parseBigIntHeaderValue(probeResponse.headers.get("content-length"));
+                // A 206 Content-Length is the length of the probe, not the file.
+                // Only a full 200 response can supply the total this way.
+                size = totalFromRange || (probeResponse.status === 200
+                    ? parseBigIntHeaderValue(probeResponse.headers.get("content-length"))
+                    : 0n);
 
                 try {
                     await probeResponse.body?.cancel();

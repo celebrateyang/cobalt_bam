@@ -10,7 +10,7 @@ import * as svelte from 'svelte';
 import * as svelteStore from 'svelte/store';
 
 // Load the real route/data modules without a production build or network calls.
-// Only framework context and the decorative supported-services strip are stubbed.
+// Framework context and components absent from the initial SEO HTML are stubbed.
 const root = fileURLToPath(new URL('../', import.meta.url));
 const cache = new Map();
 const testPage = svelteStore.writable({ params: { lang: 'en' }, url: new URL('https://freesavevideo.online/en/faq') });
@@ -28,6 +28,8 @@ const framework = {
     '$app/environment': { browser: false, dev: false, building: false },
     '$lib/i18n/translations': { t: testTranslations },
     '$components/save/SupportedServices.svelte': { __esModule: true, default: svelteInternal.create_ssr_component(() => '') },
+    // The subtitle control only appears after a user selects a video; it is not part of the initial SEO HTML.
+    '$components/save/SubtitleDownload.svelte': { __esModule: true, default: svelteInternal.create_ssr_component(() => '') },
 };
 
 function evaluate(source, filename) {

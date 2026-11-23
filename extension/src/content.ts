@@ -36,6 +36,7 @@ const isAllowedPageBridgeUrl = (value: string) => {
         if (url.protocol !== 'https:') return false;
         const host = url.hostname.toLowerCase();
         return host === 'tiktok.com' ||
+            (host === 'cdn1.suno.ai' && !url.username && !url.password && !url.port && /^\/[0-9a-f-]{36}\.mp4$/i.test(url.pathname)) ||
             host.endsWith('.tiktok.com') ||
             host.endsWith('.tiktokcdn.com') ||
             host.endsWith('.tiktokcdn-us.com') ||

@@ -178,7 +178,7 @@ test('Amazon Direct Bridge opens a download dialog without a queue task', async 
 });
 
 test('all preview Direct Bridge platforms retain the shared manual saving UI on mobile', async () => {
-    const services = ['amazon', 'youporn', 'aparat', 'deeplearningai', 'magnific', 'bilibili',
+    const services = ['amazon', 'youporn', 'aparat', 'deeplearningai', 'suno', 'magnific', 'bilibili',
         'bilibili_cdn', 'douyin', 'tencent_video', 'twitter', 'wechat_channels', 'xiaohongshu'];
     for (const service of services) {
         const f = tunnelFixture(true);

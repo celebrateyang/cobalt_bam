@@ -16,6 +16,7 @@ const lastModified = {
 const indexedPaths = ['/en', '/es/download', '/ja/download'];
 // Dedicated pages reviewed in the November 2026 landing-page traffic analysis.
 const featuredLandingSlugs = [
+    'suno-downloader',
     'youtube-download', 'aparat-video-downloader', 'dailymotion-video-downloader',
     'google-drive-video-downloader', 'vk-video-downloader', 'rutube-video-downloader',
     'streamable-video-downloader', 'threads-video-downloader', 'bluesky-video-downloader',

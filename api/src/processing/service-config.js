@@ -1,6 +1,6 @@
 import UrlPattern from "url-pattern";
 
-export const audioIgnore = new Set(["vk", "ok", "loom", "sooplive"]);
+export const audioIgnore = new Set(["vk", "ok", "loom", "sooplive", "suno"]);
 export const hlsExceptions = new Set(["amazon", "dailymotion", "naver", "vimeo", "rutube", "bsky", "youtube", "cctv", "bjnews", "niconico", "weibo", "sooplive"]);
 
 export const services = {
@@ -76,6 +76,9 @@ export const services = {
     },
     dailymotion: {
         patterns: ["video/:id"],
+    },
+    suno: {
+        patterns: ["s/:shortLink", "song/:id"],
     },
     deeplearningai: {
         patterns: [

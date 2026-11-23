@@ -26,6 +26,7 @@ if the desired service isn't supported yet, feel free to create an appropriate i
 | bilibili          | ✅            | ✅         | ✅         | ➖         | ➖              |
 | bluesky           | ✅            | ✅         | ✅         | ➖         | ➖              |
 | dailymotion       | ✅            | ✅         | ✅         | ✅         | ✅              |
+| suno              | ✅            | ❌         | ❌         | ❌         | ❌              |
 | instagram         | ✅            | ✅         | ✅         | ➖         | ➖              |
 | iqiyi            | ✅            | ✅         | ✅         | ✅         | ✅              |
 | haokan            | ✅            | ✅         | ✅         | ✅         | ✅              |

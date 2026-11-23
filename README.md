@@ -37,6 +37,7 @@ this list is not final and keeps expanding over time. if support for a service y
 | bilibili          | ✅            | ✅         | ✅         | ➖         | ➖              |
 | bluesky           | ✅            | ✅         | ✅         | ➖         | ➖              |
 | dailymotion       | ✅            | ✅         | ✅         | ✅         | ✅              |
+| suno              | ✅            | ❌         | ❌         | ❌         | ❌              |
 | instagram         | ✅            | ✅         | ✅         | ➖         | ➖              |
 | iqiyi            | ✅            | ✅         | ✅         | ✅         | ✅              |
 | haokan            | ✅            | ✅         | ✅         | ✅         | ✅              |

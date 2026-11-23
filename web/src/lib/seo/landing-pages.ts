@@ -5,6 +5,7 @@ import { xinpianchangLanding } from '$lib/seo/xinpianchang-landing';
 import { soopliveLanding } from '$lib/seo/sooplive-landing';
 import { magnificLanding } from '$lib/seo/magnific-landing';
 import { dailymotionLanding } from '$lib/seo/dailymotion-landing';
+import { sunoLanding } from '$lib/seo/suno-landing';
 import { googleDriveLanding } from '$lib/seo/google-drive-landing';
 import { aparatLanding } from '$lib/seo/aparat-landing';
 import { getSocialDownloadContent, socialPlatformForSlug } from '$lib/seo/social-download-content';
@@ -870,6 +871,7 @@ const landingPages: SeoLandingPage[] = [
     googleDriveLanding,
     aparatLanding,
     dailymotionLanding,
+    sunoLanding,
     magnificLanding,
     soopliveLanding,
     xinpianchangLanding,

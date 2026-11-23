@@ -156,6 +156,7 @@ const isPreviewDownloadResponse = (response: CobaltAPIResponse) => (
         response.service === "youporn" ||
         response.service === "aparat" ||
         response.service === "deeplearningai" ||
+        response.service === "suno" ||
         response.service === "magnific" ||
         response.service === "bilibili" ||
         response.service === "bilibili_cdn" ||

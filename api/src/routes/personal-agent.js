@@ -43,7 +43,7 @@ export const agentCapabilities = {
         creditProductsPath: "/payments/credits/products", membershipProductsPath: "/payments/memberships/products" },
     limits: { maximumDailyCallsPerGrant: 100, callsPerMinutePerUser: 10, concurrentCallsPerUser: 2, dailyResetTimezone: "UTC" },
     delivery: { statuses: ["redirect", "tunnel", "picker", "local-processing"],
-        directBridge: ["tiktok", "deeplearningai"], urlsMayExpire: true,
+        directBridge: ["tiktok", "deeplearningai", "suno"], urlsMayExpire: true,
         cors: "Direct fetch, then browser extension, then user browser handoff. No automatic proxy fallback." },
     payments: { automaticRecharge: false, userConfirmationRequired: true, checkoutSupported:true,
         productsPath:"/agent/v1/products", createPath:"/agent/v1/checkouts", statusPath:"/agent/v1/checkouts/{checkoutId}",

@@ -642,6 +642,7 @@ test('every advertised download and guide detail renders localized shared labels
                 assert(!html.includes('class="omnibox'), context);
             } else if (kind === 'download') {
                 const focused = params.slug === 'dailymotion-video-downloader'
+                    || params.slug === 'suno-downloader'
                     || params.slug === 'google-drive-video-downloader'
                     || load('src/lib/seo/tiktok-content.ts').isTiktokLanding(params.slug)
                     || (params.lang === 'en' && params.slug === 'vimeo-video-download')
@@ -853,7 +854,7 @@ test('sitemap contains only indexed pages and the selected landing pages', async
     assert(xml.includes('<loc>https://freesavevideo.online/en/download/google-drive-video-downloader</loc>'));
     assert(!xml.includes('/zh/download/google-drive-video-downloader'));
     for (const path of ['/en', '/es/download', '/ja/download']) assert(xml.includes(`<loc>https://freesavevideo.online${path}</loc>`));
-    const slugs = ['youtube-download', 'aparat-video-downloader', 'dailymotion-video-downloader', 'google-drive-video-downloader', 'vk-video-downloader', 'rutube-video-downloader', 'streamable-video-downloader', 'threads-video-downloader', 'bluesky-video-downloader', 'twitch-clip-downloader', 'vimeo-video-download', 'reddit-video-download', 'pinterest-video-download', 'tiktok-no-watermark'];
+    const slugs = ['suno-downloader', 'youtube-download', 'aparat-video-downloader', 'dailymotion-video-downloader', 'google-drive-video-downloader', 'vk-video-downloader', 'rutube-video-downloader', 'streamable-video-downloader', 'threads-video-downloader', 'bluesky-video-downloader', 'twitch-clip-downloader', 'vimeo-video-download', 'reddit-video-download', 'pinterest-video-download', 'tiktok-no-watermark'];
     const expected = new Set(['/en', '/es/download', '/ja/download']);
     for (const slug of slugs) for (const lang of routes.getDownloadSeoLanguages(slug)) expected.add(`/${lang}/download/${slug}`);
     const locations = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map(m => m[1]);

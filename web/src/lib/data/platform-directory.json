@@ -251,6 +251,10 @@
     {
       "id": "deeplearningai",
       "name": "DeepLearning.AI"
+    },
+    {
+      "id": "suno",
+      "name": "Suno"
     }
   ],
   "additional": [

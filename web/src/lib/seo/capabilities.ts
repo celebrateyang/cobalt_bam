@@ -125,6 +125,14 @@ const defaultUnsupportedCases = [
 ];
 
 export const capabilityServices: CapabilityService[] = [
+    {
+        id: 'suno', name: 'Suno', category: 'video', publicOnly: true,
+        audioMode: false, noWatermark: false, batchFriendly: true, collectionFriendly: false,
+        landingSlug: 'suno-downloader',
+        searchIntents: ['suno downloader', 'suno to mp4', 'download suno song video'],
+        unsupportedCases: [...defaultUnsupportedCases, 'MP3 or WAV export', 'songs without an available MP4', 'playlist expansion'],
+        notes: ['Supports individual public song and share links when the song page exposes an MP4.'],
+    },
     ...platformDownloadConfigs.filter(config => config.id !== 'threads').map(config => ({
         id: config.id === 'bluesky' ? 'bsky' : config.id,
         name: config.name,

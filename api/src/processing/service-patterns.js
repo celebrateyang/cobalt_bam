@@ -38,6 +38,9 @@ export const testers = {
 
     "dailymotion": pattern => pattern.id?.length <= 32,
 
+    "suno": pattern => /^[a-z0-9]{1,64}$/i.test(pattern.shortLink || "") ||
+        /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(pattern.id || ""),
+
     "deeplearningai": pattern =>
         pattern.courseSlug?.length <= 128 &&
         pattern.lessonId?.length <= 32 &&

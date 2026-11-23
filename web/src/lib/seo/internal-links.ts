@@ -20,6 +20,7 @@ type CrossLinkEntry = {
 export type LinkAudience = 'all' | 'international';
 
 const crossLinkEntries: CrossLinkEntry[] = [
+    { platform: 'Suno', downloadSlug: 'suno-downloader' },
     ...platformDownloadConfigs.map(item => ({ platform: item.name, downloadSlug: item.slug, homeKey: item.id === 'bluesky' ? 'bsky' : item.id })),
     { platform: 'Aparat', downloadSlug: 'aparat-video-downloader', homeKey: 'aparat' },
     { platform: 'Google Drive', downloadSlug: 'google-drive-video-downloader' },
@@ -208,6 +209,7 @@ const strategicDownloadOrder = [
     'aparat-video-downloader',
     'dailymotion-video-downloader',
     'youtube-download',
+    'suno-downloader',
     'youtube-playlist-downloader',
     'youtube-shorts-download',
     'youtube-playlist-to-mp3',
@@ -243,6 +245,7 @@ const strategicDownloadOrder = [
 ] as const;
 
 const internationalDownloadSlugs = new Set([
+    'suno-downloader',
     ...platformDownloadConfigs.map(item => item.slug),
     'aparat-video-downloader',
     'google-drive-video-downloader',
@@ -326,6 +329,7 @@ const matchesAudience = (slug: string, audience: LinkAudience): boolean =>
 // Keep links and route generation on the same language policy. Do not advertise
 // translated URLs merely because an English fallback can render their content.
 export const isDownloadAvailableInLanguage = (slug: string, lang: string): boolean => {
+    if (slug === 'suno-downloader') return lang === 'en';
     const focusedPlatform = getPlatformDownloadConfig(slug);
     if (focusedPlatform) return focusedPlatform.languages.includes(lang);
     if (slug === 'aparat-video-downloader') return lang === 'en' || lang === 'fa';

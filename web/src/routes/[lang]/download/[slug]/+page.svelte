@@ -86,7 +86,7 @@
         name: getPlatformDownloadConfig(landing.slug)?.name ?? getSeoLandingLocale(landing, data.lang).h1,
     }));
     $: usesFocusedPriorityContent =
-        isGoogleDrive || isAparat || Boolean(focusedPlatform) ||
+        isGoogleDrive || isAparat || data.slug === 'suno-downloader' || Boolean(focusedPlatform) ||
         isTiktok ||
         Boolean(socialPlatform) ||
         isEnglishVimeo ||
@@ -172,7 +172,7 @@
               '@type': 'HowTo',
               name: localeContent.stepsTitle,
               description: localeContent.lede,
-              ...(focusedPlatform || socialPlatform || ['xinpianchang-video-download', 'dailymotion-video-downloader'].includes(data.slug) || isEnglishVimeo || isGoogleDrive ? {} : { totalTime: 'PT1M' }),
+              ...(focusedPlatform || socialPlatform || ['xinpianchang-video-download', 'dailymotion-video-downloader', 'suno-downloader'].includes(data.slug) || isEnglishVimeo || isGoogleDrive ? {} : { totalTime: 'PT1M' }),
               tool: [
                   {
                       '@type': 'HowToTool',
@@ -219,9 +219,9 @@
                       localeContent.h1,
                       ...localeContent.metaKeywords,
                       'public video download',
-                        ...(focusedPlatform || socialPlatform || isTiktok || isEnglishVimeo || isGoogleDrive || data.slug === 'dailymotion-video-downloader' ? [] : ['batch download', 'playlist download', 'audio extraction']),
+                        ...(focusedPlatform || socialPlatform || isTiktok || isEnglishVimeo || isGoogleDrive || ['dailymotion-video-downloader', 'suno-downloader'].includes(data.slug) ? [] : ['batch download', 'playlist download', 'audio extraction']),
                   ],
-                    ...(focusedPlatform || socialPlatform || isTiktok || isEnglishVimeo || isGoogleDrive || data.slug === 'dailymotion-video-downloader' ? {} : { offers: {
+                    ...(focusedPlatform || socialPlatform || isTiktok || isEnglishVimeo || isGoogleDrive || ['dailymotion-video-downloader', 'suno-downloader'].includes(data.slug) ? {} : { offers: {
                       '@type': 'Offer',
                       price: '0',
                       priceCurrency: 'USD',
@@ -336,6 +336,12 @@
                     <GoogleDriveDownloadForm />
                 {:else if OmniboxComponent}
                     <svelte:component this={OmniboxComponent} />
+                {:else if data.slug === 'suno-downloader'}
+                    <form class="dailymotion-form" action={homeUrl} method="GET">
+                        <label for="suno-url">Suno song or share URL</label>
+                        <input id="suno-url" name="u" type="url" placeholder="https://suno.com/s/..." required />
+                        <button type="submit">Continue to downloader</button>
+                    </form>
                 {:else if isTiktok && (data.lang === 'en' || isZh)}
                     <form class="dailymotion-form" action={homeUrl} method="GET">
                         <label for="tiktok-source-url">{isZh ? '\u7c98\u8d34 TikTok \u5206\u4eab\u94fe\u63a5' : 'Paste a TikTok share link'}</label>

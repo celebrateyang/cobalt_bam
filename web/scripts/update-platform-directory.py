@@ -49,7 +49,7 @@ primary = [
     ('tumblr', 'Tumblr', 'tumblr'), ('twitch', 'Twitch Clips', 'twitch'),
     ('vk', 'VK', 'vk'), ('tencent_video', 'Tencent Video', ''),
     ('bjnews', 'The Beijing News', ''), ('ourjiangsu', 'Our Jiangsu', ''),
-    ('deeplearningai', 'DeepLearning.AI', ''),
+    ('deeplearningai', 'DeepLearning.AI', ''), ('suno', 'Suno', ''),
 ]
 icons = json.loads(fetch(f'{ICON_SOURCE}/_data/simple-icons.json'))['icons']
 icon_map = {normalize(item['title']): item for item in icons}
@@ -117,6 +117,7 @@ official_sites = {
     'streamable': 'https://streamable.com', 'tencent_video': 'https://v.qq.com',
     'bjnews': 'https://www.bjnews.com.cn', 'ourjiangsu': 'https://www.ourjiangsu.com',
     'deeplearningai': 'https://www.deeplearning.ai',
+    'suno': 'https://suno.com',
 }
 
 def save_favicon(row):

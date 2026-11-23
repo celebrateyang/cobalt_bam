@@ -108,6 +108,7 @@ export default function({
             });
         }
     }
+    if (host === "suno" && isAudioMuted) return createResponse("error", { code: "error.api.service.unsupported" });
 
     if ((host === "amazon" || host === "youporn") && !isAudioOnly && !isAudioMuted && typeof r.urls === "string") {
         return createResponse("redirect", {
@@ -314,6 +315,10 @@ export default function({
 
         case "video":
             switch (host) {
+                case "suno":
+                    responseType = "redirect";
+                    params = { url: r.urls, directUrl: r.urls, directUrlCandidates: [r.urls] };
+                    break;
                 case "bilibili":
                     if (r.directClientDownload === true && typeof r.urls === "string") {
                         responseType = "redirect";
@@ -624,6 +629,7 @@ export default function({
         responseType === "redirect" &&
         typeof params.directUrl === "string";
     const keepTwitterDirectBridge = host === "twitter" && responseType === "redirect" && typeof params.directUrl === "string";
+    const keepSunoDirectBridge = host === "suno" && responseType === "redirect" && typeof params.directUrl === "string";
     const keepTikTokServerTunnel =
         host === "tiktok" &&
         r.tiktokVideoSourceKind === "yt-dlp";
@@ -637,6 +643,7 @@ export default function({
         !keepWechatDirectBridge &&
         !keepTencentVideoDirectBridge &&
         !keepTwitterDirectBridge &&
+        !keepSunoDirectBridge &&
         !keepTikTokDirectBridge
     ) {
         responseType = "tunnel";
@@ -660,6 +667,7 @@ export default function({
         !keepWechatDirectBridge &&
         !keepTencentVideoDirectBridge &&
         !keepTwitterDirectBridge &&
+        !keepSunoDirectBridge &&
         !keepTikTokDirectBridge &&
         !keepTikTokServerTunnel &&
         !keepIqiyiServerTunnel

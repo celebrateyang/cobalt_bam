@@ -37,6 +37,7 @@ import twitch from "./services/twitch.js";
 import rutube from "./services/rutube.js";
 import dailymotion from "./services/dailymotion.js";
 import deeplearningai from "./services/deeplearningai.js";
+import suno from "./services/suno.js";
 import aparat from "./services/aparat.js";
 import { requestAparatUpstream } from "./aparat-upstream.js";
 import magnific from "./services/magnific.js";
@@ -683,6 +684,10 @@ export default async function({ host, patternMatch, params, authType }) {
                     ...patternMatch,
                     url,
                 });
+                break;
+
+            case "suno":
+                r = await suno(patternMatch);
                 break;
 
             case "magnific":

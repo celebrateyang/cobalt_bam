@@ -1,4 +1,8 @@
 {
+    "mobile_large.unknown_size": "inconnue",
+    "youtube_storage.title": "Vérifier le stockage du navigateur",
+    "youtube_storage.storage_unavailable": "Ce navigateur ne prend peut-être pas en charge le stockage sur disque. Une grande vidéo peut utiliser beaucoup de mémoire et échouer. Essayez un autre navigateur ou libérez des ressources.",
+    "youtube_storage.storage_low": "Le stockage disponible du navigateur pourrait être insuffisant pour la vidéo et son traitement. Libérez de l'espace ou utilisez un autre navigateur.",
     "mobile_large.title": "Vidéo volumineuse sur mobile",
     "mobile_large.body": "Taille estimée : {{ size }}. Les ressources du navigateur mobile, le réseau et les restrictions en arrière-plan peuvent interrompre le téléchargement. Nous recommandons un téléchargement sur ordinateur, puis un envoi vers le téléphone avec notre outil de transfert.",
     "mobile_large.desktop": "Utiliser un ordinateur",

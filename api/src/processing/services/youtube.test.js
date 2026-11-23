@@ -77,6 +77,15 @@ const h264Video = {
     vcodec: "avc1.640028", acodec: "none", url: mediaUrl("137"),
 };
 
+test("excludes unknown-length live media URLs while allowing ordinary replay formats", () => {
+    const live = { ...h264Video, url: `${mediaUrl('137')}&source=yt_live_broadcast&live=1` };
+    const audio = dubbedAudio("140", "en", 10);
+    assert.equal(buildResult([live, audio], { codec: "h264" }).error, "youtube.no_matching_format");
+    const replay = buildResult([live, h264Video, audio], { codec: "h264" });
+    assert.equal(replay.error, undefined);
+    assert.equal(replay.urls[0], h264Video.url);
+});
+
 test("preserves the Spanish original in tJn2Xg21zik instead of the first equal-bitrate English dub", () => {
     for (const isAudioOnly of [false, true]) {
         const result = buildResult([

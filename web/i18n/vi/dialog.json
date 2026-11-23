@@ -1,4 +1,8 @@
 {
+    "mobile_large.unknown_size": "chưa rõ",
+    "youtube_storage.title": "Kiểm tra bộ nhớ trình duyệt",
+    "youtube_storage.storage_unavailable": "Trình duyệt này có thể không hỗ trợ lưu trên đĩa. Video lớn có thể dùng nhiều bộ nhớ và thất bại. Hãy thử trình duyệt khác hoặc giải phóng tài nguyên trước khi tiếp tục.",
+    "youtube_storage.storage_low": "Dung lượng trình duyệt còn trống có thể không đủ để lưu và xử lý video. Hãy giải phóng dung lượng hoặc dùng trình duyệt khác.",
     "mobile_large.title": "Tải video lớn trên thiết bị di động",
     "mobile_large.body": "Dung lượng ước tính: {{ size }}. Tài nguyên trình duyệt di động, tình trạng mạng và giới hạn chạy nền có thể làm gián đoạn tải xuống. Bạn nên tải trên máy tính rồi dùng công cụ truyền tệp của chúng tôi để gửi sang điện thoại.",
     "mobile_large.desktop": "Dùng máy tính",

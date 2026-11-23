@@ -88,7 +88,17 @@ export class OPFSStorage extends AbstractStorage {
     }
 
     async write(data: Uint8Array | Int8Array, offset: number) {
-        return this.#io.write(data, { at: offset })
+        // Sync access handles may perform a partial write. Finish every byte
+        // before returning so a remux never silently loses part of a packet.
+        let total = 0;
+        while (total < data.length) {
+            const written = this.#io.write(data.subarray(total), { at: offset + total });
+            if (!Number.isInteger(written) || written <= 0 || written > data.length - total) {
+                throw new Error("storage_write_no_progress");
+            }
+            total += written;
+        }
+        return total;
     }
 
     async destroy() {

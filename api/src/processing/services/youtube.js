@@ -127,6 +127,17 @@ const isHlsManifestFormat = (format, rawUrl) => {
     }
 };
 
+const isLiveMediaUrl = (rawUrl) => {
+    try {
+        const url = new URL(rawUrl);
+        return url.searchParams.get("live") === "1"
+            || (url.searchParams.get("source") === "yt_live_broadcast"
+                && url.searchParams.get("noclen") === "1");
+    } catch {
+        return false;
+    }
+};
+
 const runProcess = (command, args, timeoutMs) => new Promise((resolve) => {
     const child = spawn(command, args, {
         stdio: ["ignore", "pipe", "pipe"],
@@ -403,7 +414,7 @@ const collectCandidates = ({ formats, requestClientIp }) => {
                 audioCodec: normalizeAudioCodec(format?.acodec),
                 hasVideo,
                 hasAudio,
-                rangeDownloadable: !isHlsManifestFormat(format, url),
+                rangeDownloadable: !isHlsManifestFormat(format, url) && !isLiveMediaUrl(url),
             };
         })
         .filter(Boolean);

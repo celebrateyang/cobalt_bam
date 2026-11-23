@@ -1,4 +1,6 @@
 {
+    "queue.fetch.unverifiable_range": "下载来源没有提供可验证的文件分段信息，无法安全确认文件完整性。本次下载无法继续，请稍后再试。",
+    "queue.fetch.cannot_resume": "下载已中断，当前来源无法安全续传。请在网络稳定后重新下载。",
     "import.no_data": "文件中没有要加载的内容。您确定这是正确的文件吗？",
     "import.invalid": "您的文件没有有效的 FreeSaveVideo 设置。您确定这是正确的文件吗？",
     "import.hash_invalid": "文件校验和无效。请确认这是正确的文件。",

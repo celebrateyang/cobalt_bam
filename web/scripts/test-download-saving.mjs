@@ -60,7 +60,7 @@ const fixture = (pref = "download", browserWindow) => {
     return { api, params, device, navigator, dialogs, callbacks, timers, dom, events };
 };
 
-const tunnelFixture = (mobile = false) => {
+const tunnelFixture = (mobile = false, storage = { getDirectory() {} }, diskAvailable = true) => {
     const pipelines = [], downloads = [], states = [], dialogs = [];
     const releases = [], subtitleNotices = [];
     let probes = 0;
@@ -71,6 +71,10 @@ const tunnelFixture = (mobile = false) => {
     const exports = {};
     const dependencies = {
         '$lib/device': { device: { is: { mobile } } },
+        '$lib/storage/opfs-probe?worker': { default: class {
+            postMessage() { queueMicrotask(() => this.onmessage({ data: diskAvailable })); }
+            terminate() {}
+        } },
         '$lib/api/mobile-large-download': load('src/lib/api/mobile-large-download.ts', {}, { URL }),
         '$app/stores': { page: { params: { lang: 'en' } } },
         '$lib/i18n/translations': { t: key => key, loadTranslations: async () => {} },
@@ -89,7 +93,8 @@ const tunnelFixture = (mobile = false) => {
         '$lib/api/api': { default: { probeCobaltTunnel: async () => { probes++; return 200; } } },
     };
     vm.runInNewContext(compiled, {
-        exports, URL, console: { log: () => {} },
+        exports, URL, setTimeout, clearTimeout, console: { log: () => {} },
+        navigator: { storage },
         window: { location: { origin: 'https://example.com' } },
         require: name => dependencies[name] || {},
     });
@@ -115,6 +120,27 @@ test('large mobile downloads wait for confirmation, then keep the same server pi
     assert.equal(f.releases.length, 0);
     await f.savingHandler(mobileLargeArgs);
     assert.equal(f.dialogs.length, 1);
+});
+
+test('desktop storage warning releases the hold when cancelled', async () => {
+    const f = tunnelFixture(false, {});
+    const pending = f.savingHandler(mobileLargeArgs);
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(f.dialogs[0].type, 'small');
+    f.dialogs[0].buttons[1].action();
+    assert.equal(await pending, null);
+    assert.equal(f.pipelines.length, 0);
+    assert.equal(f.releases[0][0], 'hold-large');
+});
+
+test('warns when the browser exposes storage but the worker cannot use it', async () => {
+    const f = tunnelFixture(false, { getDirectory() {} }, false);
+    const pending = f.savingHandler(mobileLargeArgs);
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(f.dialogs[0].bodyText, 'dialog.youtube_storage.storage_unavailable');
+    f.dialogs[0].buttons[0].action();
+    await pending;
+    assert.equal(f.pipelines.length, 1);
 });
 
 test('declining large mobile download releases its hold and starts no download', async () => {

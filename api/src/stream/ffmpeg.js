@@ -185,7 +185,7 @@ const buildInputArgs = (url, streamInfo) => {
     return ['-i', url];
 }
 
-const render = async (res, streamInfo, ffargs, estimateMultiplier, inputStream) => {
+export const render = async (res, streamInfo, ffargs, estimateMultiplier, inputStream, spawnProcess = spawn) => {
     if (streamInfo.genericDownload) {
         return renderGenericDownload(res, streamInfo, getCommand(['-loglevel', 'warning', '-xerror', ...ffargs], streamInfo));
     }
@@ -214,7 +214,14 @@ const render = async (res, streamInfo, ffargs, estimateMultiplier, inputStream) 
         }
 
         killProcess(process);
-        closeResponse(res);
+        if (streamInfo.service === 'youtube' && error) {
+            // Once headers have been sent, terminating the connection is the
+            // only way to prevent a partial stream looking like a clean EOF.
+            if (res.headersSent) res.destroy();
+            else { res.statusCode = 502; res.end(); }
+        } else {
+            closeResponse(res);
+        }
         urls.map(destroyInternalStream);
     };
 
@@ -240,7 +247,7 @@ const render = async (res, streamInfo, ffargs, estimateMultiplier, inputStream) 
         // draining the pipe, so awaiting a CDN probe afterwards loses headers.
         const estimatedLength = await estimateTunnelLength(streamInfo, estimateMultiplier);
 
-        process = spawn(...getCommand(args, streamInfo), {
+        process = spawnProcess(...getCommand(args, streamInfo), {
             windowsHide: true,
             stdio: [
                 inputStream ? 'pipe' : 'inherit', 'inherit', 'pipe',
@@ -275,7 +282,16 @@ const render = async (res, streamInfo, ffargs, estimateMultiplier, inputStream) 
 
         res.setHeader('Estimated-Content-Length', estimatedLength);
 
-        pipe(muxOutput, res, error => shutdown('pipe', error));
+        if (streamInfo.service === 'youtube') {
+            // Do not end the response on stdout EOF: FFmpeg's exit status is
+            // known only after the output pipe has closed.
+            muxOutput.on('error', error => shutdown('pipe', error));
+            res.on('error', error => shutdown('response-error', error));
+            res.on('close', () => { if (!res.writableFinished) shutdown('response-close'); });
+            muxOutput.pipe(res, { end: false });
+        } else {
+            pipe(muxOutput, res, error => shutdown('pipe', error));
+        }
 
         process.on('close', (code, signal) => {
             if (code !== 0 || muxBytes === 0) {
@@ -289,7 +305,8 @@ const render = async (res, streamInfo, ffargs, estimateMultiplier, inputStream) 
                     stderr: stderrBuffer.slice(-2000),
                 });
             }
-            shutdown('process-close');
+            shutdown('process-close', streamInfo.service === 'youtube' && (code !== 0 || muxBytes === 0)
+                ? new Error('ffmpeg_failed') : undefined);
         });
         process.on('error', error => shutdown('process-error', error));
         res.on('finish', () => shutdown('response-finish'));

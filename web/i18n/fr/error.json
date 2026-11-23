@@ -1,4 +1,6 @@
 {
+    "queue.fetch.unverifiable_range": "La source n'a pas fourni de plage de fichier vérifiable. Le téléchargement ne peut pas continuer en toute sécurité ; réessayez plus tard.",
+    "queue.fetch.cannot_resume": "Le téléchargement a été interrompu et ne peut pas reprendre en toute sécurité depuis cette source. Relancez-le avec une connexion stable.",
     "import.no_data": "il n'y a rien à charger à partir du fichier. êtes-vous sûr que c'est le bon ?",
     "import.invalid": "votre fichier n'a pas de paramètres FreeSaveVideo valides à importer. êtes-vous sûr que c'est le bon ?",
     "import.unknown": "impossible de charger les données du fichier. il peut être corrompu ou de mauvais format. voici l'erreur que j'ai obtenue :\n\n{{ value }}",

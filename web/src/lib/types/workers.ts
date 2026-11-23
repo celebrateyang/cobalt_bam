@@ -24,6 +24,7 @@ export type CobaltFetchTuning = {
     fastChunkMs?: number,
     slowChunkMs?: number,
     useRangeRequests?: boolean,
+    failOnUnverifiableResume?: boolean,
 };
 
 export type CobaltFetchResume = {

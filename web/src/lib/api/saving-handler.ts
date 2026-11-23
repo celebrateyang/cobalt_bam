@@ -18,7 +18,8 @@ import { addToHistory } from "$lib/history";
 import { currentApiURL } from "$lib/api/api-url";
 import { finalizePointsHold, releasePointsHold } from "$lib/api/points";
 import { device } from "$lib/device";
-import { needsMobileLargeDownloadWarning } from "$lib/api/mobile-large-download";
+import { needsMobileLargeDownloadWarning, youtubeStorageWarning } from "$lib/api/mobile-large-download";
+import OPFSProbeWorker from "$lib/storage/opfs-probe?worker";
 import { markCollectionDownloadedItems } from "$lib/api/collection-memory";
 import { savePendingLaunchIntent } from "$lib/pwa/launch-intent";
 import { uuid } from "$lib/util";
@@ -44,6 +45,25 @@ import type { CobaltQueueItemCollectionMemory } from "$lib/types/queue";
 export type SavingStage = 'authenticating' | 'confirming' | 'resolving' | 'starting';
 
 const mobileLargeDownloadApprovals = new Set<string>();
+
+const probeBrowserDiskStorage = () => new Promise<boolean>((resolve) => {
+    let worker: Worker;
+    try { worker = new OPFSProbeWorker(); }
+    catch { resolve(false); return; }
+    let settled = false;
+    const timer = setTimeout(() => finish(false), 8000);
+    const finish = (available: boolean) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        worker.terminate();
+        resolve(available);
+    };
+    worker.onmessage = (event) => finish(event.data === true);
+    worker.onerror = () => finish(false);
+    worker.onmessageerror = () => finish(false);
+    try { worker.postMessage(null); } catch { finish(false); }
+});
 
 type SavingHandlerArgs = {
     pointsProfile?: Awaited<ReturnType<typeof fetchCurrentUserPointsProfile>>;
@@ -634,13 +654,46 @@ export const savingHandler = async ({
     }
 
     const warningKey = `${effectiveTaskId}:${selectedRequest.url}`;
+    const desktopStorageWarning = response.status !== "error"
+        ? await youtubeStorageWarning(device.is.mobile, response, selectedRequest.url,
+            typeof navigator === "undefined" ? undefined : navigator.storage, probeBrowserDiskStorage)
+        : null;
+    if (response.status !== "error" && desktopStorageWarning && !mobileLargeDownloadApprovals.has(warningKey)) {
+        const lang = get(page)?.params?.lang || "en";
+        await loadTranslations(lang, "dialog");
+        onStage?.("confirming");
+        const proceed = await new Promise<boolean>((resolve) => createDialog({
+            id: `youtube-storage-${effectiveTaskId}`,
+            type: "small",
+            dismissable: false,
+            title: get(t)("dialog.youtube_storage.title"),
+            bodyText: get(t)(`dialog.youtube_storage.${desktopStorageWarning}`),
+            buttons: [
+                { text: get(t)("button.continue"), main: true, action: () => resolve(true) },
+                { text: get(t)("dialog.mobile_large.cancel"), main: false, action: () => resolve(false) },
+            ],
+        }));
+        if (!proceed) {
+            if (response.points?.holdId) {
+                await releasePointsHold(response.points.holdId, "youtube_storage_cancelled", {
+                    queueId: effectiveTaskId, itemId: effectiveTaskId,
+                }).catch(() => false);
+            }
+            downloadButtonState.set("idle");
+            return null;
+        }
+        if (mobileLargeDownloadApprovals.size >= 100) mobileLargeDownloadApprovals.clear();
+        mobileLargeDownloadApprovals.add(warningKey);
+        onStage?.("starting");
+    }
     if (response.status !== "error" && needsMobileLargeDownloadWarning(device.is.mobile, response, selectedRequest.url)
         && !mobileLargeDownloadApprovals.has(warningKey)) {
         const lang = get(page)?.params?.lang || "en";
         await loadTranslations(lang, "dialog");
         onStage?.("confirming");
-        const size = new Intl.NumberFormat(lang, { maximumFractionDigits: 0 })
-            .format(response.estimatedSizeBytes! / (1024 * 1024)) + " MB";
+        const size = Number.isSafeInteger(response.estimatedSizeBytes) && response.estimatedSizeBytes! > 0
+            ? new Intl.NumberFormat(lang, { maximumFractionDigits: 0 }).format(response.estimatedSizeBytes! / (1024 * 1024)) + " MB"
+            : get(t)("dialog.mobile_large.unknown_size");
         const proceed = await new Promise<boolean>((resolve) => createDialog({
             id: `mobile-large-${effectiveTaskId}`,
             type: "mobile-large-download",
@@ -931,6 +984,7 @@ export const savingHandler = async ({
             createSavePipeline(
                 {
                     type: "proxy",
+                    service: response.service,
                     tunnel: [redirectUrl],
                     output: {
                         type: guessMimeTypeFromFilename(response.filename),
@@ -973,6 +1027,7 @@ export const savingHandler = async ({
             createSavePipeline(
                 {
                     type: "proxy",
+                    service: response.service,
                     tunnel: [tunnelUrl],
                     output: {
                         type: guessMimeTypeFromFilename(response.filename),

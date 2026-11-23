@@ -1,4 +1,8 @@
 {
+    "mobile_large.unknown_size": "unbekannt",
+    "youtube_storage.title": "Browserspeicher prüfen",
+    "youtube_storage.storage_unavailable": "Dieser Browser unterstützt möglicherweise keinen Festplattenspeicher. Große Videos können viel Arbeitsspeicher benötigen und fehlschlagen. Verwende einen geeigneten Browser oder gib Ressourcen frei.",
+    "youtube_storage.storage_low": "Der verfügbare Browserspeicher reicht möglicherweise nicht für das Video und seine Verarbeitung. Gib Speicher frei oder verwende einen anderen Browser.",
     "mobile_large.title": "Großes Video auf dem Mobilgerät",
     "mobile_large.body": "Geschätzte Größe: {{ size }}. Begrenzte Browserressourcen, Netzwerkbedingungen und Hintergrundbeschränkungen können den Download unterbrechen. Wir empfehlen den Download am Computer und anschließend die Übertragung auf das Handy mit unserer Dateiübertragung.",
     "mobile_large.desktop": "Am Computer herunterladen",

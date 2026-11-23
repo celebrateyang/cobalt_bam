@@ -1,4 +1,6 @@
 {
+    "queue.fetch.unverifiable_range": "Nguồn tải xuống không cung cấp phạm vi tệp có thể xác minh. Không thể tiếp tục an toàn; vui lòng thử lại sau.",
+    "queue.fetch.cannot_resume": "Quá trình tải xuống bị gián đoạn và không thể tiếp tục an toàn từ nguồn này. Hãy tải lại khi kết nối ổn định.",
     "import.no_data": "không có gì để tải từ file. bạn có chắc đó là file đúng không?",
     "import.invalid": "file của bạn không có cài đặt FreeSaveVideo hợp lệ để nhập. bạn có chắc đó là file đúng không?",
     "import.unknown": "không thể tải dữ liệu từ file. nó có thể bị hỏng hoặc sai định dạng. đây là lỗi tôi nhận được:\n\n{{ value }}",

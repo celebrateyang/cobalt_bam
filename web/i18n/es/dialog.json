@@ -1,4 +1,8 @@
 {
+    "mobile_large.unknown_size": "desconocido",
+    "youtube_storage.title": "Comprueba el almacenamiento del navegador",
+    "youtube_storage.storage_unavailable": "Este navegador podría no admitir almacenamiento en disco. Un video grande puede consumir mucha memoria y fallar. Usa otro navegador o libera recursos antes de continuar.",
+    "youtube_storage.storage_low": "El almacenamiento disponible del navegador podría no ser suficiente para el video y su procesamiento. Libera espacio o usa otro navegador.",
     "mobile_large.title": "Vídeo grande en un dispositivo móvil",
     "mobile_large.body": "Tamaño estimado: {{ size }}. Los recursos del navegador móvil, la red y los límites en segundo plano pueden interrumpir la descarga. Recomendamos descargar en un ordenador y enviar el archivo al móvil con nuestra herramienta de transferencia.",
     "mobile_large.desktop": "Usar un ordenador",

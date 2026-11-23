@@ -61,6 +61,20 @@ test("preserves YouTube size estimates across redirect, tunnel and local process
     assert.equal(redirect.body.estimatedSizeBytes, estimatedSizeBytes);
 });
 
+test("long preferred YouTube merges remain in browser processing", () => {
+    const r = { ...youtubeResult, type: "merge", forceRedirect: false,
+        urls: ["https://video.example/video.mp4", "https://video.example/audio.m4a"] };
+    for (const [duration, localProcessing, expected] of [
+        [3599, "preferred", "local-processing"],
+        [3600, "preferred", "local-processing"],
+        [3600, "disabled", "tunnel"],
+        [3600, "forced", "local-processing"],
+    ]) {
+        const response = matchAction({ ...baseArgs, localProcessing, r: { ...r, duration } });
+        assert.equal(response.body.status, expected, `${duration} ${localProcessing}`);
+    }
+});
+
 test("Aparat never creates tunnels, including forced proxy, batch, audio and mute requests", () => {
     const url = "https://edge.cdn.asset.aparat.com/aparat-video/test.apt?sig=test";
     for (const mode of ["video", "audio", "mute"]) {

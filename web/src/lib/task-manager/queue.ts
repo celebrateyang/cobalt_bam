@@ -295,7 +295,10 @@ export const createSavePipeline = (
     const parentId = oldTaskId || uuid();
     const pipeline: CobaltPipelineItem[] = [];
     const isBilibili = info.service === "bilibili";
-    const fetchTuning = isBilibili
+    const isYouTube = info.service === "youtube" || /^(?:https?:\/\/)?(?:www\.|m\.)?(?:youtube\.com|youtu\.be)\//i.test(request.url.replace(/^"|"$/g, ""));
+    const fetchTuning = isYouTube
+        ? { failOnUnverifiableResume: true }
+        : isBilibili
         ? {
             initialChunkBytes: 2 * 1024 * 1024,
             maxChunkBytes: 4 * 1024 * 1024,

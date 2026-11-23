@@ -1,4 +1,6 @@
 {
+    "queue.fetch.unverifiable_range": "Sumber unduhan tidak memberikan rentang file yang dapat diverifikasi. Unduhan tidak dapat dilanjutkan dengan aman; coba lagi nanti.",
+    "queue.fetch.cannot_resume": "Unduhan terputus dan tidak dapat dilanjutkan dengan aman dari sumber ini. Mulai lagi saat koneksi stabil.",
     "import.no_data": "tidak ada yang dapat dimuat dari file. apakah kamu yakin itu yang benar?",
     "import.invalid": "file Anda tidak memiliki pengaturan FreeSaveVideo yang valid untuk diimpor. apakah kamu yakin itu yang benar?",
     "import.unknown": "tidak dapat memuat data dari file. mungkin rusak atau formatnya salah. inilah kesalahan yang saya dapatkan:\n\n{{ value }}",

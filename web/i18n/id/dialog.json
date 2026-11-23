@@ -1,4 +1,8 @@
 {
+    "mobile_large.unknown_size": "tidak diketahui",
+    "youtube_storage.title": "Periksa penyimpanan browser",
+    "youtube_storage.storage_unavailable": "Browser ini mungkin tidak mendukung penyimpanan disk. Video besar dapat memakai banyak memori dan gagal. Gunakan browser lain atau kosongkan sumber daya sebelum melanjutkan.",
+    "youtube_storage.storage_low": "Penyimpanan browser yang tersedia mungkin tidak cukup untuk video dan pemrosesannya. Kosongkan ruang atau gunakan browser lain.",
     "mobile_large.title": "Video besar di perangkat seluler",
     "mobile_large.body": "Perkiraan ukuran: {{ size }}. Sumber daya browser seluler, kondisi jaringan, dan batasan latar belakang dapat mengganggu unduhan. Sebaiknya unduh di komputer, lalu kirim ke ponsel dengan alat transfer file kami.",
     "mobile_large.desktop": "Gunakan komputer",

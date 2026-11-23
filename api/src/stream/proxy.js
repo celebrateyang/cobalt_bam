@@ -197,13 +197,21 @@ export default async function (streamInfo, res) {
         restartIdleTimer();
     };
 
-    const shutdown = () => (
-        clearBilibiliTimers(),
-        logEnd("shutdown"),
-        closeRequest(abortController),
-        closeResponse(res),
-        destroyInternalStream(streamInfo.urls)
-    );
+    let stopped = false;
+    const shutdown = (error) => {
+        if (stopped) return;
+        stopped = true;
+        clearBilibiliTimers();
+        logEnd("shutdown");
+        closeRequest(abortController);
+        if (streamInfo.service === "youtube" && error) {
+            if (res.headersSent) res.destroy();
+            else { res.statusCode = 502; res.end(); }
+        } else {
+            closeResponse(res);
+        }
+        destroyInternalStream(streamInfo.urls);
+    };
 
     try {
         res.setHeader('Access-Control-Allow-Origin', '*');
@@ -342,6 +350,6 @@ export default async function (streamInfo, res) {
         tunnelDebugWarn(
             `[TUNNEL] id=${tunnelId} service=${streamInfo.service} type=proxy reason=error elapsed_ms=${Date.now() - startedAt} message=${error?.message ?? "unknown"} route=${routeInfo.route} range=${rangeHeader}`,
         );
-        shutdown();
+        shutdown(error);
     }
 }

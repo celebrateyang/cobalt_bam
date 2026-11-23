@@ -21,6 +21,7 @@ type FetchWorkerTuning = {
     fastChunkMs?: number,
     slowChunkMs?: number,
     useRangeRequests?: boolean,
+    failOnUnverifiableResume?: boolean,
 };
 
 type FetchWorkerResume = {
@@ -224,6 +225,7 @@ const normalizeTuning = (tuning?: FetchWorkerTuning) => {
         fastChunkMs: normalizedFastChunkMs,
         slowChunkMs: normalizedSlowChunkMs,
         useRangeRequests: tuning?.useRangeRequests !== false,
+        failOnUnverifiableResume: tuning?.failOnUnverifiableResume === true,
     };
 };
 
@@ -428,7 +430,7 @@ const fetchFile = async (
         let rangeChunkBytes = runtimeTuning.initialChunkBytes;
         let upstreamIgnoresRange = false;
         logDebug("worker_start", {
-            url: activeUrl,
+            candidateHost: (() => { try { return new URL(activeUrl).host; } catch { return "invalid"; } })(),
             candidateCount: candidates.length,
             initialChunkBytes: rangeChunkBytes,
             maxChunkBytes: runtimeTuning.maxChunkBytes,
@@ -537,7 +539,7 @@ const fetchFile = async (
                 headers.Range = `bytes=0-${requestedRangeEnd}`;
             }
 
-            const expectedChunkBytes =
+            let expectedChunkBytes =
                 requestedRangeEnd != null
                     ? requestedRangeEnd - rangeStart + 1
                     : undefined;
@@ -591,6 +593,10 @@ const fetchFile = async (
             });
 
             if (response.status === 416 && receivedBytes > 0) {
+                if (runtimeTuning.failOnUnverifiableResume && (!expectedSizeReliable || !expectedSize || receivedBytes < expectedSize)) {
+                    await response.body?.cancel().catch(() => undefined);
+                    return error("queue.fetch.unverifiable_range");
+                }
                 if (
                     !expectedSizeReliable &&
                     shortRangeEndCandidate === receivedBytes
@@ -674,6 +680,12 @@ const fetchFile = async (
             }
 
             if (resumedRequest && response.status === 200) {
+                // A regenerated YouTube remux can differ even when its URL is
+                // unchanged. Never splice the old prefix into the new stream.
+                if (runtimeTuning.failOnUnverifiableResume) {
+                    await response.body?.cancel().catch(() => undefined);
+                    return error("queue.fetch.cannot_resume");
+                }
                 // Some upstreams ignore Range and return the full file (200).
                 // Keep already written bytes and discard the duplicated prefix
                 // from this response instead of restarting from zero.
@@ -739,6 +751,20 @@ const fetchFile = async (
 
             const contentRangeHeader = response.headers.get("Content-Range");
             const rangeBounds = parseContentRangeBounds(contentRangeHeader);
+            if (runtimeTuning.failOnUnverifiableResume && partialResponse) {
+                if (!requestedRange || !rangeBounds || !Number.isSafeInteger(rangeBounds.start)
+                    || !Number.isSafeInteger(rangeBounds.end) || !Number.isSafeInteger(rangeBounds.total)
+                    || rangeBounds.start !== rangeStart || rangeBounds.end >= rangeBounds.total
+                    || rangeBounds.end > requestedRangeEnd!) {
+                    await response.body?.cancel().catch(() => undefined);
+                    return error("queue.fetch.unverifiable_range");
+                }
+                expectedChunkBytes = rangeBounds.end - rangeBounds.start + 1;
+                if (Number.isFinite(contentLengthHeader) && contentLengthHeader !== expectedChunkBytes) {
+                    await response.body?.cancel().catch(() => undefined);
+                    return error("queue.fetch.unverifiable_range");
+                }
+            }
             if (partialResponse && requestedRange && rangeBounds && rangeBounds.start !== rangeStart) {
                 if (retries >= MAX_RETRIES) {
                     return error("queue.fetch.network_error", await buildResumeSnapshot());
@@ -764,6 +790,10 @@ const fetchFile = async (
                 receivedBytes > 0 &&
                 totalFromRange !== expectedSize
             ) {
+                if (runtimeTuning.failOnUnverifiableResume) {
+                    await response.body?.cancel().catch(() => undefined);
+                    return error("queue.fetch.cannot_resume");
+                }
                 logDebug("resume_mismatch_reset", {
                     expectedSize,
                     receivedBytes,
@@ -828,6 +858,7 @@ const fetchFile = async (
 
             let madeProgress = false;
             let bytesReceivedThisResponse = 0;
+            let interrupted = false;
 
             while (true) {
                 let chunk;
@@ -835,9 +866,13 @@ const fetchFile = async (
                     chunk = await reader.read();
                 } catch (e) {
                     if (isRetryableNetworkError(e) && retries < MAX_RETRIES) {
+                        if (runtimeTuning.failOnUnverifiableResume && upstreamIgnoresRange && receivedBytes > 0) {
+                            return error("queue.fetch.cannot_resume");
+                        }
                         retries++;
                         rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2), runtimeTuning.maxChunkBytes);
                         await waitForRetry(controller.signal, getBackoffDelayMs(retries));
+                        interrupted = true;
                         break;
                     }
                     throw e;
@@ -862,6 +897,12 @@ const fetchFile = async (
 
                 if (chunkData.length === 0) {
                     continue;
+                }
+
+                if (runtimeTuning.failOnUnverifiableResume && partialResponse && expectedChunkBytes !== undefined
+                    && bytesReceivedThisResponse + chunkData.length > expectedChunkBytes) {
+                    await reader.cancel().catch(() => undefined);
+                    return error("queue.fetch.unverifiable_range");
                 }
 
                 madeProgress = true;
@@ -892,6 +933,9 @@ const fetchFile = async (
                 retries = 0;
                 reportProgress();
             }
+
+            // A failed read is not EOF, including for chunked 200 responses.
+            if (interrupted) continue;
 
             if (bytesToSkip > 0) {
                 if (retries >= MAX_RETRIES) {

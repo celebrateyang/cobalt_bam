@@ -1,5 +1,9 @@
 {
+    "youtube_storage.title": "Check browser storage",
+    "youtube_storage.storage_unavailable": "This browser may not support disk-backed storage. A large video may use substantial memory and fail. Try a browser with disk storage or free up resources before continuing.",
+    "youtube_storage.storage_low": "The browser reports that storage may be insufficient for this video and its processing. Free up space or use another browser before continuing.",
     "mobile_large.title": "Large video on a mobile device",
+    "mobile_large.unknown_size": "unknown",
     "mobile_large.body": "Estimated size: {{ size }}. Mobile browser resources, network conditions and background limits may interrupt this download. We recommend downloading on a computer, then sending the file to your phone with our file transfer tool.",
     "mobile_large.desktop": "Use a computer",
     "mobile_large.continue": "Continue on this device",

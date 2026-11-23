@@ -191,7 +191,7 @@ export default class LibAVWrapper {
             };
 
             this.#debug("render:ffmpeg-start");
-            await libav.ffmpeg([
+            const exitCode = await libav.ffmpeg([
                 '-nostdin', '-y',
                 '-loglevel', 'error',
                 '-progress', 'progress.txt',
@@ -207,6 +207,9 @@ export default class LibAVWrapper {
             }
             if (writeError) {
                 throw writeError;
+            }
+            if (exitCode !== 0) {
+                throw new Error(`ffmpeg_exit_${exitCode}`);
             }
 
             let file = Storage.retype(await storage.res(), output.type);

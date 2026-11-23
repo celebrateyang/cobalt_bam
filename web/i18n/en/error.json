@@ -1,4 +1,6 @@
 {
+    "queue.fetch.unverifiable_range": "The download source did not provide a verifiable file range. This download cannot safely continue; try again later.",
+    "queue.fetch.cannot_resume": "This download was interrupted and its source cannot be safely resumed. Start it again when your connection is stable.",
     "import.no_data": "there's nothing to load from the file. are you sure it's the right one?",
     "import.invalid": "your file doesn't have valid FreeSaveVideo settings to import. are you sure it's the right one?",
     "import.unknown": "couldn't load data from the file. it may be corrupted or of wrong format. here's the error i got:\n\n{{ value }}",

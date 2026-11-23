@@ -104,7 +104,7 @@ export const verifyBuyMeACoffeeSignature = ({ rawBody, signature }) => {
   );
 };
 
-export const parseBuyMeACoffeePurchaseEvent = (payload) => {
+export const parseBuyMeACoffeePurchaseEvent = (payload, { allowAmountMismatch = false } = {}) => {
   if (!["extra_purchase.created", "extra_purchase.updated"].includes(payload?.type)) {
     return { ok: false, code: "UNSUPPORTED_EVENT" };
   }
@@ -138,7 +138,8 @@ export const parseBuyMeACoffeePurchaseEvent = (payload) => {
 
   const amountFen = Math.round(Number(data.amount) * 100);
   const currency = clean(data.currency).toUpperCase();
-  if (amountFen !== product.amountFen || currency !== product.currency) {
+  if (!Number.isSafeInteger(amountFen) || amountFen <= 0 || currency !== product.currency ||
+      (!allowAmountMismatch && amountFen !== product.amountFen)) {
     return { ok: false, code: "AMOUNT_MISMATCH" };
   }
 

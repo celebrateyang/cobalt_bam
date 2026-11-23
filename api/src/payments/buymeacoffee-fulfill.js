@@ -5,7 +5,7 @@ import { bindBuyMeACoffeeOrder, setBuyMeACoffeeReviewReason } from "../db/buymea
 import { markCreditOrderPaid } from "../db/credit-orders.js";
 import { ensureMembershipCheckoutPlan, markMembershipOrderPaid } from "../db/membership-orders.js";
 
-export const fulfillBuyMeACoffeePurchase = async (parsed, payload, { user, manual = false, note = "" } = {}) => {
+export const fulfillBuyMeACoffeePurchase = async (parsed, payload, { user, manual = false, note = "", adminAmountOverride = false } = {}) => {
     const review = async result => {
         if (!result.ok) await setBuyMeACoffeeReviewReason(parsed.transactionId, result.code);
         return result;
@@ -32,7 +32,7 @@ export const fulfillBuyMeACoffeePurchase = async (parsed, payload, { user, manua
     if (!bound.ok || !bound.outTradeNo) return review(bound);
     const result = await (parsed.product.kind === "membership" ? markMembershipOrderPaid : markCreditOrderPaid)({
         outTradeNo: bound.outTradeNo, providerTransactionId: parsed.transactionId,
-        paidAt: parsed.paidAt, totalFen: parsed.amountFen,
+        paidAt: parsed.paidAt, totalFen: parsed.amountFen, adminAmountOverride,
         rawNotify: { source: "buymeacoffee_webhook", event: payload },
     });
     return review(result);

@@ -58,6 +58,7 @@
     type PaymentReceipt = {
         transaction_id: string;
         supporter_email: string;
+        product_title: string | null;
         amount: string;
         currency: string;
         order_code: string | null;
@@ -86,18 +87,24 @@
         BOUND_ACCOUNT_MISMATCH: "付款已关联其他账号",
     };
     async function resolveReceipt(receipt: PaymentReceipt, mode: "grant" | "record_manual") {
-        const value = window.prompt("Website user ID (check the Users page):");
-        if (!value || !Number.isSafeInteger(Number(value)) || Number(value) <= 0) return;
+        const value = window.prompt("请输入网站用户 ID（可在用户管理页面查询）：");
+        if (value === null) return;
+        if (!Number.isSafeInteger(Number(value)) || Number(value) <= 0 || !value.trim()) {
+            receiptsError = "请输入有效的网站用户 ID。";
+            return;
+        }
+        const amountOverride = receipt.review_reason === "AMOUNT_MISMATCH";
         const message = mode === "grant"
-            ? `Grant this payment's credits or membership to user ${value}? Only continue if it has not been manually granted.`
-            : `Record that user ${value} already received this payment manually? This does not add credits or membership.`;
-        if (!window.confirm(message)) return;
+            ? `将付款商品「${receipt.product_title || "未知商品"}」的权益发放给用户 ${value}？仅在尚未人工补发时继续。`
+            : `确认用户 ${value} 已经人工收到付款商品「${receipt.product_title || "未知商品"}」的权益？此操作不会增加积分或会员。`;
+        const warning = amountOverride ? `\n\n付款金额为 ${receipt.amount} ${receipt.currency}，与商品价格不一致。确认已人工核对并跳过金额校验？` : "";
+        if (!window.confirm(message + warning)) return;
         receiptResolving = true;
         receiptsError = "";
         try {
             const res = await fetch(`${currentApiURL()}/user/admin/buymeacoffee-receipts/${encodeURIComponent(receipt.transaction_id)}/resolve`, {
                 method: "POST", headers: { Authorization: `Bearer ${getToken()}`, "Content-Type": "application/json" },
-                body: JSON.stringify({ userId: Number(value), mode }),
+                body: JSON.stringify({ userId: Number(value), mode, allowAmountMismatch: amountOverride }),
             });
             const data = await res.json();
             if (!res.ok || data.status !== "success") throw new Error(data?.error?.code || "Unable to resolve payment");

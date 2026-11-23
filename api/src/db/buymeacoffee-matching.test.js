@@ -110,5 +110,32 @@ test("email payments bind pending orders, create missing orders, and never grant
         assert.equal(oneDayPaid.order.duration_days, 1);
         assert.equal(Number(oneDayPaid.subscription.current_period_end), Number(renewed.subscription.current_period_end) + 86400000);
         assert.equal((await payOneDay()).code, "ALREADY_PAID");
+        const mismatchEvent = { type: "extra_purchase.created", live_mode: true, data: {
+            transaction_id: "pi_admin_override", supporter_email: "buyer@example.com", status: "succeeded", refunded: false,
+            amount: 0.99, currency: "USD", created_at: now / 1000,
+            extras: [{ id: 587018, quantity: 1, question_answers: [] }],
+        } };
+        const rejected = parseBuyMeACoffeePurchaseEvent(mismatchEvent);
+        assert.equal(rejected.code, "AMOUNT_MISMATCH");
+        await recordBuyMeACoffeeReceipt(mismatchEvent, rejected, query);
+        const override = parseBuyMeACoffeePurchaseEvent(mismatchEvent, { allowAmountMismatch: true });
+        const recorded = await bindBuyMeACoffeeOrder({ parsed: override, user, manual: true,
+            note: "admin approved amount mismatch", clientFactory });
+        assert.equal(recorded.code, "MANUAL_RECORDED");
+        assert.equal((await bind(override)).code, "ALREADY_PAID");
+        const receipt = (await query("SELECT fulfilled_manually,resolution_note FROM buymeacoffee_receipts WHERE transaction_id=$1", [override.transactionId])).rows[0];
+        assert.equal(receipt.fulfilled_manually, true);
+        assert.equal(receipt.resolution_note, "admin approved amount mismatch");
+        mismatchEvent.data.transaction_id = "pi_admin_credit";
+        mismatchEvent.data.extras[0].id = 587019;
+        const creditOverride = parseBuyMeACoffeePurchaseEvent(mismatchEvent, { allowAmountMismatch: true });
+        await recordBuyMeACoffeeReceipt(mismatchEvent, parseBuyMeACoffeePurchaseEvent(mismatchEvent), query);
+        const adminOrder = await bindBuyMeACoffeeOrder({ parsed: creditOverride, user,
+            note: "admin approved amount mismatch", clientFactory });
+        const adminPay = () => markCreditOrderPaid({ outTradeNo: adminOrder.outTradeNo,
+            providerTransactionId: creditOverride.transactionId, totalFen: creditOverride.amountFen, adminAmountOverride: true, clientFactory });
+        assert.equal((await adminPay()).code, "PAID");
+        assert.equal((await adminPay()).code, "ALREADY_PAID");
+        assert.equal((await query("SELECT points FROM users WHERE id=1")).rows[0].points, 3400);
     } finally { await db.close(); }
 });

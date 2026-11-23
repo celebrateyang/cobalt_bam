@@ -41,6 +41,21 @@ test("all approved packages validate exact prices and correct code kinds", () =>
   }
 });
 
+test("explicit admin amount override preserves other payment checks", () => {
+  const event = purchase("extra_purchase.created");
+  event.data.amount = 1.98;
+  assert.equal(parseBuyMeACoffeePurchaseEvent(event).code, "AMOUNT_MISMATCH");
+  assert.equal(parseBuyMeACoffeePurchaseEvent(event, { allowAmountMismatch: true }).amountFen, 198);
+  event.data.currency = "EUR";
+  assert.equal(parseBuyMeACoffeePurchaseEvent(event, { allowAmountMismatch: true }).code, "AMOUNT_MISMATCH");
+  event.data.currency = "USD";
+  event.data.amount = 0;
+  assert.equal(parseBuyMeACoffeePurchaseEvent(event, { allowAmountMismatch: true }).code, "AMOUNT_MISMATCH");
+  event.data.amount = 1.98;
+  event.data.status = "pending";
+  assert.equal(parseBuyMeACoffeePurchaseEvent(event, { allowAmountMismatch: true }).code, "PAYMENT_NOT_SUCCEEDED");
+});
+
 test("membership prices follow the revised BMC catalog", () => {
   assert.deepEqual(
     BUYMEACOFFEE_MEMBERSHIP_PRODUCTS.map(({ durationDays, amountFen }) => [durationDays, amountFen]),

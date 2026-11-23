@@ -33,7 +33,7 @@ export const bindBuyMeACoffeeOrder = async ({ parsed, user, manual = false, note
         if (receipt.bound_order_code) {
             const table = parsed.product.kind === "membership" ? "membership_orders" : "credit_orders";
             const assigned = (await client.query(`SELECT product_key,amount_fen,currency FROM ${table} WHERE out_trade_no=$1`, [receipt.bound_order_code])).rows[0];
-            if (!assigned || assigned.product_key !== parsed.product.key || assigned.amount_fen !== parsed.amountFen || assigned.currency !== parsed.product.currency) {
+            if (!assigned || assigned.product_key !== parsed.product.key || assigned.amount_fen !== parsed.product.amountFen || assigned.currency !== parsed.product.currency) {
                 await client.query("ROLLBACK"); return { ok: false, code: "ORDER_PRODUCT_MISMATCH" };
             }
             if (!manual) { await client.query("COMMIT"); return { ok: true, outTradeNo: receipt.bound_order_code }; }
@@ -50,7 +50,7 @@ export const bindBuyMeACoffeeOrder = async ({ parsed, user, manual = false, note
                 AND provider='buymeacoffee' AND product_key=$2 AND status='CREATED'
                 AND provider_transaction_id IS NULL AND amount_fen=$3 AND currency=$4
                 AND created_at <= $5 ORDER BY created_at DESC, id DESC LIMIT 1 FOR UPDATE SKIP LOCKED`,
-            [user.id, parsed.product.key, parsed.amountFen, parsed.product.currency, parsed.paidAt])).rows[0];
+            [user.id, parsed.product.key, parsed.product.amountFen, parsed.product.currency, parsed.paidAt])).rows[0];
             if (!order) {
                 const code = `${membership ? "mbr" : "cpt"}_${nanoid(20)}`;
                 const now = Date.now();
@@ -59,12 +59,12 @@ export const bindBuyMeACoffeeOrder = async ({ parsed, user, manual = false, note
                 order = (await client.query(`INSERT INTO ${table}
                     (user_id,clerk_user_id,provider,product_key,amount_fen,currency,out_trade_no,status,created_at,updated_at,${columns})
                     VALUES ($1,$2,'buymeacoffee',$3,$4,$5,$6,'CREATED',$7,$7,${values}) RETURNING *`,
-                [user.id, user.clerk_user_id, parsed.product.key, parsed.amountFen, parsed.product.currency, code, now,
+                [user.id, user.clerk_user_id, parsed.product.key, parsed.product.amountFen, parsed.product.currency, code, now,
                     ...(membership ? [parsed.product.planKey, parsed.product.durationDays] : [parsed.product.points])])).rows[0];
             }
         }
         if (order.provider !== "buymeacoffee" || order.product_key !== parsed.product.key ||
-            order.amount_fen !== parsed.amountFen || order.currency !== parsed.product.currency ||
+            order.amount_fen !== parsed.product.amountFen || order.currency !== parsed.product.currency ||
             (order.provider_transaction_id && order.provider_transaction_id !== parsed.transactionId)) {
             await client.query("ROLLBACK"); return { ok: false, code: "ORDER_PRODUCT_MISMATCH" };
         }

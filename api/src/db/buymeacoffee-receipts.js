@@ -72,7 +72,8 @@ export const listUnmatchedBuyMeACoffeeReceipts = async ({ page = 1, limit = 20 }
     const count = await queryFn(`SELECT COUNT(*)::int AS total ${filter}`);
     const result = await queryFn(`SELECT r.transaction_id, r.supporter_email,
         r.amount, r.currency, COALESCE(r.bound_order_code, r.order_code) AS order_code, r.review_reason, r.refunded,
-        r.first_received_at, r.updated_at, o.id AS credited_order_id, m.id AS membership_order_id
+        r.first_received_at, r.updated_at, r.raw_notify->'data'->'extras'->0->>'title' AS product_title,
+        o.id AS credited_order_id, m.id AS membership_order_id
         ${filter} ORDER BY r.updated_at DESC, r.transaction_id LIMIT $1 OFFSET $2`,
     [safeLimit, (safePage - 1) * safeLimit]);
     const total = Number(count.rows[0]?.total || 0);

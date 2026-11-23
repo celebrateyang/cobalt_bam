@@ -420,11 +420,14 @@ router.post("/admin/buymeacoffee-receipts/:transactionId/resolve", requireAdminA
         if (!user || user.is_disabled) return jsonError(res, 400, "INVALID_USER", "User is missing or disabled");
         const receipt = (await paymentQuery("SELECT * FROM buymeacoffee_receipts WHERE transaction_id=$1", [req.params.transactionId])).rows[0];
         if (!receipt || receipt.refunded) return jsonError(res, 400, "RECEIPT_NOT_PAYABLE", "Payment is missing or refunded");
-        const parsed = parseBuyMeACoffeePurchaseEvent(receipt.raw_notify);
+        const allowAmountMismatch = req.body?.allowAmountMismatch === true;
+        const parsed = parseBuyMeACoffeePurchaseEvent(receipt.raw_notify, { allowAmountMismatch });
         if (!parsed.ok || parsed.test) return jsonError(res, 400, parsed.code || "INVALID_RECEIPT", "Receipt cannot be fulfilled");
         const result = await fulfillBuyMeACoffeePurchase(parsed, receipt.raw_notify, {
-            user, manual: mode === "record_manual",
-            note: JSON.stringify({ adminId: req.user?.id, mode, note: String(req.body?.note || "").slice(0, 1000) }),
+            user, manual: mode === "record_manual", adminAmountOverride: allowAmountMismatch,
+            note: JSON.stringify({ adminId: req.user?.id, mode, amountOverride: allowAmountMismatch && parsed.amountFen !== parsed.product.amountFen,
+                actualAmountFen: parsed.amountFen, expectedAmountFen: parsed.product.amountFen, currency: parsed.product.currency,
+                note: String(req.body?.note || "").slice(0, 1000) }),
         });
         if (!result.ok) return jsonError(res, 409, result.code, "Payment needs further review");
         return res.json({ status: "success", data: { code: result.code } });

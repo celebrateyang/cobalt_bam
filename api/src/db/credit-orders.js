@@ -453,6 +453,7 @@ export const markCreditOrderPaid = async ({
     paidAt,
     rawNotify,
     totalFen,
+    adminAmountOverride = false,
     clientFactory = getClient,
 }) => {
     const client = await clientFactory();
@@ -501,7 +502,8 @@ export const markCreditOrderPaid = async ({
         if (
             typeof totalFen === "number" &&
             Number.isFinite(totalFen) &&
-            totalFen !== order.amount_fen
+            totalFen !== order.amount_fen &&
+            !(order.provider === "buymeacoffee" && adminAmountOverride)
         ) {
             const failed = await client.query(
                 `

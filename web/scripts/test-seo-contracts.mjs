@@ -158,6 +158,30 @@ test('Suno landing renders its audio-first form and matching SEO facts', async (
     for (const step of howTo.step) assert(rendered.html.includes(escapeText(step.text)));
 });
 
+test('Suno has complete localized pages and matching FAQ and HowTo schema', async () => {
+    const detail = await component('src/routes/[lang]/download/[slug]/+page.svelte');
+    const loader = load('src/routes/[lang]/download/[slug]/+page.ts');
+    const { sunoLocales } = load('src/lib/seo/suno-locales.ts');
+    assert.deepEqual([...routes.getDownloadSeoLanguages('suno-downloader')].sort(), [...supportedLanguages].sort());
+    for (const lang of supportedLanguages) {
+        setTestLocale(lang, 'download/suno-downloader');
+        const data = await loader.load({ params: { lang, slug: 'suno-downloader' } });
+        const content = getSeoLandingLocale(data.landing, lang);
+        const rendered = detail.render({ data });
+        const schema = [...rendered.head.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(match => JSON.parse(match[1]));
+        assert(rendered.head.includes(escapeText(content.metaTitle)), lang);
+        assert(rendered.html.includes(escapeText(content.faqs[0].q)), lang);
+        assert.equal(schema.find(item => item['@type'] === 'FAQPage').mainEntity[0].acceptedAnswer.text, content.faqs[0].a, lang);
+        for (const step of schema.find(item => item['@type'] === 'HowTo').step) assert(rendered.html.includes(escapeText(step.text)), lang);
+        if (lang !== 'en') {
+            assert.equal(sunoLocales[lang].ui.length, 56, lang);
+            assert(rendered.html.includes(escapeText(sunoLocales[lang].ui[24])) === false, lang); // validation appears only after submission
+            assert(rendered.html.includes(escapeText(sunoLocales[lang].ui[22])), lang);
+            assert.notEqual(content.metaTitle, getSeoLandingLocale(data.landing, 'en').metaTitle, lang);
+        }
+    }
+});
+
 test('focused landing pages have usable SSR, accurate schemas and deliberate locale routes', async () => {
     const { platformDownloadConfigs } = load('src/lib/seo/platform-download-landings.ts');
     const detail = await component('src/routes/[lang]/download/[slug]/+page.svelte');
@@ -653,9 +677,16 @@ test('every advertised download and guide detail renders localized shared labels
                 assert(html.includes(`id="${platform}-source-url"`), context);
                 assert(!html.includes('class="omnibox'), context);
             } else if (kind === 'download' && params.slug === 'suno-downloader') {
+                const ui = load('src/lib/seo/suno-locales.ts').sunoLocales[params.lang]?.ui;
                 assert(html.includes('id="suno-url"'), context);
-                assert(html.includes('Download audio'), context);
-                assert(html.includes('What would you like to save?'), context);
+                assert(html.includes(escapeText(ui?.[22] ?? 'Download audio')), context);
+                assert(html.includes(escapeText(ui?.[12] ?? 'What would you like to save?')), context);
+                if (ui) {
+                    assert.equal(ui.length, 56, context);
+                    assert(ui.every(value => typeof value === 'string' && value.trim()), context);
+                    assert(html.includes(escapeText(ui[35])), context);
+                    assert(!html.includes('Download audio</button>'), context);
+                }
             } else if (kind === 'download' && params.slug === 'aparat-video-downloader') {
                 const ui = load('src/lib/seo/aparat-landing.ts').aparatUi[params.lang];
                 assert(html.includes(escapeText(ui.label)), context);

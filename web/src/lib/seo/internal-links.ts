@@ -329,7 +329,6 @@ const matchesAudience = (slug: string, audience: LinkAudience): boolean =>
 // Keep links and route generation on the same language policy. Do not advertise
 // translated URLs merely because an English fallback can render their content.
 export const isDownloadAvailableInLanguage = (slug: string, lang: string): boolean => {
-    if (slug === 'suno-downloader') return lang === 'en';
     const focusedPlatform = getPlatformDownloadConfig(slug);
     if (focusedPlatform) return focusedPlatform.languages.includes(lang);
     if (slug === 'aparat-video-downloader') return lang === 'en' || lang === 'fa';

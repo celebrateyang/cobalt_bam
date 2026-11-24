@@ -3,6 +3,7 @@
     import { page } from '$app/stores';
     import type { SeoLandingLocaleContent } from '$lib/seo/landing-pages';
     import type { CobaltSettings } from '$lib/types/settings';
+    import { sunoLocales } from '$lib/seo/suno-locales';
 
     export let lang: string;
     export let content: SeoLandingLocaleContent;
@@ -15,6 +16,8 @@
     let disposed = false;
     let message = '';
     let hasError = false;
+    const english = ['Home','Downloaders','FOR THE SONGS YOU WANT TO KEEP','Suno song downloader.','Keep the feeling.','Download a public Suno song as audio, or save its available video as MP4. Your next listen is just a link away.','Audio & video','Works in your browser','YOUR DOWNLOAD',"Let\'s find your song.",'A public Suno link is all you need.','Song or share link','What would you like to save?','Audio','Listen anywhere','Video','Available MP4','Audio format','Best available (M4A)','Supports public','Sign in when prompted; points or membership usage may apply.','Preparing...','Download audio','Download video','Enter a public Suno song or share link.','Could not prepare this song. Check that it is public and try again.','Your audio is being prepared in the download queue.','Your video is ready in the download dialog.','THE AUDIO, YOUR WAY','YOUR SONG','MP3 · WAV · MORE','SOUND GOOD?','Just the audio.','All the feeling.',"Choose Audio to extract a song's sound from its available MP4 video, then save it in your preferred format. Processing happens in your browser.","The audio comes from the video's track; it isn't a separate original Suno audio export. Availability and quality depend on the source.",'Choose audio format','A FEW SIMPLE STEPS',"Start with a song that's publicly accessible on Suno.",'Copy the link','Pick your format','Save your song','GOOD TO KNOW','The details','matter.','Everything you need to know before saving your song.','READY WHEN YOU ARE','Keep the songs','you love close.','Paste your Suno link and choose how you want to listen.','Download a song','More downloaders','Help & FAQ','Enable JavaScript to prepare a download, or open the downloader.','Breadcrumb','Related links'];
+    $: ui = sunoLocales[lang]?.ui ?? english;
     const bars = [19, 31, 23, 46, 36, 55, 29, 67, 42, 76, 51, 88, 58, 72, 44, 94, 63, 81, 46, 70, 53, 84, 39, 64, 48, 73, 36, 57, 27, 43, 22, 31];
 
     function parseSunoUrl(value: string): string | null {
@@ -30,7 +33,7 @@
         if (busy) return;
         message = ''; hasError = false;
         const url = parseSunoUrl(input);
-        if (!url) { hasError = true; message = 'Enter a public Suno song or share link.'; return; }
+        if (!url) { hasError = true; message = ui[24]; return; }
         busy = true;
         try {
             const { loadTranslations } = await import('$lib/i18n/translations');
@@ -39,10 +42,10 @@
             if (disposed) return;
             const response = await savingHandler({ request: { ...buildSaveRequest(url), downloadMode: mode, audioFormat: format } });
             if (disposed) return;
-            if (response?.status === 'error') { hasError = true; message = 'Could not prepare this song. Check that it is public and try again.'; }
-            else if (response) message = mode === 'audio' ? 'Your audio is being prepared in the download queue.' : 'Your video is ready in the download dialog.';
+            if (response?.status === 'error') { hasError = true; message = ui[25]; }
+            else if (response) message = mode === 'audio' ? ui[26] : ui[27];
         } catch {
-            if (!disposed) { hasError = true; message = 'Could not prepare this song. Please try again.'; }
+            if (!disposed) { hasError = true; message = ui[25]; }
         } finally { if (!disposed) busy = false; }
     }
 
@@ -55,47 +58,47 @@
 </script>
 
 <main class="suno-page" tabindex="-1" data-first-focus data-focus-ring-hidden>
-    <nav class="crumb" aria-label="Breadcrumb"><a href={`/${lang}`}>Home</a><span>/</span><a href={`/${lang}/download`}>Downloaders</a><span>/</span><span>Suno</span></nav>
+    <nav class="crumb" aria-label={ui[54]}><a href={`/${lang}`}>{ui[0]}</a><span>/</span><a href={`/${lang}/download`}>{ui[1]}</a><span>/</span><span>Suno</span></nav>
 
     <section class="hero" aria-labelledby="suno-title">
         <div class="hero-copy">
-            <p class="eyebrow"><span class="tiny-disc" aria-hidden="true"></span> FOR THE SONGS YOU WANT TO KEEP</p>
-            <h1 id="suno-title">Suno song downloader.<br /><em>Keep the feeling.</em></h1>
-            <p class="lede">Download a public Suno song as audio, or save its available video as MP4. Your next listen is just a link away.</p>
-            <div class="hero-pills"><span>Audio & video</span><span>Works in your browser</span></div>
+            <p class="eyebrow"><span class="tiny-disc" aria-hidden="true"></span> {ui[2]}</p>
+            <h1 id="suno-title">{ui[3]}<br /><em>{ui[4]}</em></h1>
+            <p class="lede">{ui[5]}</p>
+            <div class="hero-pills"><span>{ui[6]}</span><span>{ui[7]}</span></div>
         </div>
         <div class="record-art" aria-hidden="true">
             <div class="record-glow"></div><div class="record"><div class="record-label"><span>♪</span></div></div>
-            <div class="art-tag"><span class="art-icon">♫</span><div><strong>Made for your music</strong><small>Keep the sound close.</small></div></div>
+            <div class="art-tag"><span class="art-icon">♫</span><div><strong>{ui[6]}</strong><small>{ui[7]}</small></div></div>
         </div>
     </section>
 
     <section class="download-card" id="download" aria-labelledby="form-title">
-        <div class="card-heading"><div><span class="kicker">YOUR DOWNLOAD</span><h2 id="form-title">Let's find your song.</h2></div><span class="card-note">A public Suno link is all you need.</span></div>
+        <div class="card-heading"><div><span class="kicker">{ui[8]}</span><h2 id="form-title">{ui[9]}</h2></div><span class="card-note">{ui[10]}</span></div>
         <form on:submit|preventDefault={submit} action={`/${lang}`} method="GET" aria-busy={busy}>
-            <label for="suno-url">Song or share link</label>
+            <label for="suno-url">{ui[11]}</label>
             <div class="link-input"><span aria-hidden="true">↗</span><input id="suno-url" name="u" bind:value={input} on:input={() => { message = ''; hasError = false; }} type="url" placeholder="https://suno.com/s/..." autocomplete="url" required aria-invalid={hasError} aria-describedby="suno-hint suno-status" /></div>
             <div class="controls">
-                <fieldset><legend>What would you like to save?</legend><div class="mode-options"><label class:chosen={mode === 'audio'}><input type="radio" name="suno-mode" value="audio" bind:group={mode} /><span>♫</span><span><strong>Audio</strong><small>Listen anywhere</small></span></label><label class:chosen={mode === 'auto'}><input type="radio" name="suno-mode" value="auto" bind:group={mode} /><span>▷</span><span><strong>Video</strong><small>MP4 with sound</small></span></label></div></fieldset>
-                {#if mode === 'audio'}<div class="format"><label for="suno-format">Audio format</label><select id="suno-format" bind:value={format}><option value="mp3">MP3</option><option value="wav">WAV</option><option value="ogg">OGG</option><option value="opus">Opus</option><option value="best">Best available (M4A)</option></select></div>{/if}
+                <fieldset><legend>{ui[12]}</legend><div class="mode-options"><label class:chosen={mode === 'audio'}><input type="radio" name="suno-mode" value="audio" bind:group={mode} /><span>♫</span><span><strong>{ui[13]}</strong><small>{ui[14]}</small></span></label><label class:chosen={mode === 'auto'}><input type="radio" name="suno-mode" value="auto" bind:group={mode} /><span>▷</span><span><strong>{ui[15]}</strong><small>{ui[16]}</small></span></label></div></fieldset>
+                {#if mode === 'audio'}<div class="format"><label for="suno-format">{ui[17]}</label><select id="suno-format" bind:value={format}><option value="mp3">MP3</option><option value="wav">WAV</option><option value="ogg">OGG</option><option value="opus">Opus</option><option value="best">{ui[18]}</option></select></div>{/if}
             </div>
-            <div class="submit-row"><p id="suno-hint">Supports public <strong>suno.com/s/</strong> and <strong>suno.com/song/</strong> links.<br />Sign in when prompted; points or membership usage may apply.</p><button type="submit" disabled={busy || !ready}>{busy ? 'Preparing...' : mode === 'audio' ? 'Download audio' : 'Download video'} <span aria-hidden="true">↓</span></button></div>
+            <div class="submit-row"><p id="suno-hint">{ui[19]} <strong>suno.com/s/</strong> · <strong>suno.com/song/</strong><br />{ui[20]}</p><button type="submit" disabled={busy || !ready}>{busy ? ui[21] : mode === 'audio' ? ui[22] : ui[23]} <span aria-hidden="true">↓</span></button></div>
             <p id="suno-status" class:error={hasError} class="status" role="status" aria-live="polite">{message}</p>
-            <noscript><p>Enable JavaScript to prepare a download, or <a href={`/${lang}`}>open the downloader</a>.</p></noscript>
+            <noscript><p>{ui[53]} <a href={`/${lang}`}>{ui[1]}</a></p></noscript>
         </form>
     </section>
 
     <section class="sound-section" aria-labelledby="sound-title">
-        <div class="wave-panel"><div class="wave-top"><span>THE AUDIO, YOUR WAY</span><span>♫</span></div><div class="wave" aria-hidden="true">{#each bars as height}<i style={`height:${height}%`}></i>{/each}</div><div class="wave-bottom"><span>YOUR SONG</span><span>MP3 · WAV · MORE</span></div></div>
-        <div class="sound-copy"><p class="kicker">SOUND GOOD?</p><h2 id="sound-title">Just the audio.<br /><em>All the feeling.</em></h2><p>Choose Audio to extract a song's sound from its available MP4 video, then save it in your preferred format. Processing happens in your browser.</p><p class="fine-print">The audio comes from the video's track; it isn't a separate original Suno audio export. Availability and quality depend on the source.</p><a class="text-link" href="#download">Choose audio format <span aria-hidden="true">↗</span></a></div>
+        <div class="wave-panel"><div class="wave-top"><span>{ui[28]}</span><span>♫</span></div><div class="wave" aria-hidden="true">{#each bars as height}<i style={`height:${height}%`}></i>{/each}</div><div class="wave-bottom"><span>{ui[29]}</span><span>{ui[30]}</span></div></div>
+        <div class="sound-copy"><p class="kicker">{ui[31]}</p><h2 id="sound-title">{ui[32]}<br /><em>{ui[33]}</em></h2><p>{ui[34]}</p><p class="fine-print">{ui[35]}</p><a class="text-link" href="#download">{ui[36]} <span aria-hidden="true">↗</span></a></div>
     </section>
 
-    <section class="how" aria-labelledby="how-title"><div class="section-heading"><div><p class="kicker">A FEW SIMPLE STEPS</p><h2 id="how-title">{content.stepsTitle}</h2></div><p>Start with a song that's publicly accessible on Suno.</p></div><div class="steps"><article><span class="step-icon">↗</span><h3>Copy the link</h3><p>{content.steps[0]}</p></article><article><span class="step-icon">♫</span><h3>Pick your format</h3><p>{content.steps[1]}</p></article><article><span class="step-icon">↓</span><h3>Save your song</h3><p>{content.steps[2]}</p></article></div></section>
+    <section class="how" aria-labelledby="how-title"><div class="section-heading"><div><p class="kicker">{ui[37]}</p><h2 id="how-title">{content.stepsTitle}</h2></div><p>{ui[38]}</p></div><div class="steps"><article><span class="step-icon">↗</span><h3>{ui[39]}</h3><p>{content.steps[0]}</p></article><article><span class="step-icon">♫</span><h3>{ui[40]}</h3><p>{content.steps[1]}</p></article><article><span class="step-icon">↓</span><h3>{ui[41]}</h3><p>{content.steps[2]}</p></article></div></section>
 
-    <section class="details-section" aria-labelledby="details-title"><div><p class="kicker">GOOD TO KNOW</p><h2 id="details-title">The details<br /><em>matter.</em></h2><p>Everything you need to know before saving your song.</p></div><div class="faq-list">{#each content.faqs as faq}<details><summary>{faq.q}<span aria-hidden="true">+</span></summary><p>{faq.a}</p></details>{/each}</div></section>
+    <section class="details-section" aria-labelledby="details-title"><div><p class="kicker">{ui[42]}</p><h2 id="details-title">{ui[43]}<br /><em>{ui[44]}</em></h2><p>{ui[45]}</p></div><div class="faq-list">{#each content.faqs as faq}<details><summary>{faq.q}<span aria-hidden="true">+</span></summary><p>{faq.a}</p></details>{/each}</div></section>
 
-    <section class="last-call"><div><p class="kicker">READY WHEN YOU ARE</p><h2>Keep the songs<br />you love close.</h2><p>Paste your Suno link and choose how you want to listen.</p></div><a href="#download">Download a song <span aria-hidden="true">↓</span></a></section>
-    <footer><p>{content.disclaimer}</p><nav aria-label="Related links"><a href={`/${lang}/download`}>More downloaders</a><a href={`/${lang}/faq`}>Help & FAQ</a></nav></footer>
+    <section class="last-call"><div><p class="kicker">{ui[46]}</p><h2>{ui[47]}<br />{ui[48]}</h2><p>{ui[49]}</p></div><a href="#download">{ui[50]} <span aria-hidden="true">↓</span></a></section>
+    <footer><p>{content.disclaimer}</p><nav aria-label={ui[55]}><a href={`/${lang}/download`}>{ui[51]}</a><a href={`/${lang}/faq`}>{ui[52]}</a></nav></footer>
 </main>
 
 <style>

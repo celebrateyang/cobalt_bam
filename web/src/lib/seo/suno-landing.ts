@@ -1,9 +1,37 @@
 import type { SeoLandingPage } from './landing-pages';
+import { sunoLocales } from './suno-locales';
+
+const howTitles: Record<string, string> = {
+    fr: 'Comment télécharger une chanson Suno',
+    de: 'So lädst du einen Suno-Song herunter',
+    es: 'Cómo descargar una canción de Suno',
+    zh: '如何下载 Suno 歌曲',
+    ja: 'Suno の曲をダウンロードする方法',
+    ko: 'Suno 노래 다운로드 방법',
+    ru: 'Как скачать песню Suno',
+    th: 'วิธีดาวน์โหลดเพลง Suno',
+    vi: 'Cách tải bài hát Suno',
+    id: 'Cara mengunduh lagu Suno',
+};
 
 export const sunoLanding: SeoLandingPage = {
     slug: 'suno-downloader',
     supportedLinkFormats: ['https://suno.com/s/SHARE_CODE', 'https://suno.com/song/SONG_ID'],
     locales: {
+        ...Object.fromEntries(Object.entries(sunoLocales).map(([lang, copy]) => [lang, {
+            metaTitle: copy.title,
+            metaDescription: copy.description,
+            metaKeywords: copy.keywords,
+            h1: `${copy.ui[3]} ${copy.ui[4]}`,
+            lede: copy.ui[5],
+            stepsTitle: howTitles[lang],
+            steps: copy.steps,
+            featuresTitle: copy.ui[42],
+            features: [copy.ui[5], copy.ui[34], copy.ui[35]],
+            faqTitle: copy.ui[45],
+            faqs: copy.faqs.map(([q, a]) => ({ q, a })),
+            disclaimer: copy.disclaimer,
+        }])),
         en: {
             metaTitle: 'Suno Downloader: Save Song Audio or MP4 | FreeSaveVideo',
             metaDescription: 'Download an available Suno song video as MP4 or extract its audio as MP3. Paste a public Suno share or song URL and choose your download mode.',

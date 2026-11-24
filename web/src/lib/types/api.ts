@@ -101,6 +101,7 @@ export type CobaltLocalProcessingResponse = {
     source?: {
         kind: 'hls' | 'direct',
         urls: string[],
+        sunoEncryption?: { key: string, counter: string },
         subtitles?: string,
         cover?: string,
     },

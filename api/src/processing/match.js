@@ -687,7 +687,7 @@ export default async function({ host, patternMatch, params, authType }) {
                 break;
 
             case "suno":
-                r = await suno(patternMatch);
+                r = await suno({ ...patternMatch, isAudioOnly });
                 break;
 
             case "magnific":

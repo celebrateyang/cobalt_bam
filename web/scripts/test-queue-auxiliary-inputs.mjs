@@ -104,3 +104,12 @@ test('Suno audio fetches the direct MP4 and encodes the selected audio format', 
         if (copy) assert.ok(workers[1].workerArgs.ffargs.includes('copy'));
     }
 });
+
+test('Suno playback decryption data reaches the audio encoder only', () => {
+    const encryption = { key: 'AAAAAAAAAAAAAAAAAAAAAA==', counter: 'AAAAAAAAAAAAAAAAAAAAAA==' };
+    const workers = pipeline({ type: 'audio', service: 'suno', tunnel: [],
+        source: { kind: 'direct', urls: ['https://cdn.test/audio.m4a'], sunoEncryption: encryption },
+        output: { filename: 'song.mp3', type: 'audio/mpeg' }, audio: { format: 'mp3', bitrate: '128' } });
+    assert.equal(workers[0].workerArgs.sunoEncryption, undefined);
+    assert.equal(workers[1].workerArgs.sunoEncryption, encryption);
+});

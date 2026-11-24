@@ -4,6 +4,7 @@
     import type { SeoLandingLocaleContent } from '$lib/seo/landing-pages';
     import type { CobaltSettings } from '$lib/types/settings';
     import { sunoLocales } from '$lib/seo/suno-locales';
+    import { sunoAudioCopy } from '$lib/seo/suno-audio-copy';
 
     export let lang: string;
     export let content: SeoLandingLocaleContent;
@@ -17,7 +18,9 @@
     let message = '';
     let hasError = false;
     const english = ['Home','Downloaders','FOR THE SONGS YOU WANT TO KEEP','Suno song downloader.','Keep the feeling.','Download a public Suno song as audio, or save its available video as MP4. Your next listen is just a link away.','Audio & video','Works in your browser','YOUR DOWNLOAD',"Let\'s find your song.",'A public Suno link is all you need.','Song or share link','What would you like to save?','Audio','Listen anywhere','Video','Available MP4','Audio format','Best available (M4A)','Supports public','Sign in when prompted; points or membership usage may apply.','Preparing...','Download audio','Download video','Enter a public Suno song or share link.','Could not prepare this song. Check that it is public and try again.','Your audio is being prepared in the download queue.','Your video is ready in the download dialog.','THE AUDIO, YOUR WAY','YOUR SONG','MP3 · WAV · MORE','SOUND GOOD?','Just the audio.','All the feeling.',"Choose Audio to extract a song's sound from its available MP4 video, then save it in your preferred format. Processing happens in your browser.","The audio comes from the video's track; it isn't a separate original Suno audio export. Availability and quality depend on the source.",'Choose audio format','A FEW SIMPLE STEPS',"Start with a song that's publicly accessible on Suno.",'Copy the link','Pick your format','Save your song','GOOD TO KNOW','The details','matter.','Everything you need to know before saving your song.','READY WHEN YOU ARE','Keep the songs','you love close.','Paste your Suno link and choose how you want to listen.','Download a song','More downloaders','Help & FAQ','Enable JavaScript to prepare a download, or open the downloader.','Breadcrumb','Related links'];
-    $: ui = sunoLocales[lang]?.ui ?? english;
+    $: audioCopy = sunoAudioCopy[lang] ?? sunoAudioCopy.en;
+    $: ui = (sunoLocales[lang]?.ui ?? english).map((value, index) =>
+        index === 18 ? audioCopy.best : index === 34 ? audioCopy.description : index === 35 ? audioCopy.limitation : value);
     const bars = [19, 31, 23, 46, 36, 55, 29, 67, 42, 76, 51, 88, 58, 72, 44, 94, 63, 81, 46, 70, 53, 84, 39, 64, 48, 73, 36, 57, 27, 43, 22, 31];
 
     function parseSunoUrl(value: string): string | null {

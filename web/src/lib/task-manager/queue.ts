@@ -414,6 +414,7 @@ export const createSavePipeline = (
                     type: info.output.type,
                     format: info.output.filename.split(".").pop(),
                 },
+                sunoEncryption: info.source?.sunoEncryption,
             },
         });
     }

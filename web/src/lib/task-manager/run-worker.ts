@@ -45,6 +45,7 @@ export const startWorker = async ({ worker, workerId, dependsOn, parentId, worke
                     workerArgs.output,
                     worker,
                     device.supports.multithreading,
+                    workerArgs.sunoEncryption,
                 );
             } else {
                 itemError(parentId, workerId, "queue.ffmpeg.no_args");

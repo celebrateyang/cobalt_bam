@@ -16,6 +16,7 @@ type CobaltFFmpegWorkerArgs = {
     files: File[],
     ffargs: string[],
     output: FileInfo,
+    sunoEncryption?: { key: string, counter: string },
 };
 
 export type CobaltFetchTuning = {

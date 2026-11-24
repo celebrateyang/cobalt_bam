@@ -187,7 +187,7 @@ test("the actual worker separates initialization from probing and supports singl
         async terminate() {}
     }
     const self = { postMessage: e => events.push(e.cobaltFFmpegWorker) };
-    load("../src/lib/task-manager/workers/ffmpeg.ts", { "$lib/libav": { default: LibAV } }, { self });
+    load("../src/lib/task-manager/workers/ffmpeg.ts", { "$lib/libav": { default: LibAV }, "$lib/task-manager/suno-decrypt": { decryptSunoFile: async file => file } }, { self });
     const pending = self.onmessage({ data: { cobaltFFmpegWorker: {
         variant: "encode", files: [{ type: "audio/webm" }], args: [], output: { type: "audio/mpeg" }, yesthreads: false,
     } } });
@@ -211,7 +211,7 @@ test("the actual worker reports quota exhaustion without misclassifying other re
             async terminate() {}
         }
         const self = { postMessage: e => events.push(e.cobaltFFmpegWorker) };
-        load("../src/lib/task-manager/workers/ffmpeg.ts", { "$lib/libav": { default: LibAV } }, { self });
+        load("../src/lib/task-manager/workers/ffmpeg.ts", { "$lib/libav": { default: LibAV }, "$lib/task-manager/suno-decrypt": { decryptSunoFile: async file => file } }, { self });
         await self.onmessage({ data: { cobaltFFmpegWorker: {
             variant: "remux", files: [{ type: "video/mp4" }], args: [], output: { type: "video/mp4" },
         } } });

@@ -231,6 +231,7 @@ export function createResponse(responseType, responseData) {
                             urls: Array.isArray(responseData?.url)
                                 ? responseData.url
                                 : [responseData?.url].filter(Boolean),
+                            ...(responseData?.service === "suno" && responseData?.sunoEncryption ? { sunoEncryption: responseData.sunoEncryption } : {}),
                             subtitles: responseData?.subtitles || undefined,
                             cover: processingCover || undefined,
                         }

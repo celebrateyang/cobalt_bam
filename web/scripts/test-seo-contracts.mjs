@@ -151,7 +151,7 @@ test('Suno landing renders its audio-first form and matching SEO facts', async (
     assert(rendered.html.includes('id="suno-url"'));
     assert(rendered.html.includes('Download audio'));
     assert(rendered.html.includes('Audio format'));
-    assert(rendered.html.includes('separate original Suno audio export'));
+    assert(rendered.html.includes('separate original Suno export'));
     assert(!rendered.html.includes('hero-omnibox'));
     const schema = [...rendered.head.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(match => JSON.parse(match[1]));
     const howTo = schema.find(item => item['@type'] === 'HowTo');
@@ -684,7 +684,7 @@ test('every advertised download and guide detail renders localized shared labels
                 if (ui) {
                     assert.equal(ui.length, 56, context);
                     assert(ui.every(value => typeof value === 'string' && value.trim()), context);
-                    assert(html.includes(escapeText(ui[35])), context);
+                    assert(html.includes(escapeText(load('src/lib/seo/suno-audio-copy.ts').sunoAudioCopy[params.lang].limitation)), context);
                     assert(!html.includes('Download audio</button>'), context);
                 }
             } else if (kind === 'download' && params.slug === 'aparat-video-downloader') {

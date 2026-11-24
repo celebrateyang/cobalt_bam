@@ -530,7 +530,12 @@ export default function({
             let processType = "audio";
             let copy = false;
 
-            if (audioFormat === "best") {
+            if (audioFormat === "best" && host === "suno" && r.sunoEncryption) {
+                // The player stream is Opus in MP4; preserve it losslessly in
+                // an Opus container. The MP4/ipod muxer cannot copy Opus.
+                audioFormat = "opus";
+                copy = true;
+            } else if (audioFormat === "best") {
                 const serviceBestAudio = r.bestAudio;
 
                 if (serviceBestAudio) {
@@ -608,7 +613,7 @@ export default function({
     // Extract audio in the browser from the same public MP4; never tunnel it.
     if (host === "suno" && action === "audio") {
         return createResponse("local-processing", {
-            ...defaultParams, ...params, service: "suno", frontendProcessing: "direct",
+            ...defaultParams, ...params, service: "suno", frontendProcessing: "direct", sunoEncryption: r.sunoEncryption,
         });
     }
 

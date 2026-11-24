@@ -17,6 +17,7 @@ export const runFFmpegWorker = async (
     output: FileInfo,
     variant: 'remux' | 'encode',
     yesthreads: boolean,
+    sunoEncryption?: { key: string, counter: string },
 ) => {
     const taskStartedAt = Date.now();
     const startAttempt = (attempt: number, threaded: boolean) => {
@@ -112,7 +113,7 @@ export const runFFmpegWorker = async (
                     });
                 }
             };
-            worker.postMessage({ cobaltFFmpegWorker: { variant, files, args, output, yesthreads: threaded } });
+            worker.postMessage({ cobaltFFmpegWorker: { variant, files, args, output, yesthreads: threaded, sunoEncryption } });
         } catch (error) {
             fail("queue.generic_error", error instanceof Error ? error.name : "UnknownError");
         }

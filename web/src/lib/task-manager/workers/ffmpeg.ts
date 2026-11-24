@@ -1,5 +1,6 @@
 import LibAVWrapper from "$lib/libav";
 import type { FileInfo } from "$lib/types/libav";
+import { decryptSunoFile } from "$lib/task-manager/suno-decrypt";
 
 const ffmpeg = async (
     variant: string,
@@ -7,6 +8,7 @@ const ffmpeg = async (
     args: string[],
     output: FileInfo,
     yesthreads: boolean = false,
+    sunoEncryption?: { key: string, counter: string },
 ) => {
     if (!(files && output && args)) {
         self.postMessage({
@@ -44,8 +46,16 @@ const ffmpeg = async (
     }
 
     try {
-        const initializedAt = Date.now();
         self.postMessage({ cobaltFFmpegWorker: { stage: "initializing" } });
+        if (sunoEncryption) {
+            try {
+                if (files.length !== 1) throw new Error("Invalid audio input");
+                files = [await decryptSunoFile(files[0], sunoEncryption)];
+            } catch {
+                return error("queue.ffmpeg.probe_failed");
+            }
+        }
+        const initializedAt = Date.now();
         try {
             ff.init({ variant, yesthreads, noworker: !yesthreads, debug: true });
             if (!ff.libav) throw new Error("LibAV wasn't initialized");
@@ -144,7 +154,7 @@ self.postMessage({ cobaltFFmpegWorker: { stage: "worker" } });
 self.onmessage = async (event: MessageEvent) => {
     const ed = event.data.cobaltFFmpegWorker;
     if (ed?.variant && ed?.files && ed?.args && ed?.output) {
-        await ffmpeg(ed.variant, ed.files, ed.args, ed.output, ed.yesthreads);
+        await ffmpeg(ed.variant, ed.files, ed.args, ed.output, ed.yesthreads, ed.sunoEncryption);
     }
 }
 

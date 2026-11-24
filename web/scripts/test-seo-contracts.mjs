@@ -80,6 +80,7 @@ framework['$components/aparat/AparatDownloadPage.svelte'] = { __esModule: true, 
 framework['$components/save/SupportLink.svelte'] = { __esModule: true, default: await component('src/components/save/SupportLink.svelte') };
 framework['$components/social/PlatformDownloadPage.svelte'] = { __esModule: true, default: await component('src/components/social/PlatformDownloadPage.svelte') };
 framework['$components/youtube/YouTubeDownloadPage.svelte'] = { __esModule: true, default: await component('src/components/youtube/YouTubeDownloadPage.svelte') };
+framework['$components/suno/SunoDownloadPage.svelte'] = { __esModule: true, default: await component('src/components/suno/SunoDownloadPage.svelte') };
 for (const name of ['SourceDownloadForm', 'RedditDownloadPage', 'PinterestDownloadPage']) {
     framework[`$components/social/${name}.svelte`] = { __esModule: true, default: await component(`src/components/social/${name}.svelte`) };
 }
@@ -139,6 +140,22 @@ test('focused platform forms accept source pages and reject lookalikes, feeds an
         }
         for (const url of invalid[platform]) assert.equal(parse(platform, url), null, url);
     }
+});
+
+test('Suno landing renders its audio-first form and matching SEO facts', async () => {
+    setTestLocale('en', 'download/suno-downloader');
+    const detail = await component('src/routes/[lang]/download/[slug]/+page.svelte');
+    const loader = load('src/routes/[lang]/download/[slug]/+page.ts');
+    const data = await loader.load({ params: { lang: 'en', slug: 'suno-downloader' } });
+    const rendered = detail.render({ data });
+    assert(rendered.html.includes('id="suno-url"'));
+    assert(rendered.html.includes('Download audio'));
+    assert(rendered.html.includes('Audio format'));
+    assert(rendered.html.includes('separate original Suno audio export'));
+    assert(!rendered.html.includes('hero-omnibox'));
+    const schema = [...rendered.head.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(match => JSON.parse(match[1]));
+    const howTo = schema.find(item => item['@type'] === 'HowTo');
+    for (const step of howTo.step) assert(rendered.html.includes(escapeText(step.text)));
 });
 
 test('focused landing pages have usable SSR, accurate schemas and deliberate locale routes', async () => {
@@ -635,6 +652,10 @@ test('every advertised download and guide detail renders localized shared labels
                 const platform = params.slug.startsWith('reddit') ? 'reddit' : 'pinterest';
                 assert(html.includes(`id="${platform}-source-url"`), context);
                 assert(!html.includes('class="omnibox'), context);
+            } else if (kind === 'download' && params.slug === 'suno-downloader') {
+                assert(html.includes('id="suno-url"'), context);
+                assert(html.includes('Download audio'), context);
+                assert(html.includes('What would you like to save?'), context);
             } else if (kind === 'download' && params.slug === 'aparat-video-downloader') {
                 const ui = load('src/lib/seo/aparat-landing.ts').aparatUi[params.lang];
                 assert(html.includes(escapeText(ui.label)), context);

@@ -20,6 +20,7 @@
     import YouTubeDownloadPage from '$components/youtube/YouTubeDownloadPage.svelte';
     import RedditDownloadPage from '$components/social/RedditDownloadPage.svelte';
     import PinterestDownloadPage from '$components/social/PinterestDownloadPage.svelte';
+    import SunoDownloadPage from '$components/suno/SunoDownloadPage.svelte';
 
     export let data: {
         lang: string;
@@ -241,7 +242,7 @@
     let loadingOmnibox = false;
 
     onMount(() => { mounted = true; });
-    $: if (mounted && !focusedPlatform && data.slug !== 'youtube-download' && !isGoogleDrive && !isAparat && !socialPlatform && !OmniboxComponent && !loadingOmnibox) {
+    $: if (mounted && !focusedPlatform && data.slug !== 'youtube-download' && data.slug !== 'suno-downloader' && !isGoogleDrive && !isAparat && !socialPlatform && !OmniboxComponent && !loadingOmnibox) {
         loadingOmnibox = true;
         void import('$components/save/Omnibox.svelte')
             .then((module) => {
@@ -282,7 +283,9 @@
     {/if}
 </svelte:head>
 
-{#if focusedPlatform}
+{#if data.slug === 'suno-downloader'}
+    <SunoDownloadPage lang={data.lang} content={localeContent} />
+{:else if focusedPlatform}
     {#key data.slug}<PlatformDownloadPage config={focusedPlatform} content={localeContent} lang={data.lang} related={focusedRelated} guides={data.relatedLearnPages ?? []} />{/key}
 {:else if isAparat}
     <AparatDownloadPage lang={data.lang} content={localeContent} />

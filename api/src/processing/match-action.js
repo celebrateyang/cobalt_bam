@@ -605,6 +605,12 @@ export default function({
             ...defaultParams, ...params, service: "aparat", frontendProcessing: "direct",
         });
     }
+    // Extract audio in the browser from the same public MP4; never tunnel it.
+    if (host === "suno" && action === "audio") {
+        return createResponse("local-processing", {
+            ...defaultParams, ...params, service: "suno", frontendProcessing: "direct",
+        });
+    }
 
     // alwaysProxy is set to true in match.js if localProcessing is forced
     const keepBilibiliDirectBridge =

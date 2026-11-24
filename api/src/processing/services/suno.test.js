@@ -27,8 +27,16 @@ test('resolves public Suno links and returns a direct MP4 even with forced local
     assert.equal(response.body.status, 'redirect');
     assert.equal(response.body.directUrl, media);
     assert.equal(response.body.tunnelUrl, undefined);
-    const audio = matchAction({ r: result, host: 'suno', isAudioOnly: true });
-    assert.equal(audio.body.error.code, 'error.api.service.audio_not_supported');
+    for (const format of ['mp3', 'wav', 'ogg', 'opus', 'best']) {
+        const audio = matchAction({ r: result, host: 'suno', isAudioOnly: true, audioFormat: format, audioBitrate: '128', alwaysProxy: true, localProcessing: 'disabled' });
+        assert.equal(audio.body.status, 'local-processing');
+        assert.equal(audio.body.type, 'audio');
+        assert.deepEqual(audio.body.source.urls, [media]);
+        assert.deepEqual(audio.body.tunnel, []);
+        assert.equal(audio.body.fallback, undefined);
+        assert.equal(audio.body.audio.format, format === 'best' ? 'm4a' : format);
+        assert.equal(audio.body.output.filename, `A song.${format === 'best' ? 'm4a' : format}`);
+    }
 });
 
 test('rejects unsafe redirects and unrelated or missing media', async t => {

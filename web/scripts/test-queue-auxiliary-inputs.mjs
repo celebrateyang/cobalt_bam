@@ -87,3 +87,20 @@ test('media-only response without optional audio retains validation', () => {
         output: { filename: 'video.mp4', type: 'video/mp4' } });
     assert.deepEqual(Array.from(workers[0].workerArgs.validation.expectedContentTypePrefixes), ['video/']);
 });
+
+test('Suno audio fetches the direct MP4 and encodes the selected audio format', () => {
+    const url = 'https://cdn1.suno.ai/afdb217c-fc39-453a-965d-17ed6e8efcfd.mp4';
+    for (const [format, copy] of [['mp3', false], ['m4a', true]]) {
+        const workers = pipeline({ type: 'audio', service: 'suno', tunnel: [],
+            source: { kind: 'direct', urls: [url] },
+            output: { filename: `song.${format}`, type: format === 'mp3' ? 'audio/mpeg' : 'audio/mp4' },
+            audio: { format, bitrate: '128', copy } });
+        assert.equal(workers.length, 2);
+        assert.equal(workers[0].worker, 'fetch');
+        assert.equal(workers[0].workerArgs.url, url);
+        assert.equal(workers[1].worker, 'encode');
+        assert.ok(workers[1].workerArgs.ffargs.includes('-vn'));
+        assert.ok(workers[1].workerArgs.ffargs.includes(format === 'm4a' ? 'ipod' : format));
+        if (copy) assert.ok(workers[1].workerArgs.ffargs.includes('copy'));
+    }
+});

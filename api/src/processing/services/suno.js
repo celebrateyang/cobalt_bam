@@ -30,7 +30,8 @@ export default async function suno({ id, shortLink }) {
         if (media.protocol !== "https:" || media.hostname !== "cdn1.suno.ai" || media.port || media.username || media.password || media.pathname.toLowerCase() !== `/${songId.toLowerCase()}.mp4`) return { error: "fetch.empty" };
         const title = normalized.match(/<meta property="og:title" content="([^"]+)"/i)?.[1]
             ?.replace(/&#x27;|&#39;/g, "'").replace(/&amp;/g, "&").replace(/&quot;/g, '"');
-        return { service: "suno", urls: media.toString(), filename: `${sanitizeString(title || `suno_${songId}`)}.mp4` };
+        const name = sanitizeString(title || `suno_${songId}`);
+        return { service: "suno", urls: media.toString(), filename: `${name}.mp4`, audioFilename: name };
     } catch {
         return { error: "fetch.fail" };
     }

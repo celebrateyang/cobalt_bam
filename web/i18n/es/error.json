@@ -1,4 +1,5 @@
 {
+    "queue.storage.quota_exceeded": "El almacenamiento del navegador está lleno. Libera espacio en el disco y vuelve a intentarlo, o usa otro navegador.",
     "queue.fetch.unverifiable_range": "La fuente no proporcionó un intervalo de archivo verificable. No se puede continuar de forma segura; inténtalo más tarde.",
     "queue.fetch.cannot_resume": "La descarga se interrumpió y no se puede reanudar de forma segura desde esta fuente. Vuelve a iniciarla cuando la conexión sea estable.",
     "import.no_data": "no hay nada que cargar del archivo. ¿estás seguro de que es el correcto?",

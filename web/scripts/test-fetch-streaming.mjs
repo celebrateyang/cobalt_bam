@@ -47,6 +47,15 @@ test('downloads a chunked remux tunnel without Content-Length in one request', a
     assert.deepEqual(Buffer.from(await result.arrayBuffer()), payload);
 });
 
+test('reports browser storage quota exhaustion while downloading', async () => {
+    const f = await download(() => new Response('video data'), () => {
+        throw new DOMException('storage full', 'QuotaExceededError');
+    });
+    assert.equal(f.messages.at(-1).error, 'queue.storage.quota_exceeded');
+    assert.equal(f.messages.some(message => message.result), false);
+    assert.equal(f.calls.length, 1);
+});
+
 test('stops immediately when an interrupted YouTube stream cannot resume', async () => {
     const f = await download(index => {
         if (index === 0) {

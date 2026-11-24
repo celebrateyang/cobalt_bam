@@ -1,4 +1,5 @@
 {
+    "queue.storage.quota_exceeded": "Browser storage is full. Free up disk space and try again, or use another browser.",
     "queue.fetch.unverifiable_range": "The download source did not provide a verifiable file range. This download cannot safely continue; try again later.",
     "queue.fetch.cannot_resume": "This download was interrupted and its source cannot be safely resumed. Start it again when your connection is stable.",
     "import.no_data": "there's nothing to load from the file. are you sure it's the right one?",

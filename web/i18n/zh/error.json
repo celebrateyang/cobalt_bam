@@ -1,4 +1,5 @@
 {
+    "queue.storage.quota_exceeded": "浏览器可用存储空间不足。请释放磁盘空间后重试，或尝试使用其他浏览器。",
     "queue.fetch.unverifiable_range": "下载来源没有提供可验证的文件分段信息，无法安全确认文件完整性。本次下载无法继续，请稍后再试。",
     "queue.fetch.cannot_resume": "下载已中断，当前来源无法安全续传。请在网络稳定后重新下载。",
     "import.no_data": "文件中没有要加载的内容。您确定这是正确的文件吗？",

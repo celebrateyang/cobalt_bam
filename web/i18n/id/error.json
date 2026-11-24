@@ -1,4 +1,5 @@
 {
+    "queue.storage.quota_exceeded": "Penyimpanan browser penuh. Kosongkan ruang disk lalu coba lagi, atau gunakan browser lain.",
     "queue.fetch.unverifiable_range": "Sumber unduhan tidak memberikan rentang file yang dapat diverifikasi. Unduhan tidak dapat dilanjutkan dengan aman; coba lagi nanti.",
     "queue.fetch.cannot_resume": "Unduhan terputus dan tidak dapat dilanjutkan dengan aman dari sumber ini. Mulai lagi saat koneksi stabil.",
     "import.no_data": "tidak ada yang dapat dimuat dari file. apakah kamu yakin itu yang benar?",

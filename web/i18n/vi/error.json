@@ -1,4 +1,5 @@
 {
+    "queue.storage.quota_exceeded": "Bộ nhớ lưu trữ của trình duyệt đã đầy. Hãy giải phóng dung lượng ổ đĩa rồi thử lại, hoặc dùng trình duyệt khác.",
     "queue.fetch.unverifiable_range": "Nguồn tải xuống không cung cấp phạm vi tệp có thể xác minh. Không thể tiếp tục an toàn; vui lòng thử lại sau.",
     "queue.fetch.cannot_resume": "Quá trình tải xuống bị gián đoạn và không thể tiếp tục an toàn từ nguồn này. Hãy tải lại khi kết nối ổn định.",
     "import.no_data": "không có gì để tải từ file. bạn có chắc đó là file đúng không?",

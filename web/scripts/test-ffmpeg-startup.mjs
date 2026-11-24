@@ -143,6 +143,15 @@ test("probe timeout and render failure do not retry initialization", async () =>
     assert.equal(g.workers.length, 1); assert.equal(g.errors.length, 1);
 });
 
+test("storage quota failure is terminal even during initialization", async () => {
+    const f = fixture(); await f.run();
+    f.workers[0].message({ stage: "initializing" });
+    f.workers[0].message({ error: "queue.storage.quota_exceeded", errorName: "QuotaExceededError" });
+    assert.equal(f.workers.length, 1);
+    assert.equal(f.errors[0][2], "queue.storage.quota_exceeded");
+    assert.equal(f.errors[0][3].errorName, "QuotaExceededError");
+});
+
 test("removal or terminal state cancels timers, subscriptions and late worker callbacks", async () => {
     for (const state of [undefined, "error", "done", "waiting"]) {
         const f = fixture(); await f.run();
@@ -187,6 +196,28 @@ test("the actual worker separates initialization from probing and supports singl
     assert.equal(options[0].noworker, true); ready({}); await pending;
     assert.deepEqual(events.filter(e => e.stage).map(e => e.stage), ["worker", "initializing", "probing", "encoding"]);
     assert.equal(events.at(-1).render, "output");
+});
+
+test("the actual worker reports quota exhaustion without misclassifying other render errors", async () => {
+    for (const [failure, expected] of [
+        [new DOMException("storage full", "QuotaExceededError"), "queue.storage.quota_exceeded"],
+        [new Error("other error"), "queue.ffmpeg.crashed"],
+    ]) {
+        const events = [];
+        class LibAV {
+            init() { this.libav = Promise.resolve({}); }
+            async probe() { return { format: { duration: 2 }, streams: [{ codec_type: "video" }] }; }
+            async render() { throw failure; }
+            async terminate() {}
+        }
+        const self = { postMessage: e => events.push(e.cobaltFFmpegWorker) };
+        load("../src/lib/task-manager/workers/ffmpeg.ts", { "$lib/libav": { default: LibAV } }, { self });
+        await self.onmessage({ data: { cobaltFFmpegWorker: {
+            variant: "remux", files: [{ type: "video/mp4" }], args: [], output: { type: "video/mp4" },
+        } } });
+        assert.equal(events.at(-1).error, expected);
+        assert.equal(events.at(-1).errorName, failure.name);
+    }
 });
 
 test("original-audio retry is explicit, YouTube-only and gets its own billing identity", () => {
@@ -294,6 +325,18 @@ test("terminal encoder failure persists diagnostics and releases its hold withou
     assert.equal(f.releases[0][2].failureDiagnostic, diagnostic);
     assert.equal(f.reports[0][0], "exact-attempt"); assert.equal(f.reports[0][1], "failed");
     assert.equal(f.reports[0][3], diagnostic);
+});
+
+test("quota failure does not start a fallback and releases the points hold", async () => {
+    const f = queueFixture();
+    f.store.value.task.fallback = { pipeline: [{ workerId: "fallback" }], used: false };
+    f.api.itemError("task", "encoder", "queue.storage.quota_exceeded", { errorName: "QuotaExceededError" });
+    await f.api.waitForPointsRelease("task");
+    assert.equal(f.store.value.task.state, "error");
+    assert.equal(f.store.value.task.errorCode, "queue.storage.quota_exceeded");
+    assert.equal(f.store.value.task.fallback.used, false);
+    assert.equal(f.releases.length, 1);
+    assert.equal(f.finalizes.length, 0);
 });
 
 test("successful single-thread recovery charges only on final completion and reports processing", async () => {

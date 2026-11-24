@@ -313,7 +313,7 @@ export function itemError(
             const holdId = item.points?.holdId;
             console.log(`[queue] itemError: item found, holdId=${holdId ?? 'none'}`);
 
-            if (item.fallback?.pipeline?.length && !item.fallback.used) {
+            if (error !== "queue.storage.quota_exceeded" && item.fallback?.pipeline?.length && !item.fallback.used) {
                 queueData[id] = clearPipelineCache(item);
                 queueData[id] = {
                     ...queueData[id],

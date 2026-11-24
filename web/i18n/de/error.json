@@ -1,4 +1,5 @@
 {
+    "queue.storage.quota_exceeded": "Der Browserspeicher ist voll. Gib Speicherplatz auf dem Gerät frei und versuche es erneut oder verwende einen anderen Browser.",
     "queue.fetch.unverifiable_range": "Die Downloadquelle lieferte keinen überprüfbaren Dateibereich. Der Download kann nicht sicher fortgesetzt werden. Versuche es später erneut.",
     "queue.fetch.cannot_resume": "Der Download wurde unterbrochen und kann von dieser Quelle nicht sicher fortgesetzt werden. Starte ihn bei stabiler Verbindung erneut.",
     "import.no_data": "Es gibt nichts aus der Datei zu laden. Sind Sie sicher, dass es die richtige ist?",

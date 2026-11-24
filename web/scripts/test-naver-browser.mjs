@@ -41,7 +41,7 @@ test('Naver pipelines fetch CDN media directly and remux HLS without a server fa
         const source = `https://cdn.example.com/video.${kind === 'hls' ? 'm3u8' : 'mp4'}`;
         exports.createSavePipeline({ status:'local-processing', service:'naver',
             type:kind === 'hls' ? 'remux' : 'proxy', tunnel:[], source:{kind,urls:[source]},
-            output:{type:'video/mp4',filename:'video.mp4'} }, {});
+            output:{type:'video/mp4',filename:'video.mp4'} }, {url:'https://tv.naver.com/v/123'});
         const item = items.at(-1);
         assert.equal(item.pipeline[0].worker, kind === 'hls' ? 'hls-fetch' : 'fetch');
         assert.equal(item.pipeline[0].workerArgs.url, source);
@@ -56,11 +56,14 @@ test('Naver pipelines fetch CDN media directly and remux HLS without a server fa
     }
 });
 
-const runHls = async ({ failLast = false, invalid = false, tsPacket } = {}) => {
+const runHls = async ({ failLast = false, invalid = false, tsPacket, quotaError = false } = {}) => {
     const calls = [], messages = [], chunks = [];
     let destroyed = false;
     const storage = {
-        async write(data) { chunks.push(Buffer.from(data)); return data.length; },
+        async write(data) {
+            if (quotaError) throw new DOMException('storage full', 'QuotaExceededError');
+            chunks.push(Buffer.from(data)); return data.length;
+        },
         async res() { return new Blob(chunks); },
         async destroy() { destroyed = true; },
     };
@@ -98,6 +101,13 @@ test('HLS errors destroy partial local storage and never fetch a server fallback
     const result = await runHls({failLast:true});
     assert.equal(result.destroyed,true);
     assert.equal(result.messages.at(-1).error,'queue.fetch.network_error');
+    assert.equal(result.messages.some(m=>m.result),false);
+});
+
+test('HLS storage quota exhaustion is reported and partial data is cleaned up', async () => {
+    const result = await runHls({quotaError:true});
+    assert.equal(result.destroyed,true);
+    assert.equal(result.messages.at(-1).error,'queue.storage.quota_exceeded');
     assert.equal(result.messages.some(m=>m.result),false);
 });
 

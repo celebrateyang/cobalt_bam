@@ -47,7 +47,7 @@ export const runFFmpegWorker = async (
             cleanup();
             // Retry initialization or a remux idle timeout once in a fresh
             // Worker. Other input/probe/render errors remain terminal.
-            if (attempt === 0 && (stage === "worker" || stage === "initializing" || retryRemux)) {
+            if (code !== "queue.storage.quota_exceeded" && attempt === 0 && (stage === "worker" || stage === "initializing" || retryRemux)) {
                 startAttempt(1, false);
                 return;
             }

@@ -229,6 +229,10 @@ const hlsFetch = async (url: string, mimeType?: string) => {
             },
         });
     } catch (errorReason) {
+        if (typeof errorReason === "object" && errorReason !== null && "name" in errorReason
+            && errorReason.name === "QuotaExceededError") {
+            return error("queue.storage.quota_exceeded");
+        }
         if (isAbortError(errorReason)) {
             return error("queue.fetch.timeout");
         }

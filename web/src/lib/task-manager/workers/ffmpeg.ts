@@ -32,10 +32,12 @@ const ffmpeg = async (
     });
 
     const error = (code: string, cause?: unknown) => {
+        const errorName = typeof cause === "object" && cause !== null && "name" in cause
+            && typeof cause.name === "string" ? cause.name : undefined;
         self.postMessage({
             cobaltFFmpegWorker: {
-                error: code,
-                errorName: cause instanceof Error ? cause.name : undefined,
+                error: errorName === "QuotaExceededError" ? "queue.storage.quota_exceeded" : code,
+                errorName,
             }
         });
         void ff.terminate().catch(() => undefined);

@@ -1117,6 +1117,9 @@ const fetchFile = async (
         });
     } catch (e) {
         stopTimers();
+        if (typeof e === "object" && e !== null && "name" in e && e.name === "QuotaExceededError") {
+            return error("queue.storage.quota_exceeded");
+        }
         if (isAbortError(e)) {
             logDebug("worker_aborted", {
                 abortReason: abortReason || "abort",

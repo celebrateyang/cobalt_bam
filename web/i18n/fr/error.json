@@ -1,4 +1,5 @@
 {
+    "queue.storage.quota_exceeded": "L'espace de stockage du navigateur est saturé. Libérez de l'espace sur le disque et réessayez, ou utilisez un autre navigateur.",
     "queue.fetch.unverifiable_range": "La source n'a pas fourni de plage de fichier vérifiable. Le téléchargement ne peut pas continuer en toute sécurité ; réessayez plus tard.",
     "queue.fetch.cannot_resume": "Le téléchargement a été interrompu et ne peut pas reprendre en toute sécurité depuis cette source. Relancez-le avec une connexion stable.",
     "import.no_data": "il n'y a rien à charger à partir du fichier. êtes-vous sûr que c'est le bon ?",

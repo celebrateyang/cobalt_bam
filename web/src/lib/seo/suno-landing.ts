@@ -38,7 +38,7 @@ export const sunoLanding: SeoLandingPage = {
             metaDescription: 'Download available audio from a public Suno song as MP3, or save an available MP4 video. Paste a Suno share or song URL and choose a format.',
             metaKeywords: ['suno downloader', 'suno to mp3', 'download suno audio', 'suno to mp4', 'suno song downloader'],
             h1: 'Suno song downloader. Keep the feeling.',
-            lede: 'Download audio only from an available public Suno song video, or save the video as MP4. Paste a Suno share link or song page URL to get started.',
+            lede: 'Download available audio from a public Suno song, or save its video as MP4 when available. Paste a Suno share link or song page URL to get started.',
             heroTags: ['Audio-only downloads', 'MP3 and more', 'MP4 when available'],
             facts: ['Use a public individual song or share link. Private, deleted or restricted songs may not work.', sunoAudioCopy.en.limitation, 'Sign in to FreeSaveVideo when prompted. Points or membership usage may apply.'],
             quickAnswer: 'Paste a public Suno song or share link into FreeSaveVideo. Choose audio or video; the song must expose a supported source for that mode.',

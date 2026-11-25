@@ -35,6 +35,10 @@ export const getLegacyRedirectTarget = (pathname: string): string | null => {
     const lang = match[1];
     const localizedPath = match[2] || '';
 
+    if ((lang === 'en' || lang === 'zh') && localizedPath === '/learn/savefrom-tools-alternative') {
+        return `/${lang}/learn/savefrom-alternative`;
+    }
+
     if (lang === 'en' && localizedPath === '/learn/cobalt-tools-savefrom-alternative') {
         return '/en/learn/cobalt-tools-alternative';
     }

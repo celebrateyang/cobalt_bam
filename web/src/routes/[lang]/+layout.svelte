@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { getLearnSeoLanguages } from '$lib/seo/learn-locales';
     import "@fontsource/ibm-plex-mono/400.css";
     import "@fontsource/ibm-plex-mono/400-italic.css";
     import "@fontsource/ibm-plex-mono/500.css";
@@ -92,8 +93,10 @@
         const guide = guideSlug ? getGuidePage(guideSlug) : null;
         return Boolean(guide && isEnglishOnlyDownloadSlug(guide.landingSlug));
     };
-    $: seoDetailLanguages = getSeoDetailLanguages(currentPath);
-    $: alternateLanguages = (currentPath.startsWith("/learn") || isEnglishOnlyPath(currentPath)
+    $: seoDetailLanguages = currentPath === '/learn' ? getLearnSeoLanguages()
+        : currentPath.startsWith('/learn/') ? getLearnSeoLanguages(currentPath.slice('/learn/'.length))
+        : getSeoDetailLanguages(currentPath);
+    $: alternateLanguages = (isEnglishOnlyPath(currentPath)
         ? ["en"]
         : seoDetailLanguages ?? supportedLanguages)
         .filter((lang) => !shouldNoindexLocalizedPath(currentPath, lang));

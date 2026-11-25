@@ -1,5 +1,7 @@
 <script lang="ts">
     import SubtitleDownload from "$components/save/SubtitleDownload.svelte";
+    import { getAlternativeLabels } from '$lib/seo/alternative-labels';
+    $: alternativeLabels = getAlternativeLabels(lang);
     import { onMount, onDestroy, tick } from 'svelte';
     import { page } from '$app/stores';
     import { getYouTubeCopy } from '$lib/youtube/copy';
@@ -337,7 +339,7 @@
 
     <section class="steps" aria-label={copy.guide}>{#each [[copy.step1,copy.step1Body],[copy.step2,copy.step2Body],[copy.step3,copy.step3Body]] as step,index}<article><span class="step-number">0{index+1}</span><div><h2>{step[0]}</h2><p>{step[1]}</p></div></article>{/each}</section>
     <section class="faq"><div class="section-heading"><h2>{content.faqTitle}</h2><span>FAQ</span></div>{#each content.faqs as faq}<details><summary>{faq.q}<span aria-hidden="true">+</span></summary><p>{faq.a}</p></details>{/each}</section>
-    <footer><h2>{copy.related}</h2><div>{#if guideSlug}<a href={`/${lang}/guide/${guideSlug}`}>{copy.guide} ↗</a>{/if}<a href={`/${lang}/download/youtube-shorts-download`}>{copy.shorts} ↗</a><a href={`/${lang}/download`}>{copy.tools} ↗</a></div></footer>
+    <footer><h2>{copy.related}</h2><div>{#if guideSlug}<a href={`/${lang}/guide/${guideSlug}`}>{copy.guide} ↗</a>{/if}<a href={`/${lang}/download/youtube-shorts-download`}>{copy.shorts} ↗</a><a href={`/${lang}/download`}>{copy.tools} ↗</a><a href={`/${lang}/learn/savefrom-alternative`}>{alternativeLabels[1]}</a><a href={`/${lang}/learn/cobalt-tools-alternative`}>{alternativeLabels[0]}</a></div></footer>
 </main>
 
 <style>

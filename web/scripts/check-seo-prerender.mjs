@@ -78,6 +78,24 @@ assert(
     'The retired article must permanently redirect to the Cobalt article',
 );
 const learnHub = readOutput('en', 'learn.html');
+for (const lang of ['en', 'zh', 'de', 'es', 'fr', 'ja', 'ko', 'ru', 'th', 'vi', 'id']) {
+    const hub = readOutput(lang, 'learn.html');
+    for (const slug of ['cobalt-tools-alternative', 'savefrom-alternative']) {
+        const path = `/${lang}/learn/${slug}`;
+        const html = readOutput(lang, 'learn', `${slug}.html`);
+        assert(hub.includes(`href="${path}"`), `${path} missing from localized hub`);
+        assert(html.includes(`rel="canonical" href="https://freesavevideo.online${path}"`), `${path} canonical`);
+        assert(html.includes(`lang="${lang}"`), `${path} document language`);
+        assert(html.includes('name="robots" content="index,follow"'), `${path} indexability`);
+        assert(!html.includes('\uFFFD'), `${path} invalid Unicode`);
+        for (const alternate of ['en', 'zh', 'de', 'es', 'fr', 'ja', 'ko', 'ru', 'th', 'vi', 'id']) {
+            assert(html.includes(`hreflang="${alternate}" href="https://freesavevideo.online/${alternate}/learn/${slug}"`), `${path} missing alternate ${alternate}`);
+        }
+        assert(html.includes(`hreflang="x-default" href="https://freesavevideo.online/en/learn/${slug}"`), `${path} default alternate`);
+        const schemas = [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)].map(([, json]) => JSON.parse(json));
+        assert(schemas.some(item => item['@type'] === 'Article' && item.inLanguage === lang && item.mainEntityOfPage === `https://freesavevideo.online${path}`), `${path} article schema`);
+    }
+}
 for (const slug of ['cobalt-tools-alternative', 'savefrom-alternative', '9xbuddy-alternative', 'jdownloader-online-alternative']) {
     const path = `/en/learn/${slug}`;
     const html = readOutput('en', 'learn', `${slug}.html`);

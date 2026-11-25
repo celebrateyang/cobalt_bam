@@ -1,0 +1,50 @@
+{
+  "ui": {
+    "home": "Inicio", "learn": "Guías", "updated": "Actualizado", "quick": "Respuesta rápida", "toc": "En esta página", "compare": "De un vistazo", "faq": "Preguntas frecuentes", "sources": "Fuentes y verificación", "more": "Tu siguiente paso", "all": "Todas las guías", "read": "Leer la guía", "open": "Abrir el descargador", "paste": "Pega un enlace a un vídeo público", "continue": "Continuar", "hint": "Abre FreeSaveVideo con el enlace listo para procesar.", "how": "Ver cómo funciona", "note": "Sin anuncios emergentes. Sin clics en anuncios. Pasos claros para guardar.", "formats": "Los formatos disponibles dependen de la fuente", "choose": "Elegir", "save": "Guardar", "permission": "Elige un vídeo público propio o que tengas permiso para guardar.", "hubTitle": "Guías para guardar vídeos públicos y usar herramientas multimedia en el navegador", "hubDesc": "Alternativas a Cobalt.tools y SaveFrom: cómo guardar vídeos, audio y listas de reproducción y cuáles son sus límites.", "directory": "Directorio de descargas", "guides": "Guías por plataforma", "minutes": "5 min de lectura", "category": "Comparativa de descargadores", "needs": "Necesidad", "workflow": "Flujo de FreeSaveVideo", "video": "Vídeo", "audio": "Audio", "playlist": "Lista de reproducción"
+  },
+  "capability": {
+    "video": "Vídeos públicos de YouTube y Shorts. La calidad depende de la fuente; las resoluciones altas pueden requerir combinar vídeo y audio.",
+    "audio": "El audio de YouTube ofrece opciones como MP3, M4A u Opus, Opus y WAV. Aumentar la tasa de bits no recupera calidad perdida.",
+    "playlist": "Expande listas públicas de YouTube, elige elementos y añádelos a la cola. Puedes reintentar fallos por separado; la lista depende de la respuesta de la fuente.",
+    "saving": "Tras el procesamiento, usa Guardar en el resultado o en el elemento completado de la cola. Los navegadores compatibles permiten elegir una carpeta.",
+    "limits": "El contenido privado, eliminado, protegido o restringido por región puede no estar disponible. Los formatos y la calidad dependen de la fuente.",
+    "source": "La comprobación de la API pública oficial del 2026-10-23 no mostró YouTube en la lista de servicios. Describe aquella instancia en esa fecha, no todas las instalaciones ni su estado actual."
+  },
+  "cobalt": {
+    "title": "Alternativa a Cobalt.tools para descargar YouTube y audio",
+    "description": "Una alternativa a Cobalt.tools compatible con YouTube: vídeos públicos, Shorts, MP3 y listas con FreeSaveVideo, sin anuncios emergentes.",
+    "summary": "Si tu instancia de Cobalt.tools no procesa YouTube, FreeSaveVideo permite guardar vídeos públicos, extraer audio y elegir elementos de una lista desde el navegador. No necesitas hacer clic en anuncios.",
+    "sections": [
+      ["Por qué buscar una alternativa a Cobalt.tools", "El 2026-10-23 la lista de servicios de la API pública oficial no incluía YouTube. Es una observación histórica de esa instancia: no demuestra que todas las instalaciones o versiones posteriores hayan retirado la función de forma permanente."],
+      ["Guardar vídeos públicos y Shorts", "Pega un enlace concreto watch, youtu.be o Shorts y elige vídeo, solo audio o vídeo sin sonido. Comprueba primero el resultado con un vídeo público.", "Puedes elegir MP4 H.264 y las resoluciones que ofrezca la fuente. 1080p, 1440p o 2160p pueden requerir combinar pistas separadas; no se crea calidad que el original no tenga."],
+      ["Elegir el formato de audio", "MP3 ofrece 128, 256 y 320 kbps. Revisa también las opciones M4A u Opus, Opus y WAV disponibles. La calidad original limita el resultado, aunque aumentes la tasa de bits."],
+      ["Listas y varios enlaces", "Usa una lista pública de YouTube con el parámetro list, expándela y selecciona los elementos para la cola. También puedes añadir varios enlaces y eliminar duplicados. Los vídeos privados o eliminados pueden fallar."],
+      ["Guardar el archivo con claridad", "Cuando termine el proceso, usa Guardar en el resultado o en el elemento completado de la cola. No hay anuncios emergentes ni clics publicitarios para desbloquear el archivo. Si el navegador lo permite, elige una carpeta y comprueba el archivo y el sonido."]
+    ],
+    "faqs": [
+      ["¿Cobalt.tools sigue sin admitir YouTube?", "La afirmación se basa en la comprobación del 2026-10-23. Consulta el soporte actual de la instancia que utilices."],
+      ["¿Puedo guardar 1080p o 4K con sonido?", "Cuando la fuente proporcione las pistas necesarias. Puede ser necesario combinarlas y no todos los vídeos ofrecen esas resoluciones."],
+      ["¿Puedo guardar solo el audio?", "Sí, elige solo audio y una opción disponible como MP3, M4A u Opus, Opus o WAV."],
+      ["¿Se descarga toda la lista?", "Seleccionas entre los elementos obtenidos. Una respuesta incompleta o vídeos no disponibles impiden garantizar la lista completa."]
+    ]
+  },
+  "savefrom": {
+    "title": "Alternativa a SaveFrom.net: descarga vídeos sin anuncios emergentes",
+    "description": "Usa FreeSaveVideo como alternativa a SaveFrom para vídeos públicos, YouTube MP4 y MP3, listas y descargas desde el móvil.",
+    "summary": "Si quieres evitar las ventanas publicitarias que encuentras al usar SaveFrom, prueba FreeSaveVideo: pega un enlace público, elige la salida y guarda. Sin anuncios emergentes ni clics obligatorios; el botón de guardar está en el resultado y en la cola.",
+    "sections": [
+      ["Por qué cambiar desde SaveFrom", "Elige según los enlaces que necesitas y la claridad del proceso. FreeSaveVideo no tiene anuncios emergentes ni exige clics en anuncios para guardar. Los formatos siguen dependiendo de la plataforma y del vídeo."],
+      ["Guardar un vídeo en tres pasos", "Copia el enlace de un vídeo o publicación pública, pégalo arriba y continúa. Elige vídeo o audio y guarda tras procesarlo. Para tareas en cola, usa Guardar en el elemento completado.", "Usa una URL concreta, no un perfil ni una búsqueda. Si falla, comprueba primero que el original siga siendo público y reproducible."],
+      ["YouTube MP4, MP3 y alta definición con sonido", "Los vídeos públicos y Shorts permiten elegir vídeo o solo audio. 1080p o 4K pueden requerir combinar vídeo y sonido. Una mayor tasa de bits MP3 no mejora el audio original."],
+      ["Facebook, Instagram y otras fuentes", "Utiliza enlaces concretos a vídeos públicos de Facebook, publicaciones o Reels de Instagram. Consulta el directorio para cada plataforma. Las cuentas privadas y restricciones regionales pueden impedir el acceso."],
+      ["Encontrar archivos en iPhone y Android", "Procesa y guarda en el navegador móvil, y revisa su historial de descargas o la aplicación de archivos. Algunos enlaces abren primero una vista previa: sigue la opción de guardar indicada. Ver una vista previa no significa que el archivo ya esté guardado."],
+      ["Listas y otras formas de trabajar", "Selecciona elementos de listas públicas de YouTube y añádelos a la cola, con reintentos individuales. Para automatizar por consola consulta la documentación oficial de yt-dlp; para escritorio puedes comparar 4K Video Downloader. No es una clasificación basada en pruebas comparativas."]
+    ],
+    "faqs": [
+      ["¿Tengo que pulsar anuncios para guardar?", "No. FreeSaveVideo no tiene anuncios emergentes. Guarda desde el resultado o desde el elemento completado de la cola."],
+      ["¿Puedo obtener YouTube en MP3?", "Elige solo audio y MP3 para un vídeo público disponible. La calidad depende de la pista original."],
+      ["¿Funciona en el móvil?", "Sí, en un navegador móvil. La carpeta y el comportamiento de la vista previa dependen del navegador y del sistema."],
+      ["¿Se puede guardar cualquier vídeo?", "No se garantiza. El contenido privado, eliminado, protegido o restringido puede no estar disponible y el soporte varía según la plataforma."]
+    ]
+  }
+}

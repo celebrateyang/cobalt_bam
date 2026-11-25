@@ -1,7 +1,8 @@
 <script lang="ts">
     import env from '$lib/env';
     import { getSeoLandingLocale, getSeoLandingPage } from '$lib/seo/landing-pages';
-    import { getLearnPage } from '$lib/seo/learn-pages';
+    import { getLocalizedLearnPage } from '$lib/seo/learn-pages';
+    import { getAlternativeUi } from '$lib/seo/alternative-copy';
     import AlternativeArticle from '$components/learn/AlternativeArticle.svelte';
 
     export let data: {
@@ -11,15 +12,16 @@
 
     const fallbackHost = env.HOST || 'freesavevideo.online';
 
-    $: canonicalUrl = `https://${fallbackHost}/en/learn/${data.article.slug}`;
+    $: ui = getAlternativeUi(data.lang);
+    $: canonicalUrl = `https://${fallbackHost}/${data.lang}/learn/${data.article.slug}`;
     $: relatedArticles = (data.article.relatedArticles ?? [])
-        .map(getLearnPage)
+        .map((slug) => getLocalizedLearnPage(slug, data.lang))
         .filter((item): item is NonNullable<typeof item> => Boolean(item));
     $: relatedDownloads = data.article.relatedDownloads
         .map((slug) => {
             const page = getSeoLandingPage(slug);
             if (!page) return null;
-            const locale = getSeoLandingLocale(page, 'en');
+            const locale = getSeoLandingLocale(page, data.lang);
             return {
                 slug,
                 title: locale.h1,
@@ -34,17 +36,17 @@
         description: data.article.description,
         dateModified: data.article.updatedAt,
         datePublished: data.article.updatedAt,
-        inLanguage: 'en',
+        inLanguage: data.lang,
         mainEntityOfPage: canonicalUrl,
         author: {
             '@type': 'Organization',
             name: 'FreeSaveVideo',
-            url: `https://${fallbackHost}/en`,
+            url: `https://${fallbackHost}/${data.lang}`,
         },
         publisher: {
             '@type': 'Organization',
             name: 'FreeSaveVideo',
-            url: `https://${fallbackHost}/en`,
+            url: `https://${fallbackHost}/${data.lang}`,
         },
         about: data.article.keywords,
     };
@@ -67,14 +69,14 @@
             {
                 '@type': 'ListItem',
                 position: 1,
-                name: 'Home',
-                item: `https://${fallbackHost}/en`,
+                name: ui.home,
+                item: `https://${fallbackHost}/${data.lang}`,
             },
             {
                 '@type': 'ListItem',
                 position: 2,
-                name: 'Learn',
-                item: `https://${fallbackHost}/en/learn`,
+                name: ui.learn,
+                item: `https://${fallbackHost}/${data.lang}/learn`,
             },
             {
                 '@type': 'ListItem',
@@ -105,7 +107,7 @@
 </svelte:head>
 
 {#if data.article.alternativeLanding || ['cobalt-tools-alternative', 'savefrom-alternative'].includes(data.article.slug)}
-    <AlternativeArticle article={data.article} {relatedArticles} {relatedDownloads} />
+    <AlternativeArticle lang={data.lang} article={data.article} {relatedArticles} {relatedDownloads} />
 {:else}
 <main class="article-page" tabindex="-1" data-first-focus data-focus-ring-hidden>
     <nav class="crumbs" aria-label="Breadcrumb">

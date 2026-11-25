@@ -1,0 +1,50 @@
+{
+  "ui": {
+    "home": "Beranda", "learn": "Panduan", "updated": "Diperbarui", "quick": "Jawaban singkat", "toc": "Di halaman ini", "compare": "Sekilas fitur", "faq": "Pertanyaan umum", "sources": "Sumber dan verifikasi", "more": "Langkah berikutnya", "all": "Semua panduan", "read": "Baca panduan", "open": "Buka pengunduh", "paste": "Tempel tautan video publik", "continue": "Lanjutkan", "hint": "Membuka FreeSaveVideo dengan tautan Anda siap diproses.", "how": "Lihat langkah penggunaan", "note": "Tanpa iklan pop-up. Tidak perlu mengeklik iklan. Langkah penyimpanan jelas.", "formats": "Format yang tersedia bergantung pada sumber", "choose": "Pilih", "save": "Simpan", "permission": "Pilih video publik milik Anda atau yang diizinkan untuk Anda simpan.", "hubTitle": "Panduan menyimpan video publik dan memakai alat media di browser", "hubDesc": "Alternatif Cobalt.tools dan SaveFrom: menyimpan video, audio, playlist, serta memahami batasannya.", "directory": "Direktori pengunduh", "guides": "Panduan platform", "minutes": "5 menit membaca", "category": "Perbandingan pengunduh", "needs": "Kebutuhan", "workflow": "Alur FreeSaveVideo", "video": "Video", "audio": "Audio", "playlist": "Playlist"
+  },
+  "capability": {
+    "video": "Mendukung video YouTube publik dan Shorts. Kualitas bergantung pada sumber; resolusi tinggi mungkin perlu penggabungan video dan audio.",
+    "audio": "Audio YouTube menyediakan opsi seperti MP3, M4A atau Opus, Opus, dan WAV. Bitrate lebih tinggi tidak memulihkan kualitas yang tidak ada pada sumber.",
+    "playlist": "Buka daftar playlist YouTube publik, pilih item, lalu tambahkan ke antrean. Kegagalan dapat dicoba ulang satu per satu; daftar bergantung pada respons sumber.",
+    "saving": "Setelah pemrosesan, gunakan Simpan pada hasil atau item antrean yang selesai. Browser yang mendukung memungkinkan pemilihan folder tujuan.",
+    "limits": "Konten privat, dihapus, dilindungi, atau dibatasi wilayah mungkin tidak tersedia. Format dan kualitas ditentukan oleh sumber.",
+    "source": "Saat API publik resmi diperiksa pada 2026-10-23, YouTube tidak tercantum dalam daftar layanan. Ini menggambarkan instans resmi saat itu, bukan semua pemasangan atau kondisi saat ini."
+  },
+  "cobalt": {
+    "title": "Alternatif Cobalt.tools untuk mengunduh YouTube dan audio",
+    "description": "Mencari alternatif Cobalt.tools yang mendukung YouTube? Simpan video publik, Shorts, MP3, dan playlist dengan FreeSaveVideo tanpa iklan pop-up.",
+    "summary": "Jika instans Cobalt.tools Anda tidak memproses YouTube, FreeSaveVideo dapat menyimpan video publik, mengekstrak audio, dan memilih item playlist melalui browser. Tidak perlu mengeklik iklan.",
+    "sections": [
+      ["Mengapa mencari alternatif Cobalt.tools?", "Pada 2026-10-23, daftar layanan API publik resmi tidak mencantumkan YouTube. Pengamatan historis ini tidak membuktikan penghapusan permanen fitur pada semua pemasangan atau versi berikutnya."],
+      ["Menyimpan video publik dan Shorts", "Tempel tautan watch, youtu.be, atau Shorts yang spesifik, lalu pilih video, audio saja, atau video tanpa suara. Periksa hasil dengan satu video publik terlebih dahulu.", "Pilih MP4 H.264 dan resolusi yang tersedia dari sumber. 1080p, 1440p, atau 2160p mungkin memerlukan penggabungan trek gambar dan suara; kualitas yang tidak ada pada sumber tidak dapat dibuat."],
+      ["Memilih format audio", "MP3 menawarkan 128, 256, dan 320 kbps. Periksa juga opsi M4A atau Opus, Opus, dan WAV yang tersedia. Kualitas trek asli tetap menjadi batas hasil."],
+      ["Playlist dan beberapa tautan", "Buka playlist YouTube publik yang memiliki parameter list, pilih item, dan masukkan ke antrean. Beberapa tautan juga dapat ditambahkan dengan penghapusan duplikat. Video privat atau dihapus mungkin gagal."],
+      ["Menyimpan file dengan jelas", "Setelah selesai, gunakan Simpan pada hasil atau item antrean yang telah selesai. Tidak ada iklan pop-up atau klik iklan untuk membuka unduhan. Jika browser mendukung, pilih folder lalu periksa lokasi file dan suaranya."]
+    ],
+    "faqs": [
+      ["Apakah Cobalt.tools sekarang tidak mendukung YouTube?", "Pernyataan ini berdasarkan pemeriksaan API pada 2026-10-23. Periksa dukungan terbaru pada instans yang Anda gunakan."],
+      ["Bisa menyimpan 1080p atau 4K dengan suara?", "Jika sumber menyediakan trek yang diperlukan. Penggabungan mungkin diperlukan, dan tidak setiap video menawarkan resolusi tersebut."],
+      ["Bisa menyimpan audio saja?", "Ya, pilih audio saja dan opsi yang tersedia seperti MP3, M4A atau Opus, Opus, atau WAV."],
+      ["Apakah seluruh playlist akan tersimpan?", "Anda memilih dari item yang berhasil diambil. Respons sumber yang tidak lengkap dan video tidak tersedia membuat seluruh daftar tidak dapat dijamin."]
+    ]
+  },
+  "savefrom": {
+    "title": "Alternatif SaveFrom.net: unduh video tanpa iklan pop-up",
+    "description": "FreeSaveVideo sebagai pengganti SaveFrom untuk video publik, YouTube MP4 dan MP3, playlist, serta penyimpanan di ponsel.",
+    "summary": "Ingin menghindari jendela iklan yang ditemui saat memakai SaveFrom? Coba FreeSaveVideo: tempel tautan publik, pilih keluaran, lalu simpan. Tanpa iklan pop-up atau klik wajib, dengan tombol simpan yang jelas pada hasil dan antrean.",
+    "sections": [
+      ["Mengapa beralih dari SaveFrom?", "Pilih berdasarkan tautan yang dibutuhkan dan kejelasan proses penyimpanan. FreeSaveVideo tidak memiliki iklan pop-up dan tidak mengharuskan klik iklan sebelum menyimpan. Format tetap bergantung pada platform dan video."],
+      ["Menyimpan video dalam tiga langkah", "Salin tautan video atau kiriman publik, tempel di atas, lalu lanjutkan. Pilih video atau audio dan simpan setelah diproses. Dalam antrean, gunakan Simpan pada item yang selesai.", "Gunakan URL video tertentu, bukan profil atau pencarian. Jika gagal, pastikan dahulu video asli masih publik dan dapat diputar."],
+      ["YouTube MP4, MP3, dan HD dengan suara", "Video publik dan Shorts memungkinkan pilihan video atau audio saja. 1080p dan 4K mungkin memerlukan penggabungan gambar dan suara. Bitrate MP3 yang lebih tinggi tidak meningkatkan rekaman asli."],
+      ["Facebook, Instagram, dan sumber lain", "Gunakan tautan spesifik video Facebook publik, kiriman Instagram, atau Reel. Periksa dukungan setiap platform di direktori. Akun privat dan pembatasan wilayah dapat menghalangi akses."],
+      ["Menemukan file di iPhone dan Android", "Proses dan simpan melalui browser ponsel, lalu periksa riwayat unduhan atau aplikasi file. Sebagian tautan membuka pratinjau terlebih dahulu: ikuti opsi simpan yang ditampilkan. Pratinjau bukan berarti file sudah tersimpan di perangkat."],
+      ["Playlist dan pilihan alat lain", "Pilih item playlist YouTube publik ke antrean dan coba ulang setiap kegagalan. Untuk otomatisasi baris perintah, baca dokumentasi resmi yt-dlp; untuk alur desktop, bandingkan 4K Video Downloader. Ini bukan peringkat berdasarkan pengujian perbandingan."]
+    ],
+    "faqs": [
+      ["Harus mengeklik iklan sebelum menyimpan?", "Tidak. FreeSaveVideo tidak memiliki iklan pop-up. Gunakan Simpan pada hasil atau item antrean yang selesai."],
+      ["Bisa mengunduh YouTube sebagai MP3?", "Pilih audio saja dan MP3 untuk video publik yang tersedia. Kualitas bergantung pada trek asli."],
+      ["Bisa dipakai di ponsel?", "Ya, melalui browser ponsel. Folder dan perilaku pratinjau bergantung pada browser dan sistem operasi."],
+      ["Apakah semua video bisa disimpan?", "Tidak dijamin. Konten privat, dihapus, dilindungi, atau dibatasi mungkin tidak tersedia; dukungan berbeda menurut platform."]
+    ]
+  }
+}

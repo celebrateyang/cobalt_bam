@@ -513,7 +513,7 @@ test('alternative articles replace the combined URL with independent indexable p
     await assert.rejects(route.load({ params: { lang: 'en', slug: legacySlug } }), {
         status: 308, location: '/en/learn/cobalt-tools-alternative',
     });
-    await assert.rejects(route.load({ params: { lang: 'zh', slug: 'savefrom-alternative' } }), { status: 404 });
+    await assert.rejects(route.load({ params: { lang: 'fa', slug: 'savefrom-alternative' } }), { status: 404 });
     const articleComponent = await component('src/routes/[lang]/learn/[slug]/+page.svelte');
     const sitemap = await load('src/routes/sitemap.xml/+server.ts').GET().text();
     assert(!sitemap.includes(`/learn/${legacySlug}`));
@@ -537,7 +537,9 @@ test('alternative articles replace the combined URL with independent indexable p
                 assert(rendered.html.includes(escapeText(section.heading)));
                 for (const paragraph of section.body) assert(rendered.html.includes(escapeText(paragraph)));
             }
-            await assert.rejects(route.load({ params: { lang: 'zh', slug } }), { status: 404 });
+            if (!['cobalt-tools-alternative', 'savefrom-alternative'].includes(slug)) {
+                await assert.rejects(route.load({ params: { lang: 'zh', slug } }), { status: 404 });
+            }
         }
         const other = slug === 'cobalt-tools-alternative' ? 'savefrom-alternative' : 'cobalt-tools-alternative';
         assert(rendered.html.includes(`href="/en/learn/${other}"`));
@@ -549,6 +551,91 @@ test('alternative articles replace the combined URL with independent indexable p
             assert(rendered.html.includes('href="https://api.cobalt.tools/"'));
             assert(rendered.html.includes('October 23, 2026'));
         }
+    }
+});
+
+test('SaveFrom landing exposes its downloader handoff and known mistaken URLs redirect without inventing translations', async () => {
+    const { getLearnPage } = load('src/lib/seo/learn-pages.ts');
+    const { getLegacyRedirectTarget } = load('src/lib/seo/indexing.ts');
+    const route = load('src/routes/[lang]/learn/[slug]/+page.ts');
+    for (const lang of ['en', 'zh']) {
+        assert.equal(getLegacyRedirectTarget(`/${lang}/learn/savefrom-tools-alternative`), `/${lang}/learn/savefrom-alternative`);
+        await assert.rejects(route.load({ params: { lang, slug: 'savefrom-tools-alternative' } }), {
+            status: 308, location: `/${lang}/learn/savefrom-alternative`,
+        });
+    }
+    await assert.rejects(route.load({ params: { lang: 'fa', slug: 'savefrom-alternative' } }), { status: 404 });
+    const page = await component('src/routes/[lang]/learn/[slug]/+page.svelte');
+    const html = page.render({ data: { lang: 'en', article: getLearnPage('savefrom-alternative') } }).html;
+    assert.match(html, /<form[^>]*action="\/en"[^>]*method="GET"/);
+    assert.match(html, /<input[^>]*name="u"[^>]*type="url"/);
+    assert(readFileSync(resolve(root, 'src/components/save/Omnibox.svelte'), 'utf8').includes('searchParams.get("u")'));
+    for (const file of ['src/routes/[lang]/download/+page.svelte', 'src/components/youtube/YouTubeDownloadPage.svelte']) {
+        assert(readFileSync(resolve(root, file), 'utf8').includes('/learn/savefrom-alternative`'));
+    }
+});
+
+test('both alternatives render real localized articles, hubs, schemas and handoffs in every app language', async () => {
+    const { supportedLanguages } = load('src/lib/seo/language-routing.ts');
+    const { getLearnSeoLanguages, localizedAlternativeSlugs } = load('src/lib/seo/learn-locales.ts');
+    const { getLearnPage } = load('src/lib/seo/learn-pages.ts');
+    const { getAlternativeUi } = load('src/lib/seo/alternative-copy.ts');
+    const route = load('src/routes/[lang]/learn/[slug]/+page.ts');
+    const hub = load('src/routes/[lang]/learn/+page.ts');
+    const page = await component('src/routes/[lang]/learn/[slug]/+page.svelte');
+    const hubPage = await component('src/routes/[lang]/learn/+page.svelte');
+    const directory = await component('src/routes/[lang]/download/+page.svelte');
+    const downloadRoute = load('src/routes/[lang]/download/+page.ts');
+    assert.deepEqual(getLearnSeoLanguages(), supportedLanguages);
+    assert.deepEqual(getLearnSeoLanguages('9xbuddy-alternative'), ['en']);
+    for (const lang of supportedLanguages) {
+        const ui = getAlternativeUi(lang);
+        assert(hub.entries().some(entry => entry.lang === lang));
+        const hubData = await hub.load({ params: { lang } });
+        const hubHtml = hubPage.render({ data: hubData }).html;
+        const directoryHtml = directory.render({ data: await downloadRoute.load({ params: { lang } }) }).html;
+        if (lang !== 'en') assert.equal(hubData.pages.length, 2);
+        for (const slug of localizedAlternativeSlugs) {
+            assert.deepEqual(getLearnSeoLanguages(slug), supportedLanguages);
+            assert(route.entries().some(entry => entry.lang === lang && entry.slug === slug));
+            const data = await route.load({ params: { lang, slug } });
+            const { article } = data;
+            const rendered = page.render({ data });
+            assert(hubHtml.includes(`href="/${lang}/learn/${slug}"`));
+            assert(directoryHtml.includes(`href="/${lang}/learn/${slug}"`));
+            assert(rendered.html.includes(escapeText(article.title)));
+            assert(rendered.html.includes(escapeText(ui.note)));
+            if (lang !== 'en') {
+                assert.notEqual(article.title, getLearnPage(slug).title);
+                assert.notEqual(article.summary, getLearnPage(slug).summary);
+                assert(article.sections.length >= 5 && article.faqs.length >= 4);
+                assert.doesNotMatch(rendered.html, /href="\/en(?:\/|"|\?)|action="\/en"|\uFFFD|\?\?/);
+                assert.doesNotMatch(rendered.html, /Quick answer|On this page|Common questions|Available formats depend/);
+                for (const section of article.sections) {
+                    assert(rendered.html.includes(escapeText(section.heading)));
+                    assert(section.body.length > 0);
+                    for (const paragraph of section.body) assert(rendered.html.includes(escapeText(paragraph)));
+                }
+            }
+            if (slug === 'savefrom-alternative') {
+                assert(rendered.html.includes(`action="/${lang}" method="GET"`));
+                assert.match(rendered.html, /<input[^>]*name="u"[^>]*type="url"[^>]*required/);
+            }
+            const schemas = [...rendered.head.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)].map(([, json]) => JSON.parse(json));
+            const structuredArticle = schemas.find(item => item['@type'] === 'Article');
+            assert.equal(structuredArticle.inLanguage, lang);
+            assert.equal(structuredArticle.mainEntityOfPage, `https://freesavevideo.online/${lang}/learn/${slug}`);
+            const faq = schemas.find(item => item['@type'] === 'FAQPage');
+            assert.equal(faq.mainEntity.length, article.faqs.length);
+            for (const item of faq.mainEntity) {
+                assert(rendered.html.includes(escapeText(item.name)));
+                assert(rendered.html.includes(escapeText(item.acceptedAnswer.text)));
+            }
+        }
+    }
+    for (const lang of ['fa', 'it', 'xx']) {
+        await assert.rejects(hub.load({ params: { lang } }), { status: 404 });
+        await assert.rejects(route.load({ params: { lang, slug: 'cobalt-tools-alternative' } }), { status: 404 });
     }
 });
 

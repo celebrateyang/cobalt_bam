@@ -1,19 +1,22 @@
 import type { PageLoad } from './$types';
 import { error } from '@sveltejs/kit';
 
-import { learnPages } from '$lib/seo/learn-pages';
+import { learnPages, getLocalizedLearnPage } from '$lib/seo/learn-pages';
+import { getLearnSeoLanguages, localizedAlternativeSlugs } from '$lib/seo/learn-locales';
 
 export const prerender = true;
 
-export const entries = () => [{ lang: 'en' }];
+export const entries = () => getLearnSeoLanguages().map((lang) => ({ lang }));
 
 export const load: PageLoad = async ({ params }) => {
-    if (params.lang !== 'en') {
+    if (!getLearnSeoLanguages().includes(params.lang)) {
         error(404, 'Not found');
     }
 
     return {
         lang: params.lang,
-        pages: learnPages,
+        pages: params.lang === 'en' ? learnPages : localizedAlternativeSlugs
+            .map((slug) => getLocalizedLearnPage(slug, params.lang))
+            .filter((page): page is NonNullable<typeof page> => Boolean(page)),
     };
 };

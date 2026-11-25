@@ -1,0 +1,50 @@
+{
+  "ui": {
+    "home": "Startseite", "learn": "Anleitungen", "updated": "Aktualisiert", "quick": "Kurz erklärt", "toc": "Auf dieser Seite", "compare": "Auf einen Blick", "faq": "Häufige Fragen", "sources": "Quellen und Prüfung", "more": "Nächste Schritte", "all": "Alle Anleitungen", "read": "Anleitung lesen", "open": "Downloader öffnen", "paste": "Link zu einem öffentlichen Video einfügen", "continue": "Weiter", "hint": "Der Link wird zur weiteren Verarbeitung an FreeSaveVideo übergeben.", "how": "So funktioniert es", "note": "Keine Pop-up-Werbung. Keine Werbeklicks nötig. Klare Schritte zum Speichern.", "formats": "Verfügbare Formate hängen von der Quelle ab", "choose": "Auswählen", "save": "Speichern", "permission": "Speichere nur öffentliche Videos, die dir gehören oder für die du eine Erlaubnis hast.", "hubTitle": "Anleitungen zum Speichern öffentlicher Videos im Browser", "hubDesc": "Alternativen zu Cobalt.tools und SaveFrom: Videos, Audio und Wiedergabelisten speichern und Grenzen verstehen.", "directory": "Download-Verzeichnis", "guides": "Plattform-Anleitungen", "minutes": "5 Minuten Lesezeit", "category": "Downloader-Vergleich", "needs": "Aufgabe", "workflow": "Ablauf mit FreeSaveVideo", "video": "Video", "audio": "Audio", "playlist": "Wiedergabeliste"
+  },
+  "capability": {
+    "video": "Öffentliche YouTube-Videos und Shorts speichern. Die Quelle bestimmt die Qualität; bei hoher Auflösung müssen Bild und Ton eventuell zusammengeführt werden.",
+    "audio": "YouTube-Audio bietet unter anderem MP3, M4A oder Opus, Opus und WAV. Eine höhere Bitrate stellt verlorene Klangdetails nicht wieder her.",
+    "playlist": "Öffentliche YouTube-Wiedergabelisten aufklappen, Einträge auswählen und zur Warteschlange hinzufügen. Fehler lassen sich einzeln erneut versuchen; die Liste hängt von der Quellantwort ab.",
+    "saving": "Nach der Verarbeitung die Speicherfunktion im Ergebnis oder beim fertigen Warteschlangeneintrag nutzen. Unterstützte Browser erlauben die Wahl eines Zielordners.",
+    "limits": "Private, gelöschte, geschützte oder regional gesperrte Inhalte können nicht verfügbar sein. Formate und Auflösungen hängen von der Quelle ab.",
+    "source": "Bei der Prüfung der offiziellen öffentlichen API am 2026-10-23 fehlte YouTube in der Diensteliste. Das beschreibt die damalige offizielle Instanz, nicht alle Installationen oder den aktuellen Zustand."
+  },
+  "cobalt": {
+    "title": "Cobalt.tools-Alternative für YouTube-Videos und Audio",
+    "description": "YouTube mit einer Cobalt.tools-Alternative speichern: FreeSaveVideo für öffentliche Videos, Shorts, MP3 und Wiedergabelisten ohne Pop-up-Werbung.",
+    "summary": "Kann deine Cobalt.tools-Instanz YouTube nicht verarbeiten, bietet FreeSaveVideo einen Browser-Ablauf für öffentliche Videos, Audio und ausgewählte Wiedergabelisteneinträge. Werbeklicks sind nicht nötig.",
+    "sections": [
+      ["Warum eine Alternative zu Cobalt.tools?", "Am 2026-10-23 enthielt die Diensteliste der offiziellen öffentlichen API kein YouTube. Diese historische Beobachtung gilt nicht automatisch für andere Installationen oder spätere Versionen und belegt keine dauerhafte Entfernung im gesamten Projekt."],
+      ["Öffentliche Videos und Shorts speichern", "Einen konkreten watch-, youtu.be- oder Shorts-Link einfügen und Video, nur Audio oder stummes Video wählen. Zunächst mit einem einzelnen öffentlichen Video testen.", "MP4 mit H.264 und die von der Quelle angebotenen Auflösungen auswählen. Für 1080p, 1440p oder 2160p kann das Zusammenführen getrennter Bild- und Tonspuren nötig sein; fehlende Quellqualität lässt sich nicht erzeugen."],
+      ["Audioformat auswählen", "MP3 bietet 128, 256 oder 320 kbps. Je nach verfügbaren Optionen kommen M4A oder Opus, Opus und WAV infrage. Die ursprüngliche Audioqualität bleibt die Obergrenze."],
+      ["Wiedergabelisten und mehrere Links", "Einen öffentlichen YouTube-Link mit list-Parameter aufklappen und die gewünschten Einträge zur Warteschlange hinzufügen. Mehrere Videolinks lassen sich ebenfalls sammeln und deduplizieren. Private oder gelöschte Einträge können scheitern."],
+      ["Datei klar und direkt speichern", "Nach Abschluss beim Ergebnis oder fertigen Warteschlangeneintrag auf Speichern klicken. Es gibt keine Pop-up-Werbung und keinen vorgeschalteten Werbeklick. Wenn unterstützt, einen Zielordner auswählen und anschließend Datei sowie Ton prüfen."]
+    ],
+    "faqs": [
+      ["Unterstützt Cobalt.tools derzeit kein YouTube?", "Die Aussage beruht auf der API-Prüfung vom 2026-10-23. Prüfe die aktuelle Unterstützung der tatsächlich verwendeten Instanz."],
+      ["Sind 1080p oder 4K mit Ton möglich?", "Wenn die Quelle passende Spuren liefert. Hohe Auflösungen können eine Zusammenführung erfordern und stehen nicht bei jedem Video bereit."],
+      ["Kann ich nur Audio speichern?", "Ja, über nur Audio und die verfügbaren MP3-, M4A- oder Opus-, Opus- und WAV-Optionen."],
+      ["Wird die ganze Wiedergabeliste gespeichert?", "Du wählst aus den abrufbaren Einträgen aus. Unvollständige Quellantworten und nicht verfügbare Videos verhindern eine Garantie für alle Einträge."]
+    ]
+  },
+  "savefrom": {
+    "title": "SaveFrom.net-Alternative: Videos ohne Pop-up-Werbung speichern",
+    "description": "FreeSaveVideo als SaveFrom-Alternative: öffentliche Videos, YouTube MP4 und MP3, Wiedergabelisten und Speichern auf dem Smartphone.",
+    "summary": "Wenn dich Pop-ups beim Einsatz von SaveFrom stören, kannst du FreeSaveVideo verwenden: öffentlichen Link einfügen, Ausgabe wählen und speichern. Keine Pop-up-Werbung oder nötigen Werbeklicks; die Speicherfunktion steht im Ergebnis und in der Warteschlange.",
+    "sections": [
+      ["Warum von SaveFrom wechseln?", "Wähle eine Alternative nach deinen Links und einem verständlichen Speicherablauf. FreeSaveVideo hat keine Pop-up-Werbung und verlangt keine Werbeklicks zum Speichern. Verfügbare Formate bleiben von Plattform und Video abhängig."],
+      ["In drei Schritten zum Video", "Einen öffentlichen Video- oder Beitragslink kopieren, oben einfügen und fortfahren. Video oder Audio wählen und nach der Verarbeitung speichern. In der Warteschlange die Speicherfunktion des fertigen Eintrags verwenden.", "Konkrete Videos statt Profile oder Suchseiten verwenden. Bei Fehlern zuerst prüfen, ob das Original noch öffentlich abspielbar ist."],
+      ["YouTube MP4, MP3 und HD mit Ton", "Öffentliche YouTube-Videos und Shorts unterstützen Video oder Audio. 1080p und 4K können das Zusammenführen von Bild und Ton erfordern. Eine höhere MP3-Bitrate verbessert die Qualität der ursprünglichen Aufnahme nicht."],
+      ["Facebook, Instagram und weitere Quellen", "Konkrete öffentliche Facebook-Videos oder Instagram-Beiträge und Reels verwenden. Die jeweiligen Hinweise im Download-Verzeichnis prüfen. Private Konten und regionale Sperren können den Abruf verhindern."],
+      ["Dateien auf iPhone und Android finden", "Im mobilen Browser verarbeiten und speichern, danach Download-Verlauf oder Dateien-App öffnen. Manche Medienlinks öffnen zuerst eine Vorschau: den dortigen Speicherhinweisen folgen. Eine geöffnete Vorschau bedeutet noch keine lokal gespeicherte Datei."],
+      ["Wiedergabelisten und passende Werkzeuge", "Öffentliche YouTube-Wiedergabelisten lassen sich auswählen und zur Warteschlange hinzufügen; fehlgeschlagene Einträge einzeln wiederholen. Für Kommandozeilen-Automatisierung gibt es die offizielle yt-dlp-Dokumentation, für Desktop-Abläufe etwa 4K Video Downloader. Dies ist keine gemessene Rangliste."]
+    ],
+    "faqs": [
+      ["Muss ich vor dem Speichern Werbung anklicken?", "Nein. FreeSaveVideo hat keine Pop-up-Werbung. Die Speicherfunktion befindet sich im Ergebnis oder beim fertigen Warteschlangeneintrag."],
+      ["Kann ich YouTube als MP3 speichern?", "Bei abrufbaren öffentlichen Videos nur Audio und MP3 wählen. Die Qualität hängt vom Originalton ab."],
+      ["Funktioniert es auf dem Smartphone?", "Ja, im mobilen Browser. Speicherort und Vorschau hängen von Browser und Betriebssystem ab."],
+      ["Lässt sich jedes Video speichern?", "Nein. Private, gelöschte, geschützte oder regional gesperrte Inhalte können nicht verfügbar sein; die Unterstützung unterscheidet sich je Plattform."]
+    ]
+  }
+}

@@ -79,6 +79,13 @@
                 return script;
             };
 
+            const bootAnalytics = () => {
+                if (window.__analyticsBooted) return;
+                window.__analyticsBooted = true;
+                window.gtag("config", "G-9LGPCDJK2R");
+                loadScript("https://www.googletagmanager.com/gtag/js?id=G-9LGPCDJK2R");
+            };
+
             const detectAiReferral = () => {
                 const patterns = [
                     ["chatgpt", /(^|\.)chatgpt\.com$/i],
@@ -114,15 +121,18 @@
                 }
             };
 
+            // Article readers may leave without interacting. Measure these two
+            // landing pages on arrival; keep advertising on its existing delay.
+            if (/^\/(?:en|zh|th|ru|ja|es|vi|ko|fr|de|id)\/learn\/(?:cobalt-tools-alternative|savefrom-alternative)\/?$/.test(window.location.pathname)) {
+                bootAnalytics();
+            }
             detectAiReferral();
 
             const bootLateThirdPartyScripts = () => {
                 if (window.__lateThirdPartyBooted) return;
                 window.__lateThirdPartyBooted = true;
 
-                loadScript("https://www.googletagmanager.com/gtag/js?id=G-9LGPCDJK2R").addEventListener("load", () => {
-                    window.gtag("config", "G-9LGPCDJK2R");
-                });
+                bootAnalytics();
 
                 if (!window.__disableThirdPartyAds) {
                     loadScript(

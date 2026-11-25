@@ -1,0 +1,50 @@
+{
+  "ui": {
+    "home": "Trang chủ", "learn": "Hướng dẫn", "updated": "Cập nhật", "quick": "Trả lời nhanh", "toc": "Trong trang này", "compare": "Tổng quan", "faq": "Câu hỏi thường gặp", "sources": "Nguồn và xác minh", "more": "Bước tiếp theo", "all": "Tất cả hướng dẫn", "read": "Đọc hướng dẫn", "open": "Mở công cụ tải", "paste": "Dán liên kết video công khai", "continue": "Tiếp tục", "hint": "Mở FreeSaveVideo với liên kết sẵn sàng để xử lý.", "how": "Xem cách thực hiện", "note": "Không có quảng cáo bật lên. Không cần nhấp quảng cáo. Các bước lưu rõ ràng.", "formats": "Định dạng có sẵn phụ thuộc vào nguồn", "choose": "Chọn", "save": "Lưu", "permission": "Chọn video công khai do bạn sở hữu hoặc được phép lưu.", "hubTitle": "Hướng dẫn lưu video công khai và dùng công cụ đa phương tiện trên trình duyệt", "hubDesc": "Giải pháp thay thế Cobalt.tools và SaveFrom: lưu video, âm thanh, danh sách phát và hiểu các giới hạn.", "directory": "Danh mục công cụ tải", "guides": "Hướng dẫn theo nền tảng", "minutes": "Đọc trong 5 phút", "category": "So sánh công cụ tải", "needs": "Nhu cầu", "workflow": "Quy trình FreeSaveVideo", "video": "Video", "audio": "Âm thanh", "playlist": "Danh sách phát"
+  },
+  "capability": {
+    "video": "Hỗ trợ video YouTube công khai và Shorts. Chất lượng phụ thuộc vào nguồn; độ phân giải cao có thể cần ghép hình và tiếng.",
+    "audio": "Âm thanh YouTube có các lựa chọn như MP3, M4A hoặc Opus, Opus và WAV. Tăng tốc độ bit không khôi phục chất lượng bị thiếu trong bản gốc.",
+    "playlist": "Mở rộng danh sách phát YouTube công khai, chọn mục và thêm vào hàng đợi. Có thể thử lại từng mục lỗi; danh sách phụ thuộc vào phản hồi nguồn.",
+    "saving": "Sau khi xử lý, dùng nút lưu trong kết quả hoặc mục hàng đợi đã hoàn tất. Trình duyệt tương thích cho phép chọn thư mục đích.",
+    "limits": "Nội dung riêng tư, đã xóa, được bảo vệ hoặc giới hạn khu vực có thể không khả dụng. Định dạng và chất lượng do nguồn quyết định.",
+    "source": "Khi kiểm tra API công khai chính thức vào 2026-10-23, danh sách dịch vụ không có YouTube. Đây là trạng thái của phiên bản được lưu trữ lúc đó, không đại diện cho mọi bản triển khai hoặc hiện tại."
+  },
+  "cobalt": {
+    "title": "Thay thế Cobalt.tools để tải video YouTube và âm thanh",
+    "description": "Tìm công cụ thay thế Cobalt.tools hỗ trợ YouTube? FreeSaveVideo giúp lưu video công khai, Shorts, MP3 và danh sách phát, không có quảng cáo bật lên.",
+    "summary": "Nếu phiên bản Cobalt.tools bạn dùng không xử lý được YouTube, FreeSaveVideo cho phép lưu video công khai, trích xuất âm thanh và chọn mục trong danh sách phát ngay trên trình duyệt, không cần nhấp quảng cáo.",
+    "sections": [
+      ["Vì sao cần thay thế Cobalt.tools?", "Danh sách dịch vụ của API công khai chính thức không có YouTube khi kiểm tra vào 2026-10-23. Quan sát trong quá khứ này không chứng minh tính năng bị loại bỏ vĩnh viễn ở mọi bản triển khai hay phiên bản sau đó."],
+      ["Lưu video công khai và Shorts", "Dán liên kết cụ thể dạng watch, youtu.be hoặc Shorts rồi chọn video, chỉ âm thanh hoặc video không tiếng. Hãy kiểm tra trước bằng một video công khai.", "Chọn MP4 H.264 và độ phân giải nguồn cung cấp. 1080p, 1440p hoặc 2160p có thể cần ghép các luồng hình và tiếng riêng; công cụ không tạo ra chất lượng vượt bản gốc."],
+      ["Chọn định dạng âm thanh", "MP3 có tùy chọn 128, 256 và 320 kbps. Bạn cũng có thể xem các lựa chọn M4A hoặc Opus, Opus và WAV khả dụng. Chất lượng âm thanh gốc vẫn là giới hạn của kết quả."],
+      ["Danh sách phát và nhiều liên kết", "Mở rộng danh sách phát YouTube công khai có tham số list, chọn mục rồi thêm vào hàng đợi. Có thể thêm nhiều liên kết và loại bỏ trùng lặp. Video riêng tư hoặc đã xóa có thể thất bại."],
+      ["Lưu tệp theo quy trình rõ ràng", "Sau khi xử lý xong, bấm lưu trong kết quả hoặc mục hàng đợi hoàn tất. Không có quảng cáo bật lên hay yêu cầu nhấp quảng cáo để mở khóa. Nếu trình duyệt hỗ trợ, chọn thư mục rồi kiểm tra tệp và âm thanh."]
+    ],
+    "faqs": [
+      ["Cobalt.tools hiện không hỗ trợ YouTube sao?", "Thông tin dựa trên lần kiểm tra API ngày 2026-10-23. Hãy kiểm tra khả năng hiện tại của bản triển khai bạn đang dùng."],
+      ["Có thể tải 1080p hoặc 4K kèm tiếng không?", "Khi nguồn cung cấp đủ luồng cần thiết. Có thể cần ghép hình và tiếng; không phải video nào cũng có các độ phân giải đó."],
+      ["Có thể chỉ lưu âm thanh không?", "Có, chọn chỉ âm thanh rồi chọn MP3, M4A hoặc Opus, Opus hay WAV nếu khả dụng."],
+      ["Có tải được toàn bộ danh sách phát không?", "Bạn chọn từ các mục lấy được. Phản hồi nguồn không đầy đủ hoặc video không khả dụng khiến không thể bảo đảm toàn bộ danh sách."]
+    ]
+  },
+  "savefrom": {
+    "title": "Thay thế SaveFrom.net: tải video không có quảng cáo bật lên",
+    "description": "Dùng FreeSaveVideo thay SaveFrom để lưu video công khai, YouTube MP4 và MP3, danh sách phát và tệp trên điện thoại.",
+    "summary": "Muốn tránh cửa sổ quảng cáo gặp khi dùng SaveFrom? Thử FreeSaveVideo: dán liên kết công khai, chọn đầu ra rồi lưu. Không có quảng cáo bật lên hay lượt nhấp bắt buộc, với nút lưu rõ ràng trong kết quả và hàng đợi.",
+    "sections": [
+      ["Vì sao chuyển từ SaveFrom?", "Chọn theo liên kết cần dùng và mức độ rõ ràng của thao tác lưu. FreeSaveVideo không có quảng cáo bật lên và không yêu cầu nhấp quảng cáo để lưu. Định dạng vẫn phụ thuộc vào nền tảng và video."],
+      ["Lưu video trong ba bước", "Sao chép liên kết video hoặc bài đăng công khai, dán phía trên và tiếp tục. Chọn video hoặc âm thanh rồi lưu sau khi xử lý. Trong hàng đợi, dùng nút lưu của mục đã hoàn tất.", "Dùng URL cụ thể thay vì trang hồ sơ hay tìm kiếm. Nếu có lỗi, trước tiên xác nhận video gốc vẫn công khai và phát được."],
+      ["YouTube MP4, MP3 và độ phân giải cao có tiếng", "Video công khai và Shorts có thể chọn video hoặc chỉ âm thanh. 1080p và 4K có thể cần ghép hình và tiếng. Tăng tốc độ bit MP3 không cải thiện bản ghi gốc."],
+      ["Facebook, Instagram và nguồn khác", "Dùng liên kết cụ thể đến video Facebook công khai, bài đăng Instagram hoặc Reel. Xem phạm vi hỗ trợ trong danh mục. Tài khoản riêng tư và giới hạn khu vực có thể ngăn truy cập."],
+      ["Tìm tệp trên iPhone và Android", "Xử lý và lưu trong trình duyệt di động, sau đó xem lịch sử tải hoặc ứng dụng tệp. Một số liên kết mở bản xem trước trước tiên: hãy làm theo tùy chọn lưu hiển thị. Xem trước không có nghĩa tệp đã nằm trên thiết bị."],
+      ["Danh sách phát và cách làm việc khác", "Chọn mục từ danh sách phát YouTube công khai vào hàng đợi và thử lại riêng từng lỗi. Để tự động hóa dòng lệnh, xem tài liệu chính thức yt-dlp; để làm việc trên máy tính, có thể so sánh 4K Video Downloader. Đây không phải bảng xếp hạng từ thử nghiệm so sánh."]
+    ],
+    "faqs": [
+      ["Có phải nhấp quảng cáo trước khi lưu không?", "Không. FreeSaveVideo không có quảng cáo bật lên. Dùng nút lưu trong kết quả hoặc mục hàng đợi hoàn tất."],
+      ["Có tải YouTube thành MP3 được không?", "Chọn chỉ âm thanh và MP3 cho video công khai khả dụng. Chất lượng phụ thuộc vào âm thanh gốc."],
+      ["Dùng trên điện thoại được không?", "Có, qua trình duyệt di động. Thư mục và hành vi xem trước phụ thuộc trình duyệt và hệ điều hành."],
+      ["Video nào cũng lưu được không?", "Không bảo đảm. Nội dung riêng tư, đã xóa, được bảo vệ hay bị hạn chế có thể không khả dụng; hỗ trợ khác nhau theo nền tảng."]
+    ]
+  }
+}

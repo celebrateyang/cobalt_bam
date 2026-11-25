@@ -1,6 +1,7 @@
 <script lang="ts">
     import { jsonLdScript } from '$lib/seo/json-ld';
     import env from '$lib/env';
+    import { getAlternativeUi } from '$lib/seo/alternative-copy';
 
     export let data: {
         lang: string;
@@ -8,20 +9,20 @@
     };
 
     const fallbackHost = env.HOST || 'freesavevideo.online';
-    const canonicalUrl = `https://${fallbackHost}/en/learn`;
-    const pageTitle = 'FreeSaveVideo Learn: video saving, audio extraction, and troubleshooting';
-    const pageDesc =
-        'Practical FreeSaveVideo guides for saving public videos, extracting audio, preparing links, solving download errors, and using browser media tools safely.';
+    $: ui = getAlternativeUi(data.lang);
+    $: pageTitle = `FreeSaveVideo: ${ui.hubTitle}`;
+    $: pageDesc = ui.hubDesc;
 
     $: itemListJsonLd = {
         '@context': 'https://schema.org',
         '@type': 'ItemList',
-        name: 'FreeSaveVideo Learn',
+        name: `FreeSaveVideo ${ui.learn}`,
+        inLanguage: data.lang,
         itemListElement: data.pages.map((page, index) => ({
             '@type': 'ListItem',
             position: index + 1,
             name: page.title,
-            url: `https://${fallbackHost}/en/learn/${page.slug}`,
+            url: `https://${fallbackHost}/${data.lang}/learn/${page.slug}`,
         })),
     };
 </script>
@@ -31,7 +32,7 @@
     <meta name="description" content={pageDesc} />
     <meta
         name="keywords"
-        content="FreeSaveVideo learn, online video download guide, audio extraction guide, video download troubleshooting, public video download safety"
+        content={data.pages.flatMap((article) => article.keywords ?? []).join(',')}
     />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={pageDesc} />
@@ -45,29 +46,26 @@
 
 <main class="learn-page" tabindex="-1" data-first-focus data-focus-ring-hidden>
     <section class="hero">
-        <p class="eyebrow">Learn</p>
-        <h1>Practical guides for public video saving and browser media tools</h1>
-        <p class="lede">
-            Concrete FreeSaveVideo notes for offline study, audio extraction, subtitles,
-            link preparation, troubleshooting, short-video downloads, and safer public-link use.
-        </p>
+        <p class="eyebrow">{ui.learn}</p>
+        <h1>{ui.hubTitle}</h1>
+        <p class="lede">{ui.hubDesc}</p>
         <div class="hero-links">
-            <a href="/en">Open downloader</a>
-            <a href="/en/download">Download directory</a>
-            <a href="/en/guide">Platform guides</a>
+            <a href={`/${data.lang}`}>{ui.open}</a>
+            <a href={`/${data.lang}/download`}>{ui.directory}</a>
+            <a href={`/${data.lang}/guide`}>{ui.guides}</a>
             <a href="/capabilities.json">capabilities.json</a>
         </div>
     </section>
 
-    <section class="article-grid" aria-label="Learn articles">
+    <section class="article-grid" aria-label={ui.learn}>
         {#each data.pages as article}
             <article class="article-card">
                 <div>
                     <p class="meta">{article.category} / {article.readingTime}</p>
-                    <h2><a href={`/en/learn/${article.slug}`}>{article.title}</a></h2>
+                    <h2><a href={`/${data.lang}/learn/${article.slug}`}>{article.title}</a></h2>
                     <p>{article.description}</p>
                 </div>
-                <a class="read-link" href={`/en/learn/${article.slug}`}>Read guide</a>
+                <a class="read-link" href={`/${data.lang}/learn/${article.slug}`}>{ui.read}</a>
             </article>
         {/each}
     </section>

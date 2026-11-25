@@ -1,5 +1,7 @@
 <script lang="ts">
     import env from '$lib/env';
+    import { getAlternativeLabels } from '$lib/seo/alternative-labels';
+    $: alternativeLabels = getAlternativeLabels(data.lang);
     import { getDirectoryCopy } from '$lib/seo/directory-copy';
     import { jsonLdScript } from '$lib/seo/json-ld';
 
@@ -147,11 +149,20 @@
                 {/each}
             </div>
         </details>
-        <footer><p>{ui.disclaimer}</p><div><a href={`/${data.lang}/faq`}>{copy.faq}</a><a href={`/${data.lang}/about/contact`}>{ui.help} ↗</a>{#if data.lang === 'en'}<a href="/en/learn">Learn</a>{/if}</div></footer>
+            <section class="alternative-guides" aria-labelledby="alternative-guides-title">
+                <h2 id="alternative-guides-title">{data.lang === 'en' ? 'Switching from another downloader?' : alternativeLabels[2]}</h2>
+                {#if data.lang === 'en'}<p>Compare the browser workflow and choose a downloader for your public video link.</p>{/if}
+                <div><a href={`/${data.lang}/learn/savefrom-alternative`}>{alternativeLabels[1]}</a><a href={`/${data.lang}/learn/cobalt-tools-alternative`}>{alternativeLabels[0]}</a></div>
+            </section>
+        <footer><p>{ui.disclaimer}</p><div><a href={`/${data.lang}/faq`}>{copy.faq}</a><a href={`/${data.lang}/about/contact`}>{ui.help} ↗</a><a href={`/${data.lang}/learn`}>{alternativeLabels[2]}</a></div></footer>
     </main>
 </div>
 
 <style>
+    .alternative-guides { padding: 24px 0; border-top: 1px solid var(--button-stroke); }
+    .alternative-guides p { color: var(--subtext); font-size: 13px; line-height: 1.7; }
+    .alternative-guides > div { display: flex; flex-wrap: wrap; gap: 12px 24px; }
+    .alternative-guides a { color: var(--accent-strong); font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
     .page { width: 100%; padding: 24px 32px 64px; color: var(--text); font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif; }
     .page .hero h1, .page h2, .page p, .page a, .page input, .page summary, .page .platform-name { font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif; }
     .container { max-width: 1120px; margin: 0 auto; }

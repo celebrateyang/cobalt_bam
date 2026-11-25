@@ -1,0 +1,50 @@
+{
+  "ui": {
+    "home": "Accueil", "learn": "Guides", "updated": "Mis à jour", "quick": "Réponse rapide", "toc": "Sur cette page", "compare": "En un coup d’œil", "faq": "Questions fréquentes", "sources": "Sources et vérification", "more": "Pour aller plus loin", "all": "Tous les guides", "read": "Lire le guide", "open": "Ouvrir le téléchargeur", "paste": "Collez le lien d’une vidéo publique", "continue": "Continuer", "hint": "Ouvre FreeSaveVideo avec votre lien prêt à être traité.", "how": "Voir les étapes", "note": "Aucune publicité pop-up. Aucun clic publicitaire requis. Des étapes de sauvegarde claires.", "formats": "Les formats disponibles dépendent de la source", "choose": "Choisir", "save": "Enregistrer", "permission": "Choisissez une vidéo publique qui vous appartient ou que vous êtes autorisé à enregistrer.", "hubTitle": "Guides pour enregistrer des vidéos publiques et utiliser les outils multimédias du navigateur", "hubDesc": "Alternatives à Cobalt.tools et SaveFrom : enregistrer vidéos, audio et playlists, et comprendre les limites.", "directory": "Répertoire des téléchargements", "guides": "Guides par plateforme", "minutes": "5 min de lecture", "category": "Comparatif de téléchargeurs", "needs": "Besoin", "workflow": "Parcours FreeSaveVideo", "video": "Vidéo", "audio": "Audio", "playlist": "Playlist"
+  },
+  "capability": {
+    "video": "Vidéos YouTube publiques et Shorts. La qualité dépend de la source ; les hautes résolutions peuvent nécessiter une fusion de la vidéo et du son.",
+    "audio": "L’audio YouTube propose notamment MP3, M4A ou Opus, Opus et WAV. Augmenter le débit ne restaure pas les détails absents de l’original.",
+    "playlist": "Développez une playlist YouTube publique, sélectionnez des éléments et ajoutez-les à la file. Les échecs se relancent individuellement ; la liste dépend de la réponse de la source.",
+    "saving": "Après traitement, utilisez Enregistrer dans le résultat ou dans l’élément terminé de la file. Les navigateurs compatibles permettent de choisir un dossier.",
+    "limits": "Les contenus privés, supprimés, protégés ou bloqués par région peuvent être indisponibles. Formats et qualité dépendent de la source.",
+    "source": "Lors du contrôle de l’API publique officielle le 2026-10-23, YouTube ne figurait pas dans la liste des services. Ce constat concerne cette instance à cette date, pas toutes les installations ni leur état actuel."
+  },
+  "cobalt": {
+    "title": "Alternative à Cobalt.tools pour télécharger YouTube et l’audio",
+    "description": "Une alternative à Cobalt.tools pour YouTube : vidéos publiques, Shorts, MP3 et playlists avec FreeSaveVideo, sans publicité pop-up.",
+    "summary": "Si votre instance Cobalt.tools ne traite pas YouTube, FreeSaveVideo permet d’enregistrer des vidéos publiques, d’extraire l’audio et de sélectionner des éléments de playlist dans le navigateur, sans clic publicitaire.",
+    "sections": [
+      ["Pourquoi chercher une alternative à Cobalt.tools ?", "Le 2026-10-23, la liste de l’API publique officielle ne contenait pas YouTube. Ce constat historique ne prouve pas un retrait permanent de la fonction dans toutes les installations ou versions ultérieures."],
+      ["Enregistrer des vidéos publiques et des Shorts", "Collez un lien précis watch, youtu.be ou Shorts, puis choisissez vidéo, audio seul ou vidéo muette. Vérifiez d’abord le résultat sur une seule vidéo publique.", "Choisissez MP4 H.264 et une résolution proposée par la source. Le 1080p, 1440p ou 2160p peut nécessiter la fusion de pistes distinctes ; aucune qualité absente de l’original n’est créée."],
+      ["Choisir un format audio", "MP3 propose 128, 256 ou 320 kbps. Consultez aussi les options disponibles M4A ou Opus, Opus et WAV. La qualité de la piste d’origine reste la limite du résultat."],
+      ["Playlists et liens multiples", "Développez un lien de playlist YouTube publique contenant le paramètre list, sélectionnez les éléments et ajoutez-les à la file. Plusieurs liens peuvent être regroupés et dédupliqués. Les vidéos privées ou supprimées peuvent échouer."],
+      ["Enregistrer le fichier clairement", "Après traitement, cliquez sur Enregistrer dans le résultat ou l’élément terminé de la file. Aucune publicité pop-up ni clic publicitaire ne bloque l’accès. Si le navigateur le permet, choisissez un dossier, puis vérifiez le fichier et le son."]
+    ],
+    "faqs": [
+      ["Cobalt.tools ne prend-il toujours pas YouTube en charge ?", "La mention repose sur le contrôle du 2026-10-23. Vérifiez le support actuel de l’instance utilisée."],
+      ["Puis-je obtenir du 1080p ou de la 4K avec le son ?", "Si la source fournit les pistes nécessaires. Une fusion peut être requise et ces résolutions ne sont pas disponibles pour chaque vidéo."],
+      ["Puis-je enregistrer uniquement l’audio ?", "Oui, avec audio seul et les options disponibles MP3, M4A ou Opus, Opus ou WAV."],
+      ["Toute la playlist sera-t-elle téléchargée ?", "Vous choisissez parmi les éléments récupérés. Une réponse incomplète ou des vidéos indisponibles empêchent de garantir une liste complète."]
+    ]
+  },
+  "savefrom": {
+    "title": "Alternative à SaveFrom.net : télécharger sans publicité pop-up",
+    "description": "FreeSaveVideo comme alternative à SaveFrom : vidéos publiques, YouTube MP4 et MP3, playlists et sauvegarde sur mobile.",
+    "summary": "Pour éviter les fenêtres publicitaires rencontrées avec SaveFrom, essayez FreeSaveVideo : collez un lien public, choisissez le résultat et enregistrez. Sans publicité pop-up ni clic imposé, avec un bouton clair dans le résultat et la file.",
+    "sections": [
+      ["Pourquoi remplacer SaveFrom ?", "Choisissez selon vos liens et la clarté de l’enregistrement. FreeSaveVideo ne comporte pas de publicité pop-up et n’exige aucun clic publicitaire pour enregistrer. Les formats restent liés à la plateforme et à la vidéo."],
+      ["Enregistrer une vidéo en trois étapes", "Copiez le lien d’une vidéo ou publication publique, collez-le ci-dessus et continuez. Choisissez vidéo ou audio et enregistrez après traitement. Dans la file, utilisez Enregistrer sur l’élément terminé.", "Utilisez une URL précise plutôt qu’un profil ou une recherche. En cas d’erreur, vérifiez d’abord que l’original reste public et lisible."],
+      ["YouTube MP4, MP3 et haute définition avec son", "Les vidéos publiques et Shorts proposent vidéo ou audio seul. Le 1080p et la 4K peuvent nécessiter de fusionner image et son. Un débit MP3 supérieur n’améliore pas l’audio d’origine."],
+      ["Facebook, Instagram et autres sources", "Utilisez les liens précis de vidéos Facebook publiques, de publications Instagram ou de Reels. Consultez le répertoire pour les limites de chaque plateforme. Les comptes privés et blocages régionaux peuvent empêcher l’accès."],
+      ["Retrouver les fichiers sur iPhone et Android", "Traitez et enregistrez dans le navigateur mobile, puis consultez ses téléchargements ou l’application de fichiers. Certains liens ouvrent d’abord un aperçu : suivez l’option d’enregistrement proposée. L’aperçu ne signifie pas que le fichier est déjà sauvegardé."],
+      ["Playlists et choix du bon outil", "Sélectionnez les éléments d’une playlist YouTube publique et ajoutez-les à la file, avec relance individuelle des échecs. Pour automatiser en ligne de commande, consultez yt-dlp ; pour un usage de bureau, comparez 4K Video Downloader. Il ne s’agit pas d’un classement issu de tests comparatifs."]
+    ],
+    "faqs": [
+      ["Faut-il cliquer sur une publicité pour enregistrer ?", "Non. FreeSaveVideo ne comporte pas de publicité pop-up. Enregistrez depuis le résultat ou l’élément terminé de la file."],
+      ["Puis-je obtenir YouTube en MP3 ?", "Choisissez audio seul et MP3 pour une vidéo publique disponible. La qualité dépend de la piste originale."],
+      ["Cela fonctionne-t-il sur mobile ?", "Oui, dans un navigateur mobile. Le dossier et le comportement de l’aperçu dépendent du navigateur et du système."],
+      ["Toutes les vidéos peuvent-elles être enregistrées ?", "Ce n’est pas garanti. Les contenus privés, supprimés, protégés ou restreints peuvent être indisponibles et le support varie selon la plateforme."]
+    ]
+  }
+}

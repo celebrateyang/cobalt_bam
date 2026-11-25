@@ -2,6 +2,7 @@ import { page } from "$app/stores";
 
 import env from "$lib/env";
 import API from "$lib/api/api";
+import { sunoHomeDownloadMode } from "$lib/api/suno-home-mode";
 import settings from "$lib/state/settings";
 import lazySettingGetter from "$lib/settings/lazy-get";
 
@@ -376,6 +377,7 @@ const getCurrentRedirectPath = () => {
 
 export const buildSaveRequest = (url: string): CobaltSaveRequestBody => {
     const getSetting = lazySettingGetter(get(settings));
+    const downloadMode = getSetting("save", "downloadMode");
 
     return {
         url,
@@ -384,7 +386,7 @@ export const buildSaveRequest = (url: string): CobaltSaveRequestBody => {
         localProcessing: get(settings).save.localProcessing,
 
         alwaysProxy: getSetting("save", "alwaysProxy"),
-        downloadMode: getSetting("save", "downloadMode"),
+        downloadMode: isHomePageRoute() ? sunoHomeDownloadMode(url, downloadMode) : downloadMode,
 
         subtitleLang: getSetting("save", "subtitleLang"),
         filenameStyle: getSetting("save", "filenameStyle"),

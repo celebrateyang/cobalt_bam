@@ -63,6 +63,8 @@ const fixture = (pref = "download", browserWindow) => {
 const tunnelFixture = (mobile = false, storage = { getDirectory() {} }, diskAvailable = true) => {
     const pipelines = [], downloads = [], states = [], dialogs = [];
     const releases = [], subtitleNotices = [];
+    const page = { params: { lang: 'en' }, route: { id: '/[lang]' } };
+    const settings = { save: { localProcessing: 'disabled', downloadMode: 'auto' } };
     let probes = 0;
     const source = readFileSync(new URL('src/lib/api/saving-handler.ts', root), 'utf8');
     const compiled = ts.transpileModule(source, {
@@ -70,13 +72,17 @@ const tunnelFixture = (mobile = false, storage = { getDirectory() {} }, diskAvai
     }).outputText;
     const exports = {};
     const dependencies = {
+        '$lib/env': { default: { ENABLE_DEPRECATED_YOUTUBE_HLS: false } },
         '$lib/device': { device: { is: { mobile } } },
         '$lib/storage/opfs-probe?worker': { default: class {
             postMessage() { queueMicrotask(() => this.onmessage({ data: diskAvailable })); }
             terminate() {}
         } },
         '$lib/api/mobile-large-download': load('src/lib/api/mobile-large-download.ts', {}, { URL }),
-        '$app/stores': { page: { params: { lang: 'en' } } },
+        '$app/stores': { page },
+        '$lib/state/settings': { default: settings },
+        '$lib/settings/lazy-get': { default: state => (section, key) => key === 'downloadMode' && state[section][key] !== 'auto' ? state[section][key] : undefined },
+        '$lib/api/suno-home-mode': load('src/lib/api/suno-home-mode.ts', {}, { URL }),
         '$lib/i18n/translations': { t: key => key, loadTranslations: async () => {} },
         '$lib/api/points': { releasePointsHold: async (...args) => releases.push(args) },
         'svelte/store': { get: value => value },
@@ -98,8 +104,25 @@ const tunnelFixture = (mobile = false, storage = { getDirectory() {} }, diskAvai
         window: { location: { origin: 'https://example.com' } },
         require: name => dependencies[name] || {},
     });
-    return { savingHandler: exports.savingHandler, pipelines, downloads, states, dialogs, releases, subtitleNotices, probes: () => probes };
+    return { savingHandler: exports.savingHandler, buildSaveRequest: exports.buildSaveRequest, page, settings, pipelines, downloads, states, dialogs, releases, subtitleNotices, probes: () => probes };
 };
+
+test('homepage automatic mode requests Suno music while respecting other modes and pages', () => {
+    const f = tunnelFixture();
+    for (const url of ['https://suno.com/s/WJiQeJWd58rYp4je', 'https://www.suno.com/song/d888a71c-c35a-44bd-bfaa-03bc2f8580e7?sh=test', 'suno.com/s/abc']) {
+        assert.equal(f.buildSaveRequest(url).downloadMode, 'audio', url);
+    }
+    for (const url of ['https://suno.com.evil.test/s/abc', 'https://suno.com/profile/user', 'https://example.com/s/abc']) {
+        assert.equal(f.buildSaveRequest(url).downloadMode, undefined, url);
+    }
+    f.settings.save.downloadMode = 'mute';
+    assert.equal(f.buildSaveRequest('https://suno.com/s/abc').downloadMode, 'mute');
+    f.settings.save.downloadMode = 'audio';
+    assert.equal(f.buildSaveRequest('https://suno.com/s/abc').downloadMode, 'audio');
+    f.settings.save.downloadMode = 'auto';
+    f.page.route.id = '/[lang]/download/[slug]';
+    assert.equal(f.buildSaveRequest('https://suno.com/s/abc').downloadMode, undefined);
+});
 
 const mobileLargeArgs = {
     request: { url: 'https://youtube.com/watch?v=HB8CZzDnKHI', queueId: 'large-test', localProcessing: 'disabled' },

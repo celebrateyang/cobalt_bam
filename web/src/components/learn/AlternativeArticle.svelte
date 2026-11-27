@@ -19,7 +19,7 @@
     $: downloadAction = article.alternativeLanding?.action ?? (isCobalt ? 'Open YouTube downloader' : 'Open downloader');
     $: sectionLabels = lang !== 'en' || article.alternativeLanding ? [] : isCobalt
         ? ['The YouTube support gap', 'Video and audio formats', 'Work with playlists', 'Save your file', 'Is it right for you?']
-        : ['Why switch?', 'Download a video', 'Save on your phone', 'Platforms and batch tasks', 'Is it right for you?'];
+        : ['Why switch?', 'Compare features', 'Download a video', 'YouTube formats', 'Facebook and Instagram', 'Save on your phone', 'Platforms and batch tasks', 'Is it right for you?'];
 </script>
 
 <main class="alternative-page" tabindex="-1" data-first-focus data-focus-ring-hidden>
@@ -112,7 +112,7 @@
                 {/if}
 
                 {#each article.sections as section, index}
-                    {#if index === 1}<div id="how-it-works" class="anchor"></div>{/if}
+                    {#if index === (article.slug === 'savefrom-alternative' && lang === 'en' ? 2 : 1)}<div id="how-it-works" class="anchor"></div>{/if}
                     <section class="prose-section" id={`section-${index + 1}`}>
                         <div class="section-heading"><span class="section-number" aria-hidden="true">0{index + 1}</span><h2>{section.heading}</h2></div>
                         {#each section.body as paragraph}<p>{paragraph}</p>{/each}

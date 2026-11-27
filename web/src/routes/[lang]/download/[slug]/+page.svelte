@@ -21,6 +21,8 @@
     import RedditDownloadPage from '$components/social/RedditDownloadPage.svelte';
     import PinterestDownloadPage from '$components/social/PinterestDownloadPage.svelte';
     import SunoDownloadPage from '$components/suno/SunoDownloadPage.svelte';
+    import ThreadsDownloadPage from '$components/social/ThreadsDownloadPage.svelte';
+    import RutubeDownloadPage from '$components/social/RutubeDownloadPage.svelte';
 
     export let data: {
         lang: string;
@@ -285,6 +287,10 @@
 
 {#if data.slug === 'suno-downloader'}
     <SunoDownloadPage lang={data.lang} content={localeContent} />
+{:else if data.slug === 'threads-video-downloader' && focusedPlatform}
+    <ThreadsDownloadPage config={focusedPlatform} content={localeContent} lang={data.lang} related={focusedRelated} />
+{:else if data.slug === 'rutube-video-downloader' && focusedPlatform}
+    <RutubeDownloadPage config={focusedPlatform} content={localeContent} lang={data.lang} related={focusedRelated} />
 {:else if focusedPlatform}
     {#key data.slug}<PlatformDownloadPage config={focusedPlatform} content={localeContent} lang={data.lang} related={focusedRelated} guides={data.relatedLearnPages ?? []} />{/key}
 {:else if isAparat}

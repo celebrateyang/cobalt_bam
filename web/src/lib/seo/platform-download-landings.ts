@@ -1,5 +1,7 @@
 import type { SeoLandingPage, SeoLandingLocaleContent } from './landing-pages';
 import { longTailPlatformContent } from './long-tail-platform-content';
+import { threadsSeoLocales } from './threads-locales';
+import { rutubeSeoLocales } from './rutube-locales';
 
 export type DownloadPlatform = 'rutube' | 'bluesky' | 'vk' | 'threads' | 'streamable' | 'twitch' | 'loom' | 'tumblr';
 export type PlatformDownloadConfig = {
@@ -16,10 +18,10 @@ export type PlatformDownloadConfig = {
 export const platformDownloadConfigs: PlatformDownloadConfig[] = [
     { id: 'loom', name: 'Loom', slug: 'loom-video-downloader', languages: ['en'], accent: '#6254cc', placeholder: 'https://www.loom.com/share/VIDEO_ID', formats: ['loom.com/share/VIDEO_ID', 'loom.com/embed/VIDEO_ID'], updatedAt: '2026-11-11' },
     { id: 'tumblr', name: 'Tumblr', slug: 'tumblr-video-downloader', languages: ['en'], accent: '#4779a8', placeholder: 'https://www.tumblr.com/BLOG/POST_ID', formats: ['tumblr.com/BLOG/POST_ID', 'BLOG.tumblr.com/post/POST_ID', 'tumblr.com/blog/view/BLOG/POST_ID'], updatedAt: '2026-11-11' },
-    { id: 'rutube', name: 'RUTUBE', slug: 'rutube-video-downloader', languages: ['en', 'ru'], accent: '#356fc5', placeholder: 'https://rutube.ru/video/0123456789abcdef0123456789abcdef/', formats: ['rutube.ru/video/VIDEO_ID/', 'rutube.ru/shorts/VIDEO_ID/', 'rutube.ru/play/embed/VIDEO_ID'], },
+    { id: 'rutube', name: 'RUTUBE', slug: 'rutube-video-downloader', languages: ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de', 'id'], accent: '#356fc5', placeholder: 'https://rutube.ru/video/0123456789abcdef0123456789abcdef/', formats: ['rutube.ru/video/VIDEO_ID/', 'rutube.ru/shorts/VIDEO_ID/', 'rutube.ru/play/embed/VIDEO_ID'], updatedAt: '2026-11-26' },
     { id: 'bluesky', name: 'Bluesky', slug: 'bluesky-video-downloader', languages: ['en'], accent: '#1682d4', placeholder: 'https://bsky.app/profile/handle.bsky.social/post/POST_ID', formats: ['bsky.app/profile/HANDLE/post/POST_ID', 'bsky.app/profile/did:plc:IDENTIFIER/post/POST_ID'], },
     { id: 'vk', name: 'VK Video', slug: 'vk-video-downloader', languages: ['en', 'ru'], accent: '#2874cf', placeholder: 'https://vkvideo.ru/video-123456_456789', formats: ['vkvideo.ru/videoOWNER_ID_VIDEO_ID', 'vk.com/videoOWNER_ID_VIDEO_ID', 'vk.ru/clipOWNER_ID_VIDEO_ID'], },
-    { id: 'threads', name: 'Threads', slug: 'threads-video-downloader', languages: ['en'], accent: '#737373', placeholder: 'https://www.threads.com/@username/post/POST_ID', formats: ['threads.com/@USERNAME/post/POST_ID', 'threads.net/@USERNAME/post/POST_ID', 'threads.com/t/POST_ID'], },
+    { id: 'threads', name: 'Threads', slug: 'threads-video-downloader', languages: ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de', 'id'], accent: '#737373', placeholder: 'https://www.threads.com/@username/post/POST_ID', formats: ['threads.com/@USERNAME/post/POST_ID', 'threads.net/@USERNAME/post/POST_ID', 'threads.com/t/POST_ID'], },
     { id: 'streamable', name: 'Streamable', slug: 'streamable-video-downloader', languages: ['en'], accent: '#236fc4', placeholder: 'https://streamable.com/abc123', formats: ['streamable.com/VIDEO_ID', 'streamable.com/e/VIDEO_ID', 'streamable.com/o/VIDEO_ID'], },
     { id: 'twitch', name: 'Twitch Clips', slug: 'twitch-clip-downloader', languages: ['en'], accent: '#8854ca', placeholder: 'https://clips.twitch.tv/CLIP_SLUG', formats: ['clips.twitch.tv/CLIP_SLUG', 'twitch.tv/CHANNEL/clip/CLIP_SLUG'], },
 ];
@@ -126,8 +128,8 @@ const vk = english({
 
 const threads = english({
     metaTitle: 'Threads Video Downloader - Save Videos and Photos from a Post | FreeSaveVideo',
-    metaDescription: 'Paste a public Threads post link to save available videos or photos. Supports current and older post URLs, with individual media selection when returned.',
-    metaKeywords: ['threads video downloader', 'download threads video', 'threads photo download'],
+    metaDescription: 'Download available videos and photos from a public Threads post. Paste a threads.com or threads.net link and choose from the media returned.',
+    metaKeywords: ['threads video downloader', 'download threads videos', 'threads photo downloader', 'save threads post media'],
     h1: 'Save the media from a Threads post',
     lede: 'One Threads post can hold a video, photos or several media items. Paste the original post link to get the available attachments, then select what you want to keep.',
     heroTags: ['threads.com and threads.net', 'Video and photo results', 'Select returned attachments'],
@@ -280,8 +282,8 @@ const vkRu: SeoLandingLocaleContent = {
 
 const contents: Record<DownloadPlatform, Record<string, SeoLandingLocaleContent>> = {
     ...longTailPlatformContent,
-    rutube: { en: rutube, ru: rutubeRu }, bluesky: { en: bluesky }, vk: { en: vk, ru: vkRu },
-    threads: { en: threads }, streamable: { en: streamable }, twitch: { en: twitch },
+    rutube: rutubeSeoLocales, bluesky: { en: bluesky }, vk: { en: vk, ru: vkRu },
+    threads: { ...threadsSeoLocales, en: threads }, streamable: { en: streamable }, twitch: { en: twitch },
 };
 
 export const platformDownloadLandings: SeoLandingPage[] = platformDownloadConfigs.map(config => ({

@@ -40,7 +40,7 @@ export function parsePlatformDownloadInput(platform: DownloadPlatform, input: st
                 break;
             case 'threads':
                 valid = ['threads.com', 'threads.net', 'www.threads.com', 'www.threads.net'].includes(host)
-                    && /^\/(?:@[a-z0-9._]{1,64}\/post|t)\/[a-z0-9_-]{1,64}\/?$/i.test(path);
+                    && /^\/(?:@[a-z0-9._]{1,64}\/post|t|share)\/[a-z0-9_-]{1,64}\/?$/i.test(path);
                 break;
             case 'streamable':
                 valid = ['streamable.com', 'www.streamable.com'].includes(host)

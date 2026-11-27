@@ -79,6 +79,8 @@ framework['$components/save/AparatDownloadForm.svelte'] = { __esModule: true, de
 framework['$components/aparat/AparatDownloadPage.svelte'] = { __esModule: true, default: await component('src/components/aparat/AparatDownloadPage.svelte') };
 framework['$components/save/SupportLink.svelte'] = { __esModule: true, default: await component('src/components/save/SupportLink.svelte') };
 framework['$components/social/PlatformDownloadPage.svelte'] = { __esModule: true, default: await component('src/components/social/PlatformDownloadPage.svelte') };
+framework['$components/social/ThreadsDownloadPage.svelte'] = { __esModule: true, default: await component('src/components/social/ThreadsDownloadPage.svelte') };
+framework['$components/social/RutubeDownloadPage.svelte'] = { __esModule: true, default: await component('src/components/social/RutubeDownloadPage.svelte') };
 framework['$components/youtube/YouTubeDownloadPage.svelte'] = { __esModule: true, default: await component('src/components/youtube/YouTubeDownloadPage.svelte') };
 framework['$components/suno/SunoDownloadPage.svelte'] = { __esModule: true, default: await component('src/components/suno/SunoDownloadPage.svelte') };
 for (const name of ['SourceDownloadForm', 'RedditDownloadPage', 'PinterestDownloadPage']) {
@@ -115,7 +117,7 @@ test('focused platform forms accept source pages and reject lookalikes, feeds an
         rutube: ['https://rutube.ru/video/0123456789abcdef0123456789abcdef/', 'https://rutube.ru/shorts/0123456789abcdef0123456789abcdef/', 'https://rutube.ru/play/embed/0123456789abcdef0123456789abcdef'],
         bluesky: ['https://bsky.app/profile/example.bsky.social/post/3abc123', 'https://bsky.app/profile/did:plc:abc123/post/3abc123', 'https://bsky.app/profile/example.com/post/3abc123'],
         vk: ['https://vk.com/video-123456_456789', 'https://m.vkvideo.ru/clip-123456_456789', 'https://vk.ru/video123456_456789?list=test'],
-        threads: ['https://www.threads.com/@user/post/ABC_123', 'https://threads.net/@user/post/ABC_123', 'https://threads.com/t/ABC_123'],
+        threads: ['https://www.threads.com/@user/post/ABC_123', 'https://threads.net/@user/post/ABC_123', 'https://threads.com/t/ABC_123', 'https://www.threads.com/share/ABC_123'],
         streamable: ['https://streamable.com/abc123', 'https://streamable.com/e/abc123', 'https://streamable.com/o/abc123', 'https://streamable.com/s/abc123'],
         twitch: ['https://clips.twitch.tv/AValidClip-Slug123', 'https://www.twitch.tv/channel/clip/AValidClip-Slug123'],
     };
@@ -156,6 +158,35 @@ test('Suno landing renders its audio-first form and matching SEO facts', async (
     const schema = [...rendered.head.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(match => JSON.parse(match[1]));
     const howTo = schema.find(item => item['@type'] === 'HowTo');
     for (const step of howTo.step) assert(rendered.html.includes(escapeText(step.text)));
+});
+
+test('Threads landing renders localized content and metadata for each supported language', async () => {
+    const { threadsLocales } = load('src/lib/seo/threads-locales.ts');
+    const { threadsGuidance } = load('src/lib/seo/threads-guidance.ts');
+    const detail = await component('src/routes/[lang]/download/[slug]/+page.svelte');
+    const loader = load('src/routes/[lang]/download/[slug]/+page.ts');
+    assert.deepEqual(Object.keys(threadsLocales).sort(), [...supportedLanguages].sort());
+    assert.deepEqual(Object.keys(threadsGuidance).sort(), [...supportedLanguages].sort());
+    for (const lang of supportedLanguages) {
+        setTestLocale(lang, 'download/threads-video-downloader');
+        const data = await loader.load({ params: { lang, slug: 'threads-video-downloader' } });
+        const rendered = detail.render({ data });
+        const copy = threadsLocales[lang];
+        const guidance = threadsGuidance[lang];
+        for (const text of [copy.label, copy.action, copy.hint, copy.mediaTitle, copy.linkDescription]) {
+            assert(rendered.html.includes(escapeText(text)), `${lang}: ${text}`);
+        }
+        for (const text of [guidance.title, guidance.iphone, guidance.android, guidance.troubleshootingTitle, guidance.troubleshooting, guidance.accountTitle, guidance.account]) {
+            assert(rendered.html.includes(escapeText(text)), `${lang}: missing localized guidance`);
+        }
+        if (lang !== 'en') {
+            assert(rendered.html.includes(escapeText(copy.h1)), lang);
+            assert(rendered.head.includes(escapeText(copy.title)), lang);
+            assert(rendered.head.includes(escapeText(copy.description)), lang);
+            assert(!rendered.html.includes('Start with the post link.'), lang);
+        }
+    }
+    setTestLocale('en');
 });
 
 test('Suno has complete localized pages and matching FAQ and HowTo schema', async () => {
@@ -200,7 +231,8 @@ test('focused landing pages have usable SSR, accurate schemas and deliberate loc
             assert(rendered.html.includes(`id="${config.id}-source-url"`));
             assert(!rendered.html.includes('hero-omnibox'));
             assert(!rendered.html.includes('class="services"'));
-            assert.doesNotMatch(rendered.html, /credits?|pricing|points|unlimited|guaranteed|no registration/i);
+            assert.doesNotMatch(rendered.html, /unlimited|guaranteed|no registration/i);
+            if (!['threads', 'rutube'].includes(config.id)) assert.doesNotMatch(rendered.html, /credits?|pricing|points/i);
             if (content.quickAnswer) {
                 assert(rendered.html.includes(escapeText(content.quickAnswer)));
                 assert(rendered.html.includes(`<time datetime="${content.reviewedAt}">${content.reviewedAt}</time>`));
@@ -242,6 +274,32 @@ test('focused landing pages have usable SSR, accurate schemas and deliberate loc
             assert(!xml.includes(`<loc>https://freesavevideo.online/${lang}/download/${config.slug}</loc>`));
             await assert.rejects(loader.load({ params: { lang, slug: config.slug } }), error => error.status === 308 && error.location === `/en/download/${config.slug}`);
         }
+    }
+    setTestLocale('en');
+});
+
+test('RUTUBE has dedicated localized pages and matching source, phone and FAQ guidance', async () => {
+    const slug = 'rutube-video-downloader';
+    const landing = getSeoLandingPage(slug);
+    const { rutubeLocales } = load('src/lib/seo/rutube-locales.ts');
+    const detail = await component('src/routes/[lang]/download/[slug]/+page.svelte');
+    const loader = load('src/routes/[lang]/download/[slug]/+page.ts');
+    const xml = await load('src/routes/sitemap.xml/+server.ts').GET().text();
+    assert.deepEqual(routes.getDownloadSeoLanguages(slug), [...supportedLanguages]);
+    assert.deepEqual(Object.keys(rutubeLocales).sort(), [...supportedLanguages].sort());
+    for (const lang of supportedLanguages) {
+        setTestLocale(lang, `download/${slug}`);
+        const content = landing.locales[lang];
+        const copy = rutubeLocales[lang];
+        const rendered = detail.render({ data: await loader.load({ params: { lang, slug } }) });
+        assert.match(rendered.html, /class="rutube-page(?:\s|\")/, lang);
+        for (const value of [copy.label, copy.action, copy.hint, copy.iphone, copy.android, copy.linkDescription, ...content.faqs.map(faq => faq.a)]) {
+            assert(rendered.html.includes(escapeText(value)), `${lang}: ${value}`);
+        }
+        assert(rendered.head.includes(escapeText(content.metaTitle)), lang);
+        assert(xml.includes(`<loc>https://freesavevideo.online/${lang}/download/${slug}</loc>`), lang);
+        assert(xml.includes(`hreflang="${lang}" href="https://freesavevideo.online/${lang}/download/${slug}"`), lang);
+        if (lang !== 'en') assert.notEqual(content.lede, landing.locales.en.lede, lang);
     }
     setTestLocale('en');
 });
@@ -754,7 +812,11 @@ test('every advertised download and guide detail renders localized shared labels
                 assert(!html.includes('class="omnibox'), context);
             } else if (kind === 'download' && load('src/lib/seo/platform-download-landings.ts').getPlatformDownloadConfig(params.slug)) {
                 const config = load('src/lib/seo/platform-download-landings.ts').getPlatformDownloadConfig(params.slug);
-                const form = load('src/lib/seo/platform-download-input.ts').getPlatformFormCopy(params.lang);
+                const form = params.slug === 'threads-video-downloader'
+                    ? load('src/lib/seo/threads-locales.ts').threadsLocales[params.lang]
+                    : params.slug === 'rutube-video-downloader'
+                    ? load('src/lib/seo/rutube-locales.ts').rutubeLocales[params.lang]
+                    : load('src/lib/seo/platform-download-input.ts').getPlatformFormCopy(params.lang);
                 assert(html.includes(`id="${config.id}-source-url"`), context);
                 assert(html.includes(escapeText(form.action)), context);
                 assert(html.includes(escapeText(form.label)), context);

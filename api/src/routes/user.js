@@ -4,6 +4,7 @@ import { pipeline } from 'node:stream/promises';
 import { getXFollowStorage, createXFollowKey } from '../ai-video/x-follow-storage.js';
 import { clerkClient, clerkMiddleware, getAuth } from "@clerk/express";
 import { createUserPointsHandler } from "./user-points.js";
+import { createClipMembershipSettlementHandler } from "./user-clip-settlement.js";
 import { awardShareReward, isShareRewardRequest, listShareRewards } from "../db/share-rewards.js";
 
 import {
@@ -16,6 +17,7 @@ import {
     finalizePointsHold,
     listUsers,
     releasePointsHold,
+    settleYoutubeClipMembership,
     rotateClipboardPersonalCode,
     touchClipboardPersonalDevice,
     updateUserPoints,
@@ -2282,6 +2284,10 @@ if (!isClerkApiConfigured) {
                 );
             }
         });
+
+        router.post("/youtube-clip/membership/settle", createClipMembershipSettlementHandler({
+            getAuth, getUserByClerkId, settleYoutubeClipMembership,
+        }));
 
         router.post("/points/hold/finalize", async (req, res) => {
             try {

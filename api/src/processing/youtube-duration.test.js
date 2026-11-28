@@ -29,7 +29,7 @@ test("rejects upstream download modes without forwarding their links", () => {
             fallback: { url: "https://upstream.example/tunnel?id=fallback" },
         }), {
             code: "error.api.content.too_long",
-            context: { limit: parseFloat((env.durationLimit / 60).toFixed(2)) },
+            context: { limit: parseFloat((env.durationLimit / 60).toFixed(2)), sourceDuration: env.durationLimit + 1 },
         });
     }
 });

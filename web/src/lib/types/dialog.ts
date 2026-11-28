@@ -4,6 +4,8 @@ import type { MeowbaltEmotions } from "$lib/types/meowbalt";
 import type { MembershipEligibilityReason, MembershipFeature } from "$lib/api/membership";
 import type { SaveContext, SaveOutcome } from "$lib/analytics/saving";
 
+type YoutubeClipDialog = { id: string; type: 'youtube-clip'; sourceUrl: string; sourceDuration: number; limit: number; notice: string };
+
 export type DialogButton = {
     text: string,
     description?: string,
@@ -148,4 +150,4 @@ type MembershipUpgradeDialog = Dialog & {
     returnPath?: string | null,
 };
 
-export type DialogInfo = MobileLargeDownloadDialog | DownloadOfferDialog | SmallDialog | PickerDialog | SavingDialog | TikTokDownloadDialog | PreviewDownloadDialog | BatchDialog | FeedbackDialog | MembershipUpgradeDialog | XinpianchangDownloadDialog | RedditPhotosDialog;
+export type DialogInfo = YoutubeClipDialog | MobileLargeDownloadDialog | DownloadOfferDialog | SmallDialog | PickerDialog | SavingDialog | TikTokDownloadDialog | PreviewDownloadDialog | BatchDialog | FeedbackDialog | MembershipUpgradeDialog | XinpianchangDownloadDialog | RedditPhotosDialog;

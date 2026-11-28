@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { selectUpstreamNode } from "./pool.js";
 import { requestUpstream } from "./request.js";
+import { env } from "../../config.js";
+import { validateYoutubeClipRange } from "../youtube-clip-range.js";
 
 const hasUrl = (value) => typeof value === "string" && value.trim().length > 0;
 
@@ -15,6 +17,18 @@ const hasDownload = (body) => {
     return false;
 };
 
+// Old nodes can ignore unknown request fields and return a complete download.
+// Never accept their result, or use its duration for billing, as a clip.
+export const hasVerifiedYoutubeClip = (body, requested, limit = env.durationLimit) => {
+    const clip = body?.youtubeClip;
+    if (body?.status !== "local-processing" || body.type !== "merge" || body.service !== "youtube" || clip?.version !== 1
+        || !requested || clip.start !== requested.start || clip.end !== requested.end
+        || !Array.isArray(body.tunnel) || body.tunnel.length !== 2 || !body.tunnel.every(hasUrl)
+        || !hasUrl(body.output?.filename) || body.output?.type !== "video/webm") return false;
+    const valid = validateYoutubeClipRange(clip, clip.sourceDuration, limit);
+    return !!valid && body.duration === valid.duration;
+};
+
 // Race up to three global nodes; errors must never beat a usable download.
 export const requestYoutubeUpstream = async ({ payload, ...options }) => {
     const excluded = new Set();
@@ -27,7 +41,12 @@ export const requestYoutubeUpstream = async ({ payload, ...options }) => {
     }
     if (!nodes.length) {
         // Preserve the existing unavailable/circuit-open response.
-        return await requestUpstream({ ...options, payload, service: "youtube", maxAttempts: 1 }) || {
+        const result = await requestUpstream({ ...options, payload, service: "youtube", maxAttempts: 1 });
+        if (payload?.youtubeClip && result && result.body?.status !== "error"
+            && !hasVerifiedYoutubeClip(result?.body, payload.youtubeClip)) {
+            return { status: 503, body: { status: "error", error: { code: "error.api.upstream.incomplete" } } };
+        }
+        return result || {
             status: 503,
             body: { status: "error", error: { code: "error.api.upstream.unavailable" } },
             upstreamFailure: { code: "upstream.unavailable" },
@@ -47,7 +66,7 @@ export const requestYoutubeUpstream = async ({ payload, ...options }) => {
                 allowedUpstreamOrigins: [node.origin],
                 signal: controller.signal,
             });
-            if (!hasDownload(result?.body)) {
+            if (!hasDownload(result?.body) || (payload?.youtubeClip && !hasVerifiedYoutubeClip(result.body, payload.youtubeClip))) {
                 failures[index] = result?.body?.status === "error" ? result : {
                     status: 503,
                     body: { status: "error", error: { code: "error.api.upstream.incomplete" } },
@@ -58,8 +77,10 @@ export const requestYoutubeUpstream = async ({ payload, ...options }) => {
             return result;
         }));
     } catch {
-        // Prefer a specific extraction error over a transport failure, in node order.
-        return failures.find((result) => result && !result.upstreamFailure)
+        // A node that obtained the duration can report the actionable limit even
+        // when another node encountered an unrelated extraction error.
+        return failures.find((result) => result?.body?.error?.code === "error.api.content.too_long")
+            || failures.find((result) => result && !result.upstreamFailure)
             || failures.find(Boolean);
     } finally {
         controller.abort();

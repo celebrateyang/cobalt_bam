@@ -222,6 +222,7 @@ export function createResponse(responseType, responseData) {
                 const processingCover = browserOnly ? undefined : responseData?.cover;
 
                 response = {
+                    youtubeClip: responseData?.youtubeClip,
                     type: responseData?.type,
                     service: responseData?.service,
                     tunnel: browserOnly ? [] : createProxyTunnels(responseData),
@@ -320,6 +321,9 @@ export function normalizeRequest(request) {
         if (firstPass.success) {
             return firstPass;
         }
+
+        // Never strip or sanitize an invalid clip request into a full download.
+        if (request && Object.hasOwn(request, "youtubeClip")) return firstPass;
 
         const withoutNulls = sanitizeNullValues(request);
         if (withoutNulls !== request) {

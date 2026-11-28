@@ -8,6 +8,22 @@ import { env } from "../../config.js";
 const mediaUrl = (itag) =>
     `https://rr.example.googlevideo.com/videoplayback?itag=${itag}&c=VISIONOS`;
 
+test('clip extraction uses trusted source duration and rejects unsupported modes and formats', () => {
+    const formats = [
+        { ext: 'webm', protocol: 'https', filesize: 1000, url: mediaUrl(243), vcodec: 'vp9', acodec: 'none', height: 360 },
+        { ext: 'webm', protocol: 'https', filesize: 900, url: mediaUrl(251), vcodec: 'none', acodec: 'opus' },
+    ];
+    const info = { title: 'Clip', duration: 20000, formats };
+    const o = { id: 'video-id', youtubeClip: { start: 15000, end: 15030, sourceDuration: 999999 } };
+    const result = buildYoutubeResult({ info, o, targetQuality: 360 });
+    assert.equal(result.duration, 30);
+    assert.deepEqual(result.youtubeClip, { version: 1, start: 15000, end: 15030, sourceDuration: 20000 });
+    assert.deepEqual(result.urls, formats.map(format => format.url));
+    assert.equal(buildYoutubeResult({ info: { ...info, duration: 15020 }, o, targetQuality: 360 }).error, 'youtube.clip.invalid');
+    assert.equal(buildYoutubeResult({ info, o: { ...o, isAudioOnly: true }, targetQuality: 360 }).error, 'youtube.clip.unsupported');
+    assert.equal(buildYoutubeResult({ info: { ...info, formats: [] }, o, targetQuality: 360 }).error, 'youtube.clip.unsupported');
+});
+
 test("rejects active and upcoming live streams without rejecting completed broadcasts", () => {
     for (const info of [{ is_live: true }, { live_status: "is_live" }, { live_status: "is_upcoming" }]) {
         assert.equal(buildYoutubeResult({ info, o: { id: "video-id" } }).error, "content.video.live");
@@ -204,7 +220,7 @@ test("rejects over-limit YouTube media before selecting formats, including audio
             requestClientIp: "",
             targetQuality: 720,
         });
-        assert.deepEqual(result, { error: "content.too_long" });
+        assert.deepEqual(result, { error: "content.too_long", sourceDuration: env.durationLimit + 1 });
     }
 });
 

@@ -32,6 +32,7 @@ const allowedPayloadKeys = new Set([
     "alwaysProxy",
     "youtubeHLS",
     "youtubeBetterAudio",
+    "youtubeClip",
 ]);
 
 const truncate = (value, max = 180) => {

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { env } from "../../config.js";
 import { getUpstreamNodes, refreshUpstreamPool } from "./pool.js";
-import { requestYoutubeUpstream } from "./youtube.js";
+import { hasVerifiedYoutubeClip, requestYoutubeUpstream } from "./youtube.js";
 
 const setup = (t, count = 3) => {
     const keys = ["apiURL", "upstreamURLs", "upstreamGlobalURLs", "upstreamCnURLs", "upstreamMaxAttempts"];
@@ -24,11 +24,70 @@ const setup = (t, count = 3) => {
 };
 const payload = { url: new URL("https://www.youtube.com/watch?v=abcdefghijk"), videoQuality: "1080" };
 const download = { status: "tunnel", url: "https://cdn.example/video.mp4" };
+const clipRequest = { start: 100, end: 130 };
+const clipResponse = { status: "local-processing", type: "merge", service: "youtube",
+    tunnel: ["https://node.example/tunnel?id=1", "https://node.example/tunnel?id=2"],
+    output: { filename: "clip.webm", type: "video/webm" },
+    duration: 30, youtubeClip: { version: 1, start: 100, end: 130, sourceDuration: 1000 } };
 const pendingFetch = (signal, onAbort = () => {}) => new Promise((resolve, reject) => {
     signal.addEventListener("abort", () => {
         onAbort();
         reject(signal.reason);
     }, { once: true });
+});
+
+test("clip acknowledgment must match validated boundaries, source duration and local limit", () => {
+    assert.equal(hasVerifiedYoutubeClip(clipResponse, clipRequest, 30), true);
+    for (const body of [download,
+        { ...clipResponse, duration: 31 },
+        { ...clipResponse, status: "redirect" },
+        { ...clipResponse, youtubeClip: { ...clipResponse.youtubeClip, version: 0 } },
+        { ...clipResponse, youtubeClip: { ...clipResponse.youtubeClip, start: 101 } },
+        { ...clipResponse, youtubeClip: { ...clipResponse.youtubeClip, sourceDuration: 129 } },
+        { ...clipResponse, youtubeClip: { ...clipResponse.youtubeClip, sourceDuration: undefined } },
+    ]) assert.equal(hasVerifiedYoutubeClip(body, clipRequest, 30), false);
+    assert.equal(hasVerifiedYoutubeClip(clipResponse, clipRequest, 29), false);
+});
+
+test("legacy full download cannot win a clip race", async t => {
+    const nodes = setup(t, 2);
+    globalThis.fetch = async url => {
+        if (new URL(url).origin === nodes[0]) return Response.json(download);
+        await new Promise(resolve => setImmediate(resolve));
+        return Response.json(clipResponse);
+    };
+    const result = await requestYoutubeUpstream({ payload: { ...payload, youtubeClip: clipRequest }, returnFailureResponse: true });
+    assert.deepEqual(result.body, clipResponse);
+});
+
+test("clip race fails closed when all nodes return legacy downloads", async t => {
+    setup(t, 2);
+    globalThis.fetch = async () => Response.json(download);
+    const result = await requestYoutubeUpstream({ payload: { ...payload, youtubeClip: clipRequest }, returnFailureResponse: true });
+    assert.equal(result.body.status, "error");
+    assert.equal(result.body.error.code, "error.api.upstream.incomplete");
+});
+
+test("main YouTube matcher forwards and validates clip acknowledgment before exposing tracks", async t => {
+    const nodes = setup(t, 2);
+    const previousRole = process.env.IS_UPSTREAM_SERVER;
+    process.env.IS_UPSTREAM_SERVER = "false";
+    t.after(() => {
+        if (previousRole === undefined) delete process.env.IS_UPSTREAM_SERVER;
+        else process.env.IS_UPSTREAM_SERVER = previousRole;
+    });
+    const { default: match } = await import('../match.js');
+    const body = { ...clipResponse, tunnel: ['/tunnel?id=video', '/tunnel?id=audio'] };
+    globalThis.fetch = async (url, options) => {
+        assert.deepEqual(JSON.parse(options.body).youtubeClip, clipRequest);
+        if (new URL(url).origin === nodes[0]) return Response.json(download);
+        return Response.json(body);
+    };
+    const result = await match({ host: 'youtube', patternMatch: { id: 'abcdefghijk' },
+        params: { ...payload, youtubeClip: clipRequest }, authType: 'key' });
+    assert.equal(result.body.status, 'local-processing');
+    assert.equal(result.body.duration, 30);
+    assert.ok(result.body.tunnel.every(url => url.startsWith(nodes[1] + '/tunnel?')));
 });
 
 test("three nodes start together; first complete download wins and cancels healthy losers", async (t) => {
@@ -67,6 +126,18 @@ test("fast business errors and malformed successes cannot beat a later download"
     assert.equal((await requestYoutubeUpstream({ payload })).upstreamOrigin, nodes[2]);
 });
 
+test("a duration error cannot beat a later usable download", async (t) => {
+    const nodes = setup(t, 2);
+    globalThis.fetch = async (url) => {
+        if (new URL(url).origin === nodes[0]) {
+            return Response.json({ status: "error", error: { code: "error.api.content.too_long", context: { limit: 180 } } });
+        }
+        await new Promise((resolve) => setImmediate(resolve));
+        return Response.json(download);
+    };
+    assert.deepEqual((await requestYoutubeUpstream({ payload })).body, download);
+});
+
 test("a node timing out does not cancel a peer still reading a valid response body", async (t) => {
     const nodes = setup(t, 2);
     globalThis.fetch = async (url, { signal }) => {
@@ -95,6 +166,18 @@ test("all failures preserve a business error instead of a transport error", asyn
     const result = await requestYoutubeUpstream({ payload, returnFailureResponse: true });
     assert.equal(result.status, 400);
     assert.equal(result.body.error.code, "error.api.youtube.login");
+});
+
+test("all failures prefer a confirmed duration limit over another extraction error", async (t) => {
+    const nodes = setup(t);
+    globalThis.fetch = async (url) => {
+        const origin = new URL(url).origin;
+        if (origin === nodes[0]) return Response.json({ status: "error", error: { code: "error.api.fetch.fail" } });
+        if (origin === nodes[1]) return Response.json({ status: "error", error: { code: "error.api.content.too_long", context: { limit: 180 } } });
+        throw new TypeError("network failed");
+    };
+    const result = await requestYoutubeUpstream({ payload, returnFailureResponse: true });
+    assert.deepEqual(result.body.error, { code: "error.api.content.too_long", context: { limit: 180 } });
 });
 
 test("all timeouts finish and release in-flight counters", async (t) => {

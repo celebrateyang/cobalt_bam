@@ -2213,6 +2213,15 @@ export const reserveMemberDownloadUsage = async ({
             return { allowed: false, reason: "not_member", membership: null };
         }
 
+        // Browser clip work may be abandoned without a completion callback.
+        // Release only these reservations after a generous processing window.
+        await client.query(
+            `UPDATE member_usage_events SET status = 'failed', completed_at = $2
+             WHERE user_id = $1 AND status = 'reserved'
+               AND metadata->>'stage' = 'youtube_clip_reserved' AND created_at < $3`,
+            [userId, now, now - 24 * 60 * 60 * 1000],
+        );
+
         const usageResult = await client.query(
             `
             SELECT
@@ -2333,6 +2342,39 @@ export const completeMemberDownloadUsage = async ({
     );
 
     return result.rows[0] || null;
+};
+
+// Clip reservations remain pending until the client completes or fails. The
+// row itself is the idempotency record; never let a retry reverse its outcome.
+export const settleYoutubeClipMembership = async ({ userId, usageEventId, success }) => {
+    const desired = success ? 'success' : 'failed';
+    const now = Date.now();
+    const result = await query(
+        `UPDATE member_usage_events SET status = $3, completed_at = $4
+         WHERE id = $1 AND user_id = $2 AND status = 'reserved'
+           AND metadata->>'stage' = 'youtube_clip_reserved'
+           AND duration_seconds IS NOT NULL AND created_at >= $5
+         RETURNING status`,
+        [usageEventId, userId, desired, now, now - 24 * 60 * 60 * 1000],
+    );
+    if (result.rowCount) return { ok: true, status: desired };
+    const existing = await query(
+        `SELECT status FROM member_usage_events
+         WHERE id = $1 AND user_id = $2 AND metadata->>'stage' = 'youtube_clip_reserved'`,
+        [usageEventId, userId],
+    );
+    const status = existing.rows?.[0]?.status;
+    return status === desired ? { ok: true, status } : { ok: false, status: status || null };
+};
+
+export const prepareYoutubeClipMembership = async ({ userId, usageEventId, durationSeconds, pointsEquivalent }) => {
+    const result = await query(
+        `UPDATE member_usage_events SET service = 'youtube', duration_seconds = $3, points_equivalent = $4
+         WHERE id = $1 AND user_id = $2 AND status = 'reserved'
+           AND metadata->>'stage' = 'youtube_clip_reserved' RETURNING id`,
+        [usageEventId, userId, durationSeconds, pointsEquivalent],
+    );
+    return result.rowCount === 1;
 };
 
 export const recordMemberDownloadUsage = async ({

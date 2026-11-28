@@ -13,6 +13,6 @@ export const getYoutubeUpstreamDurationError = (body) => {
 
     return {
         code: "error.api.content.too_long",
-        context: { limit: parseFloat((env.durationLimit / 60).toFixed(2)) },
+        context: { limit: parseFloat((env.durationLimit / 60).toFixed(2)), sourceDuration: Number(body.duration) },
     };
 };

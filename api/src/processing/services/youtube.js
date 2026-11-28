@@ -8,6 +8,9 @@ import { sanitizeString } from "../create-filename.js";
 import { exceedsYoutubeDurationLimit } from "../youtube-duration.js";
 import { estimateYoutubeSize } from "../youtube-size.js";
 import { waitForYoutubeMedia } from "../youtube-availability.js";
+import { validateYoutubeClipRange } from "../youtube-clip-range.js";
+import { selectYoutubeClipFormats } from "../youtube-clip-formats.js";
+import { env } from "../../config.js";
 
 const DEFAULT_TIMEOUT_MS = 45000;
 const MIN_GOOD_URL_SCORE = -140;
@@ -902,8 +905,24 @@ export const buildYoutubeResult = ({
         return { error: "content.video.live" };
     }
     const duration = parseNumber(info.duration);
+    if (o.youtubeClip) {
+        const clip = validateYoutubeClipRange(o.youtubeClip, duration, env.durationLimit);
+        if (!clip) return { error: "youtube.clip.invalid" };
+        if (o.isAudioOnly || o.isAudioMuted || o.subtitleLang || o.youtubeHLS) {
+            return { error: "youtube.clip.unsupported" };
+        }
+        const selected = selectYoutubeClipFormats(allFormats, targetQuality);
+        if (!selected) return { error: "youtube.clip.unsupported" };
+        return {
+            type: "merge", urls: [selected.video.url, selected.audio.url],
+            duration: clip.duration,
+            youtubeClip: { version: 1, start: clip.start, end: clip.end, sourceDuration: duration },
+            filename: `${sanitizeString(String(info.title || `youtube_${o.id}`))}.webm`,
+            originalRequest: { ...o, dispatcher: undefined },
+        };
+    }
     if (exceedsYoutubeDurationLimit(duration)) {
-        return { error: "content.too_long" };
+        return { error: "content.too_long", sourceDuration: duration };
     }
     const title = String(info.title || `youtube_${o.id}`).trim() || `youtube_${o.id}`;
     const artist = String(info.channel || info.uploader || "").trim();

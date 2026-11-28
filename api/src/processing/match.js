@@ -6,6 +6,7 @@ import { createStream } from "../stream/manage.js";
 import { requestUpstream } from "./upstream/request.js";
 import { requestYoutubeUpstream } from "./upstream/youtube.js";
 import { getYoutubeUpstreamDurationError } from "./youtube-duration.js";
+import { validateYoutubeClipRange } from "./youtube-clip-range.js";
 
 import { testers } from "./service-patterns.js";
 import matchAction from "./match-action.js";
@@ -181,7 +182,7 @@ const requestUpstreamCobalt = async (payload, options = {}) => {
 
             let parsed;
             try {
-                parsed = new URL(value);
+                parsed = new URL(value, upstreamOrigin);
             } catch {
                 return value;
             }
@@ -293,6 +294,11 @@ export default async function({ host, patternMatch, params, authType }) {
         let r,
             isAudioOnly = params.downloadMode === "audio",
             isAudioMuted = params.downloadMode === "mute";
+
+        if (params.youtubeClip && (host !== "youtube" || params.batch === true
+            || !validateYoutubeClipRange(params.youtubeClip, params.youtubeClip.end, env.durationLimit))) {
+            return createResponse("error", { code: "error.api.youtube.clip.invalid" });
+        }
 
         if (!testers[host]) {
             return createResponse("error", {
@@ -500,6 +506,7 @@ export default async function({ host, patternMatch, params, authType }) {
                     requestClientIp: params.requestClientIp,
                     traceId: params.traceId,
                     traceReceivedAtMs: params.traceReceivedAtMs,
+                    youtubeClip: params.youtubeClip,
                 }
 
                 if (url.hostname === "music.youtube.com" || isAudioOnly) {
@@ -898,6 +905,8 @@ export default async function({ host, patternMatch, params, authType }) {
                 case "content.too_long":
                     context = {
                         limit: parseFloat((env.durationLimit / 60).toFixed(2)),
+                        ...(host === "youtube" && Number.isFinite(r.sourceDuration) && r.sourceDuration > 0
+                            ? { sourceDuration: r.sourceDuration } : {}),
                     }
                     break;
 
@@ -923,6 +932,16 @@ export default async function({ host, patternMatch, params, authType }) {
                 code: `error.api.${normalizedError}`,
                 context,
             })
+        }
+
+        if (host === "youtube" && params.youtubeClip) {
+            if (!r.youtubeClip || r.type !== "merge" || !Array.isArray(r.urls) || r.urls.length !== 2) {
+                return createResponse("error", { code: "error.api.youtube.clip.unsupported" });
+            }
+            return createResponse("local-processing", {
+                type: "merge", service: "youtube", url: r.urls, filename: r.filename,
+                duration: r.duration, youtubeClip: r.youtubeClip, originalRequest: r.originalRequest,
+            });
         }
 
         let localProcessing = params.localProcessing;

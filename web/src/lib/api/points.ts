@@ -45,6 +45,18 @@ const getTokenWithRetry = async (attempts = 6, delayMs = 250) => {
 const createRequestId = () =>
     `pts_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 
+export const settleClipMembership = async (usageEventId: number, success: boolean) => {
+    const token = await getTokenWithRetry();
+    if (!token) return { ok: false };
+    const res = await fetch(`${currentApiURL()}/user/youtube-clip/membership/settle`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usageEventId, success }),
+    }).catch(() => null);
+    const body = await res?.json().catch(() => null);
+    return { ok: Boolean(res?.ok && body?.status === 'success' && body?.data?.status === (success ? 'success' : 'failed')) };
+};
+
 export const finalizePointsHold = async (
     holdId: string,
     reason?: string,

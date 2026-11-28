@@ -16,6 +16,7 @@ export type CobaltErrorResponse = {
             service?: string,
             domain?: string,
             limit?: number,
+            sourceDuration?: number,
             current?: number,
             required?: number,
             reason?: "daily_limit" | "monthly_limit" | string,
@@ -85,6 +86,7 @@ export type CobaltLocalProcessingResponse = {
     type: 'proxy' | 'merge' | 'remux' | 'mute' | 'audio' | 'gif',
     service?: string,
     tunnel: string[],
+    youtubeClip?: { version: number; start: number; end: number; sourceDuration: number },
     output: {
         type: string,
         filename: string,
@@ -167,6 +169,7 @@ export type CobaltSaveRequestBody =
         queueId?: string;
         filenameTitle?: string;
         bilibiliDirectBridge?: boolean;
+        youtubeClip?: { start: number; end: number };
     };
 
 export type CobaltSessionResponse = CobaltSession | CobaltErrorResponse;
@@ -179,6 +182,7 @@ export type CobaltPointsInfo = {
     after?: number | null;
     holdId?: string | null;
     holdExpiresAt?: number | null;
+    memberUsageId?: number;
     chargePolicy?: "standard" | "new_user_protection";
 };
 

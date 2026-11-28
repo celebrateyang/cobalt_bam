@@ -40,6 +40,11 @@ export const apiSchema = z.object({
 
     batch: z.boolean().default(false),
 
+    youtubeClip: z.object({
+        start: z.number().int().safe().nonnegative(),
+        end: z.number().int().safe().positive(),
+    }).strict().refine(value => value.end > value.start).optional(),
+
     // Explicit product action: download only the submitted Bilibili video/page
     // through a single progressive MP4 URL instead of the browser merge queue.
     bilibiliDirectBridge: z.boolean().default(false),

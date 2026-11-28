@@ -16,6 +16,7 @@
     import XinpianchangDownloadDialog from './XinpianchangDownloadDialog.svelte';
     import RedditPhotosDialog from './RedditPhotosDialog.svelte';
     import MobileLargeDownloadDialog from './MobileLargeDownloadDialog.svelte';
+    import YoutubeClipDialog from './YoutubeClipDialog.svelte';
 
     $: backdropVisible = $dialogs.length > 0;
 </script>
@@ -50,6 +51,8 @@
             <RedditPhotosDialog {...dialog} />
         {:else if dialog.type === 'mobile-large-download'}
             <MobileLargeDownloadDialog {...dialog} />
+        {:else if dialog.type === 'youtube-clip'}
+            <YoutubeClipDialog {...dialog} />
         {/if}
     {/each}
     <div id="dialog-backdrop" class:visible={backdropVisible}></div>

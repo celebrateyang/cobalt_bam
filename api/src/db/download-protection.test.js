@@ -4,6 +4,7 @@ import { pathToFileURL } from 'node:url';
 import vm from 'node:vm';
 import test from 'node:test';
 import * as protection from '../core/download-protection.js';
+import { isBrowserQueuedDownload } from '../core/browser-queue.js';
 
 // Optional isolated PostgreSQL engine. Install PGlite outside the checkout and
 // set DOWNLOAD_PROTECTION_TEST_PGLITE to its dist/index.js to run SQL integration.
@@ -39,9 +40,10 @@ test('download protection PostgreSQL integration', { skip: !enginePath }, async 
         'initPlatformRequestsDatabase', 'initCuriousCatDatabase']) sandbox[name] = async () => {};
     const context = vm.createContext(sandbox);
     vm.runInContext(executable, context);
-    const api = vm.runInContext(`({ initUserDatabase, upsertUserFromClerk, consumeUserPoints,
+    const api = vm.runInContext(`({ initUserDatabase, upsertUserFromClerk, getUserByClerkId, consumeUserPoints,
         createPointsHold, finalizePointsHold, releasePointsHold, claimDownloadRequest,
-        failDownloadRequest, completeDownloadRequest, startDownloadProtection })`, context);
+        failDownloadRequest, completeDownloadRequest, startDownloadProtection,
+        prepareYoutubeClipMembership, settleYoutubeClipMembership, completeMemberDownloadUsage })`, context);
     // A pre-migration account must remain ineligible, including later profile sync.
     await query(source.match(/CREATE TABLE IF NOT EXISTS users \([\s\S]*?\);/)[0]);
     await query(`INSERT INTO users (clerk_user_id, created_at, updated_at) VALUES ('legacy', 1, 1)`);
@@ -49,6 +51,105 @@ test('download protection PostgreSQL integration', { skip: !enginePath }, async 
     const rollout = Number((await query('SELECT started_at FROM download_protection_rollout')).rows[0].started_at);
     const signup = (id, createdAt = rollout + 1, email = `${id}@example.com`) => api.upsertUserFromClerk({
         clerkUserId: id, primaryEmail: email, clerkCreatedAt: createdAt,
+    });
+
+    await t.test('clip handler reserves validated duration and settles or releases actual points', async () => {
+        const user = await signup('clip-handler', rollout - 1);
+        await query('UPDATE users SET points = 100 WHERE id = $1', [user.id]);
+        const handlerFile = await readFile(new URL('../core/api.js', import.meta.url), 'utf8');
+        const handlerSource = handlerFile.slice(handlerFile.indexOf('    const handleDownload = async'), handlerFile.indexOf("    app.post('/', handleDownload);"));
+        let extractionFails = false;
+        let member = false;
+        const handlerContext = vm.createContext({
+            ...api, ...protection, URL, Date, process: { env: {} },
+            console: { log() {}, warn() {}, error(...args) { throw new Error(args.join(' ')); } },
+            randomUUID: () => `request_${++sequence}`, resolveDownloadLogEmail: () => 'test@example.com',
+            isClerkAuthConfigured: true, isUpstreamServer: false,
+            getClerkUserIdFromTokenHeader: async () => ({ ok: true, clerkUserId: 'clip-handler' }),
+            hashHmac: () => 'rate-key', normalizeRequest: async request => ({ success: true, data: request }),
+            fail: (res, code) => res.status(400).json({ status: 'error', error: { code } }),
+            createResponse: (_, { code, context }) => ({ status: 400, body: { status: 'error', error: { code, context } } }),
+            getUrlHost: () => 'youtube.com', logDownloadRequest() {}, scheduleDownloadAttemptCreate() {},
+            scheduleDownloadAttemptComplete() {}, DOWNLOAD_ATTEMPT_STATUS: {}, getReadableDownloadError: x => x,
+            toNullableInteger: x => x, env: { downloadDedupeTTL: 0, pointsHoldTtlSeconds: 3600 },
+            getIdempotencyErrorCode: () => 'error.api.request.conflict',
+            reserveMemberDownloadUsage: async ({ userId, metadata }) => {
+                if (!member) return { allowed: false, membership: null };
+                const usageEvent = (await query(
+                    `INSERT INTO member_usage_events (user_id,status,created_at,metadata) VALUES ($1,'reserved',$2,$3) RETURNING id`,
+                    [userId, Date.now(), metadata],
+                )).rows[0];
+                return { allowed: true, usageEvent, membership: { planKey: 'test',
+                    usage: { dailySuccessfulDownloads: 0, monthlySuccessfulDownloads: 0 },
+                    limits: { dailySuccessfulDownloads: 10, monthlySuccessfulDownloads: 100 } } };
+            },
+            extract: () => ({ host: 'youtube', patternMatch: [] }), APIKeys: { getAllowedServices() {} },
+            match: async ({ params }) => extractionFails
+                ? { status: 400, body: { status: 'error', error: { code: 'error.api.youtube.clip.unsupported' } } }
+                : { status: 200, body: { status: 'local-processing', service: 'youtube', type: 'merge',
+                    duration: params.youtubeClip.end - params.youtubeClip.start } },
+            isBrowserQueuedDownload,
+        });
+        vm.runInContext(handlerFile.slice(handlerFile.indexOf('const durationToPoints ='),
+            handlerFile.indexOf('const getClerkUserIdFromTokenHeader =')), handlerContext);
+        vm.runInContext(handlerSource, handlerContext);
+        const handle = vm.runInContext('handleDownload', handlerContext);
+        const request = async (queueId, start, end) => {
+            const response = { status(code) { this.statusCode = code; return this; }, json(body) { this.body = body; return this; } };
+            await handle({ body: { url: 'https://youtube.com/watch?v=example', queueId,
+                youtubeClip: { start, end } }, header() {} }, response);
+            return response;
+        };
+        const first = await request('clip-success', 100, 190);
+        assert.equal(first.body.points.outcome, 'held');
+        assert.equal(first.body.points.required, 4);
+        assert.equal((await query('SELECT points FROM users WHERE id = $1', [user.id])).rows[0].points, 100);
+        assert.equal((await request('clip-success', 110, 190)).body.status, 'error');
+        assert.equal((await api.finalizePointsHold({ userId: user.id, holdId: first.body.points.holdId })).charged, 4);
+        const second = await request('clip-failed', 100, 110);
+        assert.equal((await api.releasePointsHold({ userId: user.id, holdId: second.body.points.holdId })).status, 'released');
+        extractionFails = true;
+        assert.equal((await request('clip-extraction-error', 100, 110)).body.status, 'error');
+        assert.equal((await query('SELECT points FROM users WHERE id = $1', [user.id])).rows[0].points, 96);
+        extractionFails = false;
+        member = true;
+        const memberResult = await request('clip-member-success', 100, 190);
+        assert.equal(memberResult.body.points.outcome, 'member');
+        const eventId = memberResult.body.points.memberUsageId;
+        let event = (await query('SELECT status, duration_seconds, points_equivalent FROM member_usage_events WHERE id = $1', [eventId])).rows[0];
+        assert.equal(event.status, 'reserved');
+        assert.equal(event.duration_seconds, 90);
+        assert.equal(event.points_equivalent, 4);
+        assert.equal((await api.settleYoutubeClipMembership({ userId: user.id, usageEventId: eventId, success: true })).status, 'success');
+        const cancelled = await request('clip-member-failure', 100, 110);
+        assert.equal((await api.settleYoutubeClipMembership({ userId: user.id, usageEventId: cancelled.body.points.memberUsageId, success: false })).status, 'failed');
+        extractionFails = true;
+        assert.equal((await request('clip-member-extraction-error', 100, 110)).body.status, 'error');
+        event = (await query('SELECT status FROM member_usage_events WHERE user_id = $1 ORDER BY id DESC LIMIT 1', [user.id])).rows[0];
+        assert.equal(event.status, 'failed');
+    });
+
+    await t.test('clip member reservations settle only once and only for their owner', async () => {
+        const user = await signup('clip-member');
+        const other = await signup('clip-other');
+        const create = async metadata => (await query(
+            `INSERT INTO member_usage_events (user_id,status,created_at,metadata) VALUES ($1,'reserved',$2,$3) RETURNING id`,
+            [user.id, Date.now(), metadata],
+        )).rows[0].id;
+        const id = await create({ stage: 'youtube_clip_reserved' });
+        assert.equal((await api.settleYoutubeClipMembership({ userId: user.id, usageEventId: id, success: true })).ok, false);
+        assert.equal(await api.prepareYoutubeClipMembership({ userId: user.id, usageEventId: id, durationSeconds: 90, pointsEquivalent: 4 }), true);
+        assert.equal((await api.settleYoutubeClipMembership({ userId: other.id, usageEventId: id, success: true })).ok, false);
+        assert.equal((await api.settleYoutubeClipMembership({ userId: user.id, usageEventId: id, success: true })).ok, true);
+        assert.equal((await api.settleYoutubeClipMembership({ userId: user.id, usageEventId: id, success: true })).ok, true);
+        assert.equal((await api.settleYoutubeClipMembership({ userId: user.id, usageEventId: id, success: false })).ok, false);
+        const ordinary = await create({ stage: 'request_reserved' });
+        assert.equal(await api.prepareYoutubeClipMembership({ userId: user.id, usageEventId: ordinary, durationSeconds: 90, pointsEquivalent: 4 }), false);
+        assert.equal((await api.settleYoutubeClipMembership({ userId: user.id, usageEventId: ordinary, success: true })).ok, false);
+        const failed = await create({ stage: 'youtube_clip_reserved' });
+        assert.equal(await api.prepareYoutubeClipMembership({ userId: user.id, usageEventId: failed, durationSeconds: 90, pointsEquivalent: 4 }), true);
+        assert.equal((await api.settleYoutubeClipMembership({ userId: user.id, usageEventId: failed, success: false })).ok, true);
+        assert.equal((await api.settleYoutubeClipMembership({ userId: user.id, usageEventId: failed, success: true })).ok, false);
     });
 
     await t.test('migration is repeatable and Clerk registration date governs eligibility', async () => {

@@ -732,6 +732,31 @@ export const savingHandler = async ({
     }
 
     if (response.status === "error") {
+        if (response.error.code === 'error.api.content.too_long' && !selectedRequest.batch && !shouldSuppressError(response.error.code)) {
+            let host = '';
+            try {
+                const url = selectedRequest.url.trim();
+                host = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(url) ? url : `https://${url}`).hostname.toLowerCase();
+            } catch { /* invalid URL */ }
+            const sourceDuration = Number(response.error.context?.sourceDuration);
+            const limit = Number(response.error.context?.limit);
+            if ((host === 'youtu.be' || host === 'youtube.com' || host.endsWith('.youtube.com'))
+                && Number.isFinite(sourceDuration) && sourceDuration > 0 && Number.isFinite(limit) && limit > 0) {
+                const lang = get(page)?.params?.lang || 'en';
+                await loadTranslations(lang, 'dialog');
+                downloadButtonState.set('idle');
+                if ((selectedRequest.downloadMode && selectedRequest.downloadMode !== 'auto')
+                    || (selectedRequest.subtitleLang && selectedRequest.subtitleLang !== 'none')) {
+                    createDialog({ id: 'youtube-clip-unsupported', type: 'small',
+                        bodyText: get(t)('dialog.youtube_clip.unsupported'),
+                        buttons: [{ text: get(t)('button.gotit'), main: true, action: () => {} }] });
+                    return response;
+                }
+                const notice = await translateApiError(response.error.code, response.error.context);
+                createDialog({ id: 'youtube-clip', type: 'youtube-clip', sourceUrl: selectedRequest.url, sourceDuration, limit, notice });
+                return response;
+            }
+        }
         const redditHandoff = redditPhotoHandoff(selectedRequest.url, response);
         if (redditHandoff && !shouldSuppressError(response.error.code)) {
             downloadButtonState.set('idle');

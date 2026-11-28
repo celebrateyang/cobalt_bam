@@ -58,6 +58,7 @@ import {
     isDownloadProtected,
     getUserByClerkId,
     reserveMemberDownloadUsage,
+    prepareYoutubeClipMembership,
     upsertUserFromClerk,
 } from "../db/users.js";
 import {
@@ -1152,6 +1153,14 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             return fail(res, "error.api.invalid_body");
         }
         normalizedRequest = normalized.data;
+        // Personal-agent downloads use immediate charging and cannot report the
+        // browser's eventual processing result, so they cannot safely settle clips.
+        if (normalizedRequest.youtubeClip && req.personalAgent) {
+            return fail(res, "error.api.youtube.clip.unsupported");
+        }
+        const billingSourceUrl = normalizedRequest.youtubeClip
+            ? `${normalizedRequest.url}#fsv-clip=${normalizedRequest.youtubeClip.start}-${normalizedRequest.youtubeClip.end}`
+            : normalizedRequest.url;
         let membershipReservation = null;
         const requestClientIp = String(
             req.header("x-fsv-client-ip")
@@ -1233,7 +1242,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 const claim = await claimDownloadRequest({
                     userId: pointsUser.id,
                     queueId: normalizedRequest.queueId,
-                    sourceUrl: normalizedRequest.url,
+                    sourceUrl: billingSourceUrl,
                     protectedDownload,
                 });
                 if (claim.status === "replay") {
@@ -1337,7 +1346,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                     sourceUrl: normalizedRequest.url,
                     isBatch: normalizedRequest?.batch === true,
                     metadata: {
-                        stage: "request_reserved",
+                        stage: normalizedRequest.youtubeClip ? "youtube_clip_reserved" : "request_reserved",
                     },
                 });
                 if (
@@ -1521,7 +1530,15 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                     pointsOutcome = "member";
                     membershipPlan = membershipReservation.membership.planKey;
                     try {
-                        await completeMemberDownloadUsage({
+                        if (normalizedRequest.youtubeClip) {
+                            const prepared = await prepareYoutubeClipMembership({
+                                userId: pointsUser.id,
+                                usageEventId: membershipReservation.usageEvent?.id,
+                                durationSeconds: result.body.duration,
+                                pointsEquivalent: pointsRequired,
+                            });
+                            if (!prepared) throw new Error("clip_member_reservation_unavailable");
+                        } else await completeMemberDownloadUsage({
                             usageEventId: membershipReservation.usageEvent?.id,
                             status: "success",
                             service: result?.body?.service ?? parsed.host,
@@ -1534,6 +1551,9 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                         membershipLimit = `${membershipReservation.membership.usage.dailySuccessfulDownloads}/${membershipReservation.membership.limits.dailySuccessfulDownloads},${membershipReservation.membership.usage.monthlySuccessfulDownloads}/${membershipReservation.membership.limits.monthlySuccessfulDownloads}`;
                     } catch (error) {
                         console.error("Failed to record member usage:", error);
+                        if (normalizedRequest.youtubeClip && membershipReservation.usageEvent?.id) {
+                            await completeMemberDownloadUsage({ usageEventId: membershipReservation.usageEvent.id, status: "failed" }).catch(() => undefined);
+                        }
                         pointsOutcome = "error";
                         return failDownload("error.api.points.unavailable", null, {
                             pointsOutcome,
@@ -1543,7 +1563,9 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 } else if (shouldDeferPointsCharge) {
                     pointsOutcome = "hold";
                     const holdExpiresAt =
-                        Date.now() + env.pointsHoldTtlSeconds * 1000;
+                        Date.now() + (normalizedRequest.youtubeClip
+                            ? Math.max(env.pointsHoldTtlSeconds, 24 * 60 * 60)
+                            : env.pointsHoldTtlSeconds) * 1000;
                     try {
                         const hold = await createPointsHold({
                             userId: pointsUser.id,
@@ -1552,7 +1574,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                             reason: isBatchRequest
                                 ? "batch_download"
                                 : "queued_download",
-                            sourceUrl: normalizedRequest.url,
+                            sourceUrl: billingSourceUrl,
                             queueId: normalizedRequest.queueId ?? null,
                             protectedDownload,
                             idempotencyOwnerToken:
@@ -1721,6 +1743,8 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                     holdId: pointsHoldId,
                     holdExpiresAt: pointsHoldExpiresAt,
                     chargePolicy: protectedDownload ? "new_user_protection" : "standard",
+                    ...(normalizedRequest.youtubeClip && pointsOutcome === "member"
+                        ? { memberUsageId: membershipReservation?.usageEvent?.id } : {}),
                 };
             }
 

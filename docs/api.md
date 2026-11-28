@@ -45,6 +45,7 @@ Content-Type: application/json
 | key                          | type      | expected value(s)                  | default   | description                                                                     |
 |:-----------------------------|:----------|:-----------------------------------|:----------|:--------------------------------------------------------------------------------|
 | `url`                        | `string`  | URL to download                    | --        | **must** be included in every request.                                          |
+| `youtubeClip`                | `object`  | `{ "start": 0, "end": 60 }`     | --        | Optional single YouTube clip; integer start and end in seconds. See below.     |
 | `videoQuality`               | `string`  | `144 / ... / 2160 / 4320 / max`    | `1080`    | `720` quality is recommended for phones.                                        |
 | `audioFormat`                | `string`  | `best / mp3 / ogg / wav / opus`    | `mp3`     |                                                                                 |
 | `audioBitrate`               | `string`  | `320 / 256 / 128 / 96 / 64 / 8`    | `128`     | specifies the bitrate to use for the audio. applies only to audio conversion.   |
@@ -79,6 +80,48 @@ YouTube `redirect`, `tunnel`, and `local-processing` responses may also include
 separate video and audio sizes are summed. It is not a guaranteed final output
 length. Unknown sizes and playlist inputs omit these fields. Upstream instances
 must run an extractor version that emits them; the main API preserves the fields.
+
+### YouTube time-range downloads
+
+When a single YouTube video exceeds the configured duration limit, the error
+`error.api.content.too_long` includes `context.limit` in minutes and, when
+available, `context.sourceDuration` in seconds. The web app offers a separate
+clip dialog. Submit one range as `youtubeClip: { start, end }`, in whole seconds;
+the end is exclusive. The upstream obtains the source duration from yt-dlp
+metadata and both roles validate the range against the configured limit. Do not
+submit or rely on a client-supplied source duration.
+
+The version 1 response is `local-processing` with `service: "youtube"`,
+`type: "merge"`, two range-capable tunnel URLs, a WebM output filename, the
+validated clip `duration`, and `youtubeClip: { version: 1, start, end,
+sourceDuration }`. The URLs are source tracks, not pre-cut files. Clients must
+read ranges and produce the selected segment locally; opening or saving a
+track directly does not produce the requested clip. The current web client
+selects at most 360p VP9 video with Opus audio, writes WebM to browser private
+storage, validates the output, and lets the user save it. It requires a browser
+supporting OPFS sync access handles in workers and sufficient free storage.
+Audio-only, mute, subtitles, live/HLS, playlists, incompatible encodings or
+unverifiable track sizes are rejected. Processing time and device resource use
+can be substantial for long clips; upstream media URLs or tunnel links can
+expire before very long jobs finish. This client-side design does not enforce
+the requested range against a modified client that reads the source tunnels.
+
+For signed-in users, the API reserves points based on the verified clip
+duration, or reserves a membership use. After producing a validated output the
+client finalizes the returned `points.holdId` through the existing points-hold
+endpoint, or posts `{ "usageEventId": <points.memberUsageId>, "success": true }`
+to `/user/youtube-clip/membership/settle` with Clerk authorization. On failure use the
+points-hold release endpoint or settle the member usage with `success: false`.
+The member endpoint is owner-scoped and final outcomes are idempotent; pending
+reservations expire after 24 hours. Network or page interruption can leave a
+reservation pending until it expires. Personal-agent clip requests are rejected
+because their immediate-charge flow cannot confirm browser completion.
+
+Deploy clip-capable YouTube upstreams first, then the main API, then the web
+client. The main API checks the upstream's version, range, duration and response
+shape before accepting or billing it, and rejects older nodes that return a full
+download. A mixed rollout can still return unsupported until a compatible node
+responds. No deployment is performed by these changes.
 
 On mobile devices, the web client asks before starting YouTube downloads estimated
 at 500 MiB or larger. Users can continue the existing download or copy the video
